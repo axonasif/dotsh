@@ -1,4 +1,4 @@
-use std::log::info;
+use std::print::log;
 
 function main() {
 

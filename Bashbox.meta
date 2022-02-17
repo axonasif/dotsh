@@ -9,6 +9,7 @@ REPOSITORY=""
 BASHBOX_COMPAT="0.3.9~"
 
 bashbox_after_build() {
-	cp "$_target_workfile" "$_arg_path/$CODENAME";
-	chmod 0755 "$_arg_path/$CODENAME";
+    local _script_name='install.sh';
+	cp "$_target_workfile" "$_arg_path/$_script_name";
+	chmod 0755 "$_arg_path/$_script_name";
 }
