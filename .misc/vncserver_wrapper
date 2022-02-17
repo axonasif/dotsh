@@ -1,0 +1,2 @@
+#!/bin/bash
+{ exec vncserver ${1:-":0"} 2>&1; } > "$HOME/.vnc/server.log" 2>&1 &

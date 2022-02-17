@@ -1,0 +1,12 @@
+# Kill xserver xsel
+
+# Run DWM
+#echo "Setting wallpaper"
+#feh --no-fehbg --bg-fill "$HOME/.misc/wall.jpg";
+echo "Running DWM";
+
+slstatus &
+
+launch_swcursor;
+
+exec dbus-launch --exit-with-session dwm;

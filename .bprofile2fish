@@ -1,0 +1,23 @@
+#!/bin/bash
+
+_blacklisted_env_keywords=(
+	SHLVL
+	PWD
+	SHELL
+	PS1
+	OLDPWD
+	_
+)
+
+while read -r _line; do {
+	
+	# Ignore blacklisted keywords and exported env bash functions
+	if [[ "${_blacklisted_env_keywords[@]}" =~ (^| )${_line%%=*}($| ) ]] \
+	|| [[ "$_line" =~ BASH_FUNC_ ]]; then
+		\continue;
+	fi
+	\printf '%s' "set -gx '${_line%%=*}' '${_line#*=}';";
+	
+} done < <(\bash -lic 'env')
+
+printf '%s' 'set -u OLDPWD;';
