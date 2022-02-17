@@ -39,6 +39,7 @@ function main() {
 
         # Use workspace persisted history
         log::info "Persiting shell histories to /workspace";
+        mkdir -p "$_workspace_persist_dir";
         local _hist;
         for _hist in "${_shell_hist_files[@]}"; do {
             _hist_name="${_hist##*/}";

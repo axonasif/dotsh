@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9738 () 
+main@bashbox%7157 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%9738 ()
     shopt -s inherit_errexit expand_aliases;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%9738";
+    ___MAIN_FUNCNAME="main@bashbox%7157";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -100,6 +100,7 @@ main@bashbox%9738 ()
                 };
                 curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall;
                 log::info "Persiting shell histories to /workspace";
+                mkdir -p "$_workspace_persist_dir";
                 local _hist;
                 for _hist in "${_shell_hist_files[@]}";
                 do
@@ -126,4 +127,4 @@ main@bashbox%9738 ()
     wait;
     exit
 }
-main@bashbox%9738 "$@";
+main@bashbox%7157 "$@";
