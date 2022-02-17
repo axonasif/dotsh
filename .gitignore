@@ -25,5 +25,5 @@
 /.local/share/nvim/swap
 /.local/share/recently-used.xbel
 /.npm
-
+/.private
 /target
