@@ -45,6 +45,9 @@ function main() {
             if test -e "$_workspace_persist_dir/$_hist_name"; then {
                 log::warn "Overwriting $_hist with workspace persisted history file";
                 ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist";
+            } else {
+                cp "$_hist" "$_workspace_persist_dir/";
+                ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist";
             } fi
             unset _hist_name;
         } done
