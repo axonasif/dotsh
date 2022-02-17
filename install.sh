@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9382 () 
+main@bashbox%9738 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%9382 ()
     shopt -s inherit_errexit expand_aliases;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%9382";
+    ___MAIN_FUNCNAME="main@bashbox%9738";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -110,6 +110,11 @@ main@bashbox%9382 ()
                                 log::warn "Overwriting $_hist with workspace persisted history file";
                                 ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
                             };
+                        else
+                            { 
+                                cp "$_hist" "$_workspace_persist_dir/";
+                                ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
+                            };
                         fi;
                         unset _hist_name
                     };
@@ -121,4 +126,4 @@ main@bashbox%9382 ()
     wait;
     exit
 }
-main@bashbox%9382 "$@";
+main@bashbox%9738 "$@";
