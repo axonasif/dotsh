@@ -24,3 +24,9 @@ You can take a look inside the `/src` dir to tweak stuff as per your needs and r
 │   │   ├── Performs all the other tasks
 └── Logs are saved to $HOME/.dotfiles.log
 ```
+
+# How to use
+
+Feel free to create your `dotfiles` repo from this template!
+
+You can then use it on https://gitpod.io/preferences for Gitpod.
