@@ -14,3 +14,13 @@ It does a few things to ease my life a bit:
 - You tell me!
 
 You can take a look inside the `/src` dir to tweak stuff as per your needs and run `bashbox build --release` or `bashbox run --release`.
+
+# Work process
+```markdown
+├── Gitpod clones and executes `install.sh` from $HOME/.dotfiles
+│   ├── install.sh
+│   │   ├── Symlinks from $HOME/.dotfiles to $HOME while following `.dotfilesignore`
+│   │   ├── Symlinks from $HOME/.dotfiles/.private to $HOME while following `.dotfilesignore`
+│   │   ├── Performs all the other tasks
+└── Logs are saved to $HOME/.dotfiles.log
+```
