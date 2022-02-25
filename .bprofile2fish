@@ -18,6 +18,6 @@ while read -r _line; do {
 	fi
 	\printf '%s' "set -gx '${_line%%=*}' '${_line#*=}';";
 	
-} done < <(\bash -lic 'env')
+} done < <(\bash -lc 'env')
 
 printf '%s' 'set -u OLDPWD;';

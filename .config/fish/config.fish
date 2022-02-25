@@ -3,5 +3,3 @@ if status is-interactive
 end
 
 eval (~/.bprofile2fish)
-
-source "/home/axon/.bashbox/env.fish";

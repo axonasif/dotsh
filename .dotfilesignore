@@ -1,0 +1,7 @@
+./.bashrc
+./.profile
+./.private
+./src
+./target
+./.zshrc
+./.gitconfig

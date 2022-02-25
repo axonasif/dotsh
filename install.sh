@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7157 () 
+main@bashbox%21108 () 
 { 
     function process::self::exit () 
     { 
@@ -50,19 +50,20 @@ main@bashbox%7157 ()
     shopt -s inherit_errexit expand_aliases;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%7157";
+    ___MAIN_FUNCNAME="main@bashbox%21108";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
     ___self_DEPENDENCIES=(std::0.2.0);
-    ___self_REPOSITORY="";
+    ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
-    function bashbox_after_build () 
+    function bashbox::build::after () 
     { 
         local _script_name='install.sh';
         cp "$_target_workfile" "$_arg_path/$_script_name";
-        chmod 0755 "$_arg_path/$_script_name"
+        chmod 0755 "$_arg_path/$_script_name";
+        rm -rf "$_arg_path/.private"
     };
     function log::info () 
     { 
@@ -72,39 +73,102 @@ main@bashbox%7157 ()
     { 
         echo -e "[***] \033[1;37mwarn\033[0m: $@"
     };
-    function main () 
+    function dotfiles_symlink () 
+    { 
+        local _dotfiles_repo="${1:-"$___self_REPOSITORY"}";
+        local _dotfiles_dir="${2:-$HOME/.dotfiles}";
+        local _target_file _target_dir;
+        if test ! -e "$_dotfiles_dir"; then
+            { 
+                bash -lic "git clone \"$_dotfiles_repo\" \"$_dotfiles_dir\"" > /dev/null
+            };
+        fi;
+        if test -e "$_dotfiles_dir"; then
+            { 
+                local _dotfiles_ignore="$_dotfiles_dir/.dotfilesignore";
+                local _thing_path;
+                local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'*/.gitpod.yml'");
+                if test -e "$_dotfiles_ignore"; then
+                    { 
+                        while read _ignore_thing; do
+                            { 
+                                if [[ ! "$_ignore_thing" =~ ^\# ]]; then
+                                    { 
+                                        _ignore_list+=(-not -path "'$_ignore_thing'")
+                                    };
+                                fi
+                            };
+                        done < "$_dotfiles_ignore"
+                    };
+                fi;
+                pushd "$_dotfiles_dir" > /dev/null;
+                while read -r _file; do
+                    { 
+                        _target_file="$HOME/${_file##${_dotfiles_dir}/}";
+                        _target_dir="${_target_file%/*}";
+                        if test ! -d "$_target_dir"; then
+                            { 
+                                mkdir -p "$_target_dir"
+                            };
+                        fi;
+                        ln -srf "$_file" "$_target_file";
+                        unset _target_file _target_dir
+                    };
+                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find . -type f);
+                popd > /dev/null
+            };
+        fi
+    };
+    function is::gitpod () 
     { 
         if test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT; then
             { 
+                true
+            };
+        else
+            { 
+                false
+            };
+        fi
+    };
+    _system_packages=(shellcheck rsync tree);
+    function install::system_packages () 
+    { 
+        ( sudo install-packages "${_system_packages[@]}" > /dev/null ) &
+    };
+    function install::userland_tools () 
+    { 
+        ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall ) &
+    };
+    function main () 
+    { 
+        if is::gitpod; then
+            { 
                 log::info "Gitpod environment detected!";
-                local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
                 local _workspace_persist_dir="/workspace/.persist";
-                local _private_dir="$_source_dir/.private";
-                local _shell_hist_files=("$HOME/.bash_history" "$HOME/.local/share/fish/fish_history");
-                log::info "Installing private dotfiles";
-                local _target_file _target_dir _private_files;
-                git clone https://github.com/axonasif/dotfiles.private "$_private_dir" && { 
-                    while read -r _file; do
-                        { 
-                            _target_file="$HOME/${_file##${_private_dir}/}";
-                            _target_dir="${_target_file%/*}";
-                            if test ! -d "$_target_dir"; then
-                                { 
-                                    mkdir -p "$_target_dir"
-                                };
-                            fi;
-                            ln -srf "$_file" "$_target_file";
-                            unset _target_file _target_dir
-                        };
-                    done < <(find "$_private_dir" -type f -not -path '*/\.git/*')
-                };
-                curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall;
-                log::info "Persiting shell histories to /workspace";
+                local _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history")
+            };
+        fi;
+        local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
+        local _private_dir="$_source_dir/.private";
+        local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
+        log::info "Installing system packages in the background";
+        install::system_packages;
+        log::info "Installing local dotfiles";
+        dotfiles_symlink;
+        log::info "Installing private dotfiles";
+        dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
+        log::info "Installing userland tools in the background";
+        install::userland_tools;
+        if is::gitpod; then
+            { 
+                log::info "Persiting Gitpod shell histories to /workspace";
                 mkdir -p "$_workspace_persist_dir";
                 local _hist;
                 for _hist in "${_shell_hist_files[@]}";
                 do
                     { 
+                        mkdir -p "${_hist%/*}";
                         _hist_name="${_hist##*/}";
                         if test -e "$_workspace_persist_dir/$_hist_name"; then
                             { 
@@ -113,13 +177,25 @@ main@bashbox%7157 ()
                             };
                         else
                             { 
+                                touch "$_hist";
                                 cp "$_hist" "$_workspace_persist_dir/";
                                 ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
                             };
                         fi;
                         unset _hist_name
                     };
-                done
+                done;
+                log::info "Setting fish as the interactive shell for Gitpod task terminals";
+                if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc > /dev/null; then
+                    { 
+                        printf 'PROMPT_COMMAND="[ "$PPID" == 26 ] && [ "$BASH" == /bin/bash ] && && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc
+                    };
+                fi
+            };
+        fi;
+        if test -n "$(jobs -p)"; then
+            { 
+                log::warn "Waiting for background jobs to comple"
             };
         fi
     };
@@ -127,4 +203,4 @@ main@bashbox%7157 ()
     wait;
     exit
 }
-main@bashbox%7157 "$@";
+main@bashbox%21108 "$@";
