@@ -5,11 +5,31 @@ VERSION="1.0"
 DEPENDENCIES=(
     std::0.2.0
 )
-REPOSITORY=""
+REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"
 
-bashbox_after_build() {
+bashbox::build::after() {
     local _script_name='install.sh';
 	cp "$_target_workfile" "$_arg_path/$_script_name";
 	chmod 0755 "$_arg_path/$_script_name";
+    rm -rf "$_arg_path/.private";
 }
+
+# bashbox::run::before() {
+#     local _fovfs=/tmp/fovfs;
+#     if test ! -e "$_fovfs"; then {
+#         curl -sL 'https://github.com/containers/fuse-overlayfs/releases/download/v1.8.2/fuse-overlayfs-x86_64' -o "$_fovfs";
+#         chmod +x "$_fovfs";
+#     } fixs
+#     rm -rf $HOME/.dotfiles;
+#     sudo umount -lf $HOME 2>/dev/null || :
+#     local _workdir=/tmp/workdir;
+#     local _upperdir=/tmp/upper;
+#     sudo rm -rf $_workdir $_upperdir;
+#     mkdir -p $_upperdir $_workdir;
+#     # sudo mount -t overlay overlay -olowerdir=$HOME,upperdir=${_upperdir},workdir=${_workdir} $HOME;
+# }
+
+# bashbox::run::after() {
+#     sudo umount -f $HOME 2>/dev/null || { sudo umount -lf $HOME 2>/dev/null; true; }
+# }
