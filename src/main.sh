@@ -57,8 +57,8 @@ function main() {
         # Make gitpod task spawned terminals use fish
         log::info "Setting fish as the interactive shell for Gitpod task terminals"
         if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc 1>/dev/null; then {
-            # 26 is the supervisor PID, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-            printf 'PROMPT_COMMAND="[ "$PPID" == 26 ] && [ "$BASH" == /bin/bash ] && && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc;
+            # The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
+            printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == $(pgrep -f "supervisor run") ] && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc;
         } fi
     } fi
 

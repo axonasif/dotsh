@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%13117 () 
+main@bashbox%20345 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%13117 ()
     shopt -s inherit_errexit expand_aliases;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%13117";
+    ___MAIN_FUNCNAME="main@bashbox%20345";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -62,8 +62,11 @@ main@bashbox%13117 ()
     { 
         local _script_name='install.sh';
         cp "$_target_workfile" "$_arg_path/$_script_name";
-        chmod 0755 "$_arg_path/$_script_name";
-        rm -rf "$_arg_path/.private"
+        chmod 0755 "$_arg_path/$_script_name"
+    };
+    function bashbox::run::before () 
+    { 
+        rm -rf .private
     };
     function log::info () 
     { 
@@ -78,9 +81,12 @@ main@bashbox%13117 ()
         local _dotfiles_repo="${1:-"$___self_REPOSITORY"}";
         local _dotfiles_dir="${2:-$HOME/.dotfiles}";
         local _target_file _target_dir;
+        local _git_output;
         if test ! -e "$_dotfiles_dir"; then
             { 
-                git -c credential.helper="/usr/bin/gp credential-helper" clone "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null
+                _git_output="$(
+            git -c credential.helper="/usr/bin/gp credential-helper"                 -c user.name="$GITPOD_GIT_USER_NAME"                 -c user.email="$GITPOD_GIT_USER_EMAIL"             clone "$_dotfiles_repo" "$_dotfiles_dir" 2>&1
+        )" 2> /dev/null || log::error "$_git_output" && return 0
             };
         fi;
         if test -e "$_dotfiles_dir"; then
@@ -188,7 +194,7 @@ main@bashbox%13117 ()
                 log::info "Setting fish as the interactive shell for Gitpod task terminals";
                 if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc > /dev/null; then
                     { 
-                        printf 'PROMPT_COMMAND="[ "$PPID" == 26 ] && [ "$BASH" == /bin/bash ] && && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc
+                        printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == $(pgrep -f "supervisor run") ] && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc
                     };
                 fi
             };
@@ -203,4 +209,4 @@ main@bashbox%13117 ()
     wait;
     exit
 }
-main@bashbox%13117 "$@";
+main@bashbox%20345 "$@";

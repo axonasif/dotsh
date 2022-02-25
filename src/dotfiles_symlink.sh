@@ -2,10 +2,15 @@ function dotfiles_symlink() {
     local _dotfiles_repo="${1:-"$___self_REPOSITORY"}";
     local _dotfiles_dir="${2:-$HOME/.dotfiles}";
     local _target_file _target_dir;
+    local _git_output;
     
     if test ! -e "$_dotfiles_dir"; then {
-        git -c credential.helper="/usr/bin/gp credential-helper" clone "$_dotfiles_repo" "$_dotfiles_dir" 1>/dev/null
-        #|| log::error "You might not have permission to clone $_dotfiles_repo" && return 0;
+        _git_output="$(
+            git -c credential.helper="/usr/bin/gp credential-helper" \
+                -c user.name="$GITPOD_GIT_USER_NAME" \
+                -c user.email="$GITPOD_GIT_USER_EMAIL" \
+            clone "$_dotfiles_repo" "$_dotfiles_dir" 2>&1
+        )" 2>/dev/null || log::error "$_git_output" && return 0;
     } fi
     
     if test -e "$_dotfiles_dir" ; then {
