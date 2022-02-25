@@ -4,7 +4,7 @@ function dotfiles_symlink() {
     local _target_file _target_dir;
     
     if test ! -e "$_dotfiles_dir"; then {
-        bash -lic "git clone \"$_dotfiles_repo\" \"$_dotfiles_dir\"" 1>/dev/null
+        git -c credential.helper="/usr/bin/gp credential-helper" clone "$_dotfiles_repo" "$_dotfiles_dir" 1>/dev/null
         #|| log::error "You might not have permission to clone $_dotfiles_repo" && return 0;
     } fi
     

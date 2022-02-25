@@ -63,7 +63,7 @@ function main() {
     } fi
 
     if test -n "$(jobs -p)"; then {
-        log::warn "Waiting for background jobs to comple";
+        log::warn "Waiting for background jobs to complete";
     } fi
 
     # TODO: Add gpg signing

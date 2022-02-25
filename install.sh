@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21108 () 
+main@bashbox%13117 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%21108 ()
     shopt -s inherit_errexit expand_aliases;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%21108";
+    ___MAIN_FUNCNAME="main@bashbox%13117";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -80,7 +80,7 @@ main@bashbox%21108 ()
         local _target_file _target_dir;
         if test ! -e "$_dotfiles_dir"; then
             { 
-                bash -lic "git clone \"$_dotfiles_repo\" \"$_dotfiles_dir\"" > /dev/null
+                git -c credential.helper="/usr/bin/gp credential-helper" clone "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null
             };
         fi;
         if test -e "$_dotfiles_dir"; then
@@ -195,7 +195,7 @@ main@bashbox%21108 ()
         fi;
         if test -n "$(jobs -p)"; then
             { 
-                log::warn "Waiting for background jobs to comple"
+                log::warn "Waiting for background jobs to complete"
             };
         fi
     };
@@ -203,4 +203,4 @@ main@bashbox%21108 ()
     wait;
     exit
 }
-main@bashbox%21108 "$@";
+main@bashbox%13117 "$@";
