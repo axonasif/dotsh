@@ -31,4 +31,4 @@ Feel free to create your `dotfiles` repo from this template!
 
 You can then use it on https://gitpod.io/preferences for Gitpod.
 
-You can learn more about uusing dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
+You can learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
