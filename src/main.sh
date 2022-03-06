@@ -60,6 +60,13 @@ function main() {
             # The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
             printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == $(pgrep -f "supervisor run") ] && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc;
         } fi
+        # Append .gitpod.yml:tasks hist to fish_hist
+        log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
+        while read -r _command; do {
+            if test -n "$_command"; then {
+                printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "${_shell_hist_files[2]}";
+            } fi 
+        } done < <(sed "s/\r//g" /workspace/.gitpod/cmd-*)
     } fi
 
     if test -n "$(jobs -p)"; then {

@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-main@bashbox%20345 () 
+#!/bin/env bash
+main@bashbox%20596 () 
 { 
     function process::self::exit () 
     { 
@@ -44,13 +44,13 @@ main@bashbox%20345 ()
         return "$_retcode"
     };
     \command \unalias -a || exit;
-    trap 'exit' USR1;
-    trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     set -eEuT -o pipefail;
     shopt -s inherit_errexit expand_aliases;
+    trap 'exit' USR1;
+    trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%20345";
+    ___MAIN_FUNCNAME="main@bashbox%20596";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -196,7 +196,17 @@ main@bashbox%20345 ()
                     { 
                         printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == $(pgrep -f "supervisor run") ] && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc
                     };
-                fi
+                fi;
+                log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
+                while read -r _command; do
+                    { 
+                        if test -n "$_command"; then
+                            { 
+                                printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "${_shell_hist_files[2]}"
+                            };
+                        fi
+                    };
+                done < <(sed "s/\r//g" /workspace/.gitpod/cmd-*)
             };
         fi;
         if test -n "$(jobs -p)"; then
@@ -209,4 +219,4 @@ main@bashbox%20345 ()
     wait;
     exit
 }
-main@bashbox%20345 "$@";
+main@bashbox%20596 "$@";
