@@ -6,10 +6,11 @@ function dotfiles_symlink() {
     
     if test ! -e "$_dotfiles_dir"; then {
         _git_output="$(
-            git -c credential.helper="/usr/bin/gp credential-helper" \
-                -c user.name="$GITPOD_GIT_USER_NAME" \
-                -c user.email="$GITPOD_GIT_USER_EMAIL" \
+            git \
             clone "$_dotfiles_repo" "$_dotfiles_dir" 2>&1
+            # -c credential.helper="/usr/bin/gp credential-helper" \
+            #     -c user.name="$GITPOD_GIT_USER_NAME" \
+            #     -c user.email="$GITPOD_GIT_USER_EMAIL" \
         )" 2>/dev/null || log::error "$_git_output" && return 0;
     } fi
     

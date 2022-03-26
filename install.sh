@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3795 () 
+main@bashbox%14546 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%3795 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%3795";
+    ___MAIN_FUNCNAME="main@bashbox%14546";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -85,7 +85,10 @@ main@bashbox%3795 ()
         if test ! -e "$_dotfiles_dir"; then
             { 
                 _git_output="$(
-            git -c credential.helper="/usr/bin/gp credential-helper"                 -c user.name="$GITPOD_GIT_USER_NAME"                 -c user.email="$GITPOD_GIT_USER_EMAIL"             clone "$_dotfiles_repo" "$_dotfiles_dir" 2>&1
+            git             clone "$_dotfiles_repo" "$_dotfiles_dir" 2>&1
+            # -c credential.helper="/usr/bin/gp credential-helper" \
+            #     -c user.name="$GITPOD_GIT_USER_NAME" \
+            #     -c user.email="$GITPOD_GIT_USER_EMAIL" \
         )" 2> /dev/null || log::error "$_git_output" && return 0
             };
         fi;
@@ -162,9 +165,8 @@ main@bashbox%3795 ()
         install::system_packages;
         log::info "Installing local dotfiles";
         dotfiles_symlink;
-        log::info "Installing private dotfiles";
-        dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
-        log::info "Installing userland tools in the background";
+        log::info "Will install private dotfiles after the VSCODE IDE starts";
+        ( gp await-port 23000 > /dev/null && dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || : ) & log::info "Installing userland tools in the background";
         install::userland_tools;
         if is::gitpod; then
             { 
@@ -194,7 +196,7 @@ main@bashbox%3795 ()
                 log::info "Setting fish as the interactive shell for Gitpod task terminals";
                 if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc > /dev/null; then
                     { 
-                        printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec fish || bash_ran=true"' >> $HOME/.bashrc
+                        printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec fish || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc
                     };
                 fi;
                 log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
@@ -219,4 +221,4 @@ main@bashbox%3795 ()
     wait;
     exit
 }
-main@bashbox%3795 "$@";
+main@bashbox%14546 "$@";
