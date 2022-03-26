@@ -26,7 +26,7 @@ You can take a look inside the `/src` dir to tweak stuff as per your needs and r
 │   │   ├── Process Gitpod workspace persisted shell histories
 │   │   ├── Hacks `$HOME/.bashrc` to make Gitpod prebuild terminals fall back to fish shell after completion
 ├── Gitpod starts the VSCODE IDE
-│   │   ├── Creates symlinks from $HOME/.dotfiles/.private to $HOME/ while following `.dotfilesignore` (If you provided PRIVATE_DOTFILES_RPO)
+│   │   ├── Creates symlinks from $HOME/.dotfiles/.private to $HOME/ while following `.dotfilesignore` (If you provided PRIVATE_DOTFILES_REPO)
 └── Logs are saved to $HOME/.dotfiles.log
 ```
 
