@@ -5,7 +5,8 @@ This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
 It does a few things to ease my life a bit:
 
 - Works both locally and in the Cloud on Gitpod
-- Installs this repo dotfiles and also puts another private dotfiles repo on top of it (git clone fails for private repo currently).
+- Installs this repo dotfiles and also puts another private dotfiles repo on top of it
+    - Set `PRIVATE_DOTFILES_RPO` url on https://gitpod.io/variables with `*/*` scope to use it.
 - Installs a bunch of handy system tools I use often.
 - Persists Gitpod workspace shell(bash, fish, zsh etc) histories to the specific workspace on restart of a workspace.
 - Makes `.gitpod.yml` task terminals to use `fish` shell after the commands are processed in bash, we can not make `fish` execute those task commands since it's not POSIX compliant.
@@ -15,13 +16,17 @@ It does a few things to ease my life a bit:
 
 You can take a look inside the `/src` dir to tweak stuff as per your needs and run `bashbox build --release` or `bashbox run --release`.
 
-# Work process
+# How it works on Gitpod
 ```markdown
-├── Gitpod clones and executes `install.sh` from $HOME/.dotfiles
+├── Gitpod clones your dotfiles repo and executes `install.sh` from $HOME/.dotfiles
 │   ├── install.sh
-│   │   ├── Symlinks from $HOME/.dotfiles to $HOME while following `.dotfilesignore`
-│   │   ├── Symlinks from $HOME/.dotfiles/.private to $HOME while following `.dotfilesignore`
-│   │   ├── Performs all the other tasks
+│   │   ├── Installs some system packages with `apt` in the background
+│   │   ├── Creates symlinks from this repo to $HOME/ while following `.dotfilesignore`
+│   │   ├── Installs userland tools
+│   │   ├── Process Gitpod workspace persisted shell histories
+│   │   ├── Hacks `$HOME/.bashrc` to make Gitpod prebuild terminals fall back to fish shell after completion
+├── Gitpod starts the VSCODE IDE
+│   │   ├── Creates symlinks from $HOME/.dotfiles/.private to $HOME/ while following `.dotfilesignore` (If you provided PRIVATE_DOTFILES_RPO)
 └── Logs are saved to $HOME/.dotfiles.log
 ```
 
