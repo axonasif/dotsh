@@ -66,7 +66,7 @@ function main() {
             if test -n "$_command"; then {
                 printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "${_shell_hist_files[2]}";
             } fi 
-        } done < <(sed "s/\r//g" /workspace/.gitpod/cmd-*)
+        } done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
     } fi
 
     if test -n "$(jobs -p)"; then {

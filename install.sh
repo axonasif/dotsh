@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14546 () 
+main@bashbox%27625 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%14546 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%14546";
+    ___MAIN_FUNCNAME="main@bashbox%27625";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -208,7 +208,7 @@ main@bashbox%14546 ()
                             };
                         fi
                     };
-                done < <(sed "s/\r//g" /workspace/.gitpod/cmd-*)
+                done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
             };
         fi;
         if test -n "$(jobs -p)"; then
@@ -221,4 +221,4 @@ main@bashbox%14546 ()
     wait;
     exit
 }
-main@bashbox%14546 "$@";
+main@bashbox%27625 "$@";
