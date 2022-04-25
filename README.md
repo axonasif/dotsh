@@ -6,7 +6,7 @@ It does a few things to ease my life a bit:
 
 - Works both locally and in the Cloud on Gitpod
 - Installs this repo dotfiles and also puts another private dotfiles repo on top of it
-    - Set `PRIVATE_DOTFILES_RPO` url on https://gitpod.io/variables with `*/*` scope to use it.
+    - Set `PRIVATE_DOTFILES_RPO` url on https://gitpod.io/variables with `*/*` scope to use it. Or if you're using locally, you can export the variable from your shell.
 - Installs a bunch of handy system tools I use often.
 - Persists Gitpod workspace shell(bash, fish, zsh etc) histories to the specific workspace on restart of a workspace.
 - Makes `.gitpod.yml` task terminals to use `fish` shell after the commands are processed in bash, we can not make `fish` execute those task commands since it's not POSIX compliant.

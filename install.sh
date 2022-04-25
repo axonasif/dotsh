@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5932 () 
+main@bashbox%32601 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%5932 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%5932";
+    ___MAIN_FUNCNAME="main@bashbox%32601";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -160,8 +160,8 @@ main@bashbox%5932 ()
         install::system_packages;
         log::info "Installing local dotfiles";
         dotfiles_symlink;
-        log::info "Will install private dotfiles after the VSCODE IDE starts";
-        ( gp await-port 23000 && dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || : ) > "$HOME/.dotfiles.private.log" 2>&1 & disown;
+        log::info "Installing private dotfiles";
+        dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
         log::info "Installing userland tools in the background";
         install::userland_tools;
         if is::gitpod; then
@@ -212,4 +212,4 @@ main@bashbox%5932 ()
     wait;
     exit
 }
-main@bashbox%5932 "$@";
+main@bashbox%32601 "$@";

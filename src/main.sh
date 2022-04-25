@@ -28,7 +28,7 @@ function main() {
 
     # Install private dotfiles
     # Note: you can set PRIVATE_DOTFILES_REPO with */* scope in https://gitpod.io/variables for your personal dotfiles
-    log::info "Will install private dotfiles after the VSCODE IDE starts";
+    log::info "Installing private dotfiles";
     dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
 
     # Install tools
