@@ -69,10 +69,6 @@ function main() {
         } done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
     } fi
 
-    if test -n "$(jobs -p)"; then {
-        log::warn "Waiting for background jobs to complete";
-    } fi
-
     # TODO: Add gpg signing
     # TODO(Not sure if this makes sense): Add shell history syncer over git (specific to Gitpod, not necessary locally)
 
