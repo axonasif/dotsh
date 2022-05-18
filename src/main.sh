@@ -76,6 +76,7 @@ function main() {
     # Hook a bash script into config.fish to properly load things that depend on bash env
     local _hook_snippet="eval (~/.bprofile2fish)";
     if ! grep -q "$_hook_snippet"; then {
+        log::info "Injecting bash env into fish";
         printf '%s\n' "$_hook_snippet" >> "${_shell_hist_files[2]}";
     } fi
 }

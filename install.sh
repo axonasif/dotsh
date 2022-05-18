@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16784 () 
+main@bashbox%26112 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%16784 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%16784";
+    ___MAIN_FUNCNAME="main@bashbox%26112";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -210,6 +210,7 @@ main@bashbox%16784 ()
         local _hook_snippet="eval (~/.bprofile2fish)";
         if ! grep -q "$_hook_snippet"; then
             { 
+                log::info "Injecting bash env into fish";
                 printf '%s\n' "$_hook_snippet" >> "${_shell_hist_files[2]}"
             };
         fi
@@ -218,4 +219,4 @@ main@bashbox%16784 ()
     wait;
     exit
 }
-main@bashbox%16784 "$@";
+main@bashbox%26112 "$@";
