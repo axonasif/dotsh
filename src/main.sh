@@ -5,14 +5,15 @@ use install;
 
 function main() {
 
+    local _shell_hist_files=(
+        "$HOME/.bash_history"
+        "$HOME/.zsh_history"
+        "$HOME/.local/share/fish/fish_history"
+    )
+
     if is::gitpod; then {
         log::info "Gitpod environment detected!";
         local _workspace_persist_dir="/workspace/.persist";
-        local _shell_hist_files=(
-            "$HOME/.bash_history"
-            "$HOME/.zsh_history"
-            "$HOME/.local/share/fish/fish_history"
-        )
     } fi
     local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
     local _private_dir="$_source_dir/.private";
@@ -72,4 +73,9 @@ function main() {
     # TODO: Add gpg signing
     # TODO(Not sure if this makes sense): Add shell history syncer over git (specific to Gitpod, not necessary locally)
 
+    # Hook a bash script into config.fish to properly load things that depend on bash env
+    local _hook_snippet="eval (~/.bprofile2fish)";
+    if ! grep -q "$_hook_snippet"; then {
+        printf '%s\n' "$_hook_snippet" >> "${_shell_hist_files[2]}";
+    } fi
 }

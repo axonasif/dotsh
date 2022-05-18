@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%32601 () 
+main@bashbox%16784 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%32601 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%32601";
+    ___MAIN_FUNCNAME="main@bashbox%16784";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -146,11 +146,11 @@ main@bashbox%32601 ()
     };
     function main () 
     { 
+        local _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
         if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
-                local _workspace_persist_dir="/workspace/.persist";
-                local _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history")
+                local _workspace_persist_dir="/workspace/.persist"
             };
         fi;
         local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
@@ -206,10 +206,16 @@ main@bashbox%32601 ()
                     };
                 done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
             };
+        fi;
+        local _hook_snippet="eval (~/.bprofile2fish)";
+        if ! grep -q "$_hook_snippet"; then
+            { 
+                printf '%s\n' "$_hook_snippet" >> "${_shell_hist_files[2]}"
+            };
         fi
     };
     main "$@";
     wait;
     exit
 }
-main@bashbox%32601 "$@";
+main@bashbox%16784 "$@";
