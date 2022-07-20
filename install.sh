@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5358 () 
+main@bashbox%29998 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%5358 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%5358";
+    ___MAIN_FUNCNAME="main@bashbox%29998";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -225,14 +225,16 @@ main@bashbox%5358 ()
     };
     function ranger::setup () 
     { 
-        local target=$HOME/.config/ranger;
+        local target=$HOME/.config/ranger/rc.conf;
+        local target_dir="${target%/*}";
         local devicons_activation_string="default_linemode devicons";
         if ! grep -q "$devicons_activation_string" "$target" 2> /dev/null; then
             { 
+                mkdir -p "$target_dir";
                 printf '%s\n' "$devicons_activation_string" >> "$target"
             };
         fi;
-        local devicons_plugin_dir="${target%/*}/plugins/ranger_devicons";
+        local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
         if test ! -e "$devicons_plugin_dir"; then
             { 
                 git clone https://github.com/alexanderjeurissen/ranger_devicons
@@ -274,4 +276,4 @@ main@bashbox%5358 ()
     wait;
     exit
 }
-main@bashbox%5358 "$@";
+main@bashbox%29998 "$@";
