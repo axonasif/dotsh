@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%13865 () 
+main@bashbox%20100 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%13865 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%13865";
+    ___MAIN_FUNCNAME="main@bashbox%20100";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -76,6 +76,10 @@ main@bashbox%13865 ()
     function log::warn () 
     { 
         echo -e "[***] \033[1;37mwarn\033[0m: $@"
+    };
+    function sleep () 
+    { 
+        read -rt "$1" 0<> <(:) || :
     };
     function dotfiles_symlink () 
     { 
@@ -132,13 +136,44 @@ main@bashbox%13865 ()
     function install::system_packages () 
     { 
         log::info "Installing system packages";
-        ( sudo install-packages "${_system_packages[@]}" > /dev/null ) &
+        sudo install-packages "${_system_packages[@]}" > /dev/null
     };
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall;
-        bash -lic 'pip install --no-input ranger-fm' ) &
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
+    };
+    function tmux::setup () 
+    { 
+        local target="$HOME/.tmux/plugins/tpm";
+        if test ! -e "$target"; then
+            { 
+                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
+                until command -v tmux; do
+                    sleep 0.5;
+                done;
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
+            };
+        fi
+    };
+    function ranger::setup () 
+    { 
+        bash -lic 'pip install --no-input ranger-fm';
+        local target=$HOME/.config/ranger/rc.conf;
+        local target_dir="${target%/*}";
+        local devicons_activation_string="default_linemode devicons";
+        if ! grep -q "$devicons_activation_string" "$target" 2> /dev/null; then
+            { 
+                mkdir -p "$target_dir";
+                printf '%s\n' "$devicons_activation_string" >> "$target"
+            };
+        fi;
+        local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
+        if test ! -e "$devicons_plugin_dir"; then
+            { 
+                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons
+            };
+        fi
     };
     function docker_auth () 
     { 
@@ -217,39 +252,9 @@ main@bashbox%13865 ()
             };
         fi
     };
-    function tmux::setup () 
-    { 
-        local target="$HOME/.tmux/plugins/tpm";
-        if test ! -e "$target"; then
-            { 
-                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
-                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
-            };
-        fi
-    };
-    function ranger::setup () 
-    { 
-        local target=$HOME/.config/ranger/rc.conf;
-        local target_dir="${target%/*}";
-        local devicons_activation_string="default_linemode devicons";
-        if ! grep -q "$devicons_activation_string" "$target" 2> /dev/null; then
-            { 
-                mkdir -p "$target_dir";
-                printf '%s\n' "$devicons_activation_string" >> "$target"
-            };
-        fi;
-        local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
-        if test ! -e "$devicons_plugin_dir"; then
-            { 
-                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons
-            };
-        fi
-    };
     function main () 
     { 
-        install::system_packages;
-        install::userland_tools;
-        { 
+        install::system_packages & { 
             local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
             local _private_dir="$_source_dir/.private";
             local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
@@ -258,19 +263,15 @@ main@bashbox%13865 ()
             log::info "Installing private dotfiles";
             dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
         };
-        if is::gitpod; then
+        install::userland_tools & if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
-                docker_auth;
-                shell::persist_history;
-                fish::hijack_gitpod_tasks;
-                fish::append_hist_from_gitpod_tasks
+                docker_auth & shell::persist_history;
+                fish::hijack_gitpod_tasks & fish::append_hist_from_gitpod_tasks &
             };
         fi;
         fish::inherit_bash_env;
-        ranger::setup;
-        tmux::setup;
-        if test -n "$(jobs -p)"; then
+        ranger::setup & tmux::setup & if test -n "$(jobs -p)"; then
             { 
                 log::warn "Waiting for background jobs to complete"
             };
@@ -280,4 +281,4 @@ main@bashbox%13865 ()
     wait;
     exit
 }
-main@bashbox%13865 "$@";
+main@bashbox%20100 "$@";
