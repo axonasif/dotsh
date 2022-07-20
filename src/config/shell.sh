@@ -44,9 +44,10 @@ function fish::append_hist_from_gitpod_tasks() {
 }
 
 function fish::inherit_bash_env() {
-    local _hook_snippet="eval (~/.bprofile2fish)";
-    if ! grep -q "$_hook_snippet"; then {
+    local hook_snippet="eval (~/.bprofile2fish)";
+	local fish_histfile="${_shell_hist_files[2]}";
+    if ! grep -q "$hook_snippet" "$fish_histfile"; then {
         log::info "Injecting bash env into fish";
-        printf '%s\n' "$_hook_snippet" >> "${_shell_hist_files[2]}";
+        printf '%s\n' "$hook_snippet" >> "$fish_histfile";
     } fi
 }
