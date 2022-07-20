@@ -10,8 +10,10 @@ BASHBOX_COMPAT="0.3.9~"
 
 bashbox::build::after() {
     local _script_name='install.sh';
-	cp "$_target_workfile" "$_arg_path/$_script_name";
-	chmod 0755 "$_arg_path/$_script_name";
+    local root_script="$_arg_path/$_script_name";
+	cp "$_target_workfile" "$root_script";
+	chmod 0755 "$root_script";
+    sed -i 's|#!/usr/bin/env bash|#!/usr/bin/bash -i|' "$root_script";
 }
 
 bashbox::run::before() {

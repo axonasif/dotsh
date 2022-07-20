@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-main@bashbox%29998 () 
+#!/usr/bin/bash -i
+main@bashbox%15544 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%29998 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%29998";
+    ___MAIN_FUNCNAME="main@bashbox%15544";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -61,8 +61,10 @@ main@bashbox%29998 ()
     function bashbox::build::after () 
     { 
         local _script_name='install.sh';
-        cp "$_target_workfile" "$_arg_path/$_script_name";
-        chmod 0755 "$_arg_path/$_script_name"
+        local root_script="$_arg_path/$_script_name";
+        cp "$_target_workfile" "$root_script";
+        chmod 0755 "$root_script";
+        sed -i 's|#!/usr/bin/bash -i|#!/usr/bin/bash -i|' "$root_script"
     };
     function bashbox::run::before () 
     { 
@@ -136,7 +138,8 @@ main@bashbox%29998 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall ) &
+        ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall;
+        pip install --no-input ranger-fm ) &
     };
     function docker_auth () 
     { 
@@ -219,7 +222,8 @@ main@bashbox%29998 ()
         local target="$HOME/.tmux/plugins/tpm";
         if test ! -e "$target"; then
             { 
-                git clone https://github.com/tmux-plugins/tpm "$target"
+                git clone https://github.com/tmux-plugins/tpm "$target";
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
             };
         fi
     };
@@ -276,4 +280,4 @@ main@bashbox%29998 ()
     wait;
     exit
 }
-main@bashbox%29998 "$@";
+main@bashbox%15544 "$@";
