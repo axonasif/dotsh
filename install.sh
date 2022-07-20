@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2603 () 
+main@bashbox%21035 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2603 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2603";
+    ___MAIN_FUNCNAME="main@bashbox%21035";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -132,11 +132,14 @@ main@bashbox%2603 ()
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
     };
-    _system_packages=(shellcheck rsync tree tmux);
+    _system_packages=(shellcheck rsync tree tmux file fish);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
-        sudo install-packages "${_system_packages[@]}" > /dev/null
+        sudo apt-get update;
+        sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
+        sudo apt-get install -yq --no-install-recommends "${_system_packages[@]}" > /dev/null;
+        sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
     };
     function install::userland_tools () 
     { 
@@ -286,4 +289,4 @@ main@bashbox%2603 ()
     wait;
     exit
 }
-main@bashbox%2603 "$@";
+main@bashbox%21035 "$@";
