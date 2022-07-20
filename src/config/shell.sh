@@ -24,12 +24,12 @@ function shell::persist_history() {
         unset _hist_name;
     } done
 }
-function fish::hijack_gitpod_tasks() {
+function shell::hijack_gitpod_task_terminals() {
     # Make gitpod task spawned terminals use fish
-    log::info "Setting fish as the interactive shell for Gitpod task terminals"
-    if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc 1>/dev/null; then {
+    log::info "Setting tmux as the interactive shell for Gitpod task terminals"
+    if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' $HOME/.bashrc; then {
         # The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-        printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec fish || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc;
+        printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec tmux new-session -As main || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc;
     } fi
 }
 

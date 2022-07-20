@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14801 () 
+main@bashbox%2603 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%14801 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%14801";
+    ___MAIN_FUNCNAME="main@bashbox%2603";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -219,12 +219,12 @@ main@bashbox%14801 ()
             };
         done
     };
-    function fish::hijack_gitpod_tasks () 
+    function shell::hijack_gitpod_task_terminals () 
     { 
-        log::info "Setting fish as the interactive shell for Gitpod task terminals";
-        if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc > /dev/null; then
+        log::info "Setting tmux as the interactive shell for Gitpod task terminals";
+        if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' $HOME/.bashrc; then
             { 
-                printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec fish || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc
+                printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec tmux new-session -As main || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc
             };
         fi
     };
@@ -272,7 +272,7 @@ main@bashbox%14801 ()
             { 
                 log::info "Gitpod environment detected!";
                 docker_auth & shell::persist_history;
-                fish::hijack_gitpod_tasks & fish::append_hist_from_gitpod_tasks & bash::gitpod_start_tmux_on_start &
+                shell::hijack_gitpod_task_terminals & fish::append_hist_from_gitpod_tasks & bash::gitpod_start_tmux_on_start &
             };
         fi;
         fish::inherit_bash_env;
@@ -286,4 +286,4 @@ main@bashbox%14801 ()
     wait;
     exit
 }
-main@bashbox%14801 "$@";
+main@bashbox%2603 "$@";

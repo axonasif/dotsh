@@ -37,7 +37,7 @@ function main() {
 
         # Shell + Fish hacks (specific to Gitpod)
         shell::persist_history;
-        fish::hijack_gitpod_tasks &
+        shell::hijack_gitpod_task_terminals &
         fish::append_hist_from_gitpod_tasks &
 		bash::gitpod_start_tmux_on_start &
     } fi
