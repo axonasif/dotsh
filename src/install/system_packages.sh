@@ -2,6 +2,7 @@ _system_packages=(
     shellcheck
     rsync
     tree
+    tmux
 )
 
 function install::system_packages {

@@ -43,6 +43,12 @@ function main() {
     # Hook a bash script into config.fish to properly load things that depend on bash env
     fish::inherit_bash_env
 
+    # Ranger plugins
+    ranger::setup;
+
+    # Tmux plugins
+    tmux::setup;
+
     # Wait for background processess to exit
     if test -n "$(jobs -p)"; then {
         log::warn "Waiting for background jobs to complete";

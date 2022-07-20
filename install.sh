@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11491 () 
+main@bashbox%5358 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%11491 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%11491";
+    ___MAIN_FUNCNAME="main@bashbox%5358";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -127,7 +127,7 @@ main@bashbox%11491 ()
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
     };
-    _system_packages=(shellcheck rsync tree);
+    _system_packages=(shellcheck rsync tree tmux);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -214,6 +214,31 @@ main@bashbox%11491 ()
             };
         fi
     };
+    function tmux::setup () 
+    { 
+        local target="$HOME/.tmux/plugins/tpm";
+        if test ! -e "$target"; then
+            { 
+                git clone https://github.com/tmux-plugins/tpm "$target"
+            };
+        fi
+    };
+    function ranger::setup () 
+    { 
+        local target=$HOME/.config/ranger;
+        local devicons_activation_string="default_linemode devicons";
+        if ! grep -q "$devicons_activation_string" "$target" 2> /dev/null; then
+            { 
+                printf '%s\n' "$devicons_activation_string" >> "$target"
+            };
+        fi;
+        local devicons_plugin_dir="${target%/*}/plugins/ranger_devicons";
+        if test ! -e "$devicons_plugin_dir"; then
+            { 
+                git clone https://github.com/alexanderjeurissen/ranger_devicons
+            };
+        fi
+    };
     function main () 
     { 
         install::system_packages;
@@ -237,6 +262,8 @@ main@bashbox%11491 ()
             };
         fi;
         fish::inherit_bash_env;
+        ranger::setup;
+        tmux::setup;
         if test -n "$(jobs -p)"; then
             { 
                 log::warn "Waiting for background jobs to complete"
@@ -247,4 +274,4 @@ main@bashbox%11491 ()
     wait;
     exit
 }
-main@bashbox%11491 "$@";
+main@bashbox%5358 "$@";
