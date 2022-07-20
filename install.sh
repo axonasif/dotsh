@@ -1,5 +1,5 @@
 #!/usr/bin/bash -i
-main@bashbox%15544 () 
+main@bashbox%17898 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15544 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15544";
+    ___MAIN_FUNCNAME="main@bashbox%17898";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,7 +86,7 @@ main@bashbox%15544 ()
         local _git_output;
         if test ! -e "$_dotfiles_dir"; then
             { 
-                git clone "$_dotfiles_repo" "$_dotfiles_dir" || :
+                git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" || :
             };
         fi;
         if test -e "$_dotfiles_dir"; then
@@ -222,7 +222,7 @@ main@bashbox%15544 ()
         local target="$HOME/.tmux/plugins/tpm";
         if test ! -e "$target"; then
             { 
-                git clone https://github.com/tmux-plugins/tpm "$target";
+                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
                 bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
             };
         fi
@@ -241,7 +241,7 @@ main@bashbox%15544 ()
         local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
         if test ! -e "$devicons_plugin_dir"; then
             { 
-                git clone https://github.com/alexanderjeurissen/ranger_devicons
+                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons
             };
         fi
     };
@@ -280,4 +280,4 @@ main@bashbox%15544 ()
     wait;
     exit
 }
-main@bashbox%15544 "$@";
+main@bashbox%17898 "$@";
