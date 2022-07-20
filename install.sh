@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%26112 () 
+main@bashbox%30617 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%26112 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%26112";
+    ___MAIN_FUNCNAME="main@bashbox%30617";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -125,88 +125,87 @@ main@bashbox%26112 ()
     };
     function is::gitpod () 
     { 
-        if test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT; then
-            { 
-                true
-            };
-        else
-            { 
-                false
-            };
-        fi
+        test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
     };
     _system_packages=(shellcheck rsync tree);
     function install::system_packages () 
     { 
+        log::info "Installing system packages in the background";
         ( sudo install-packages "${_system_packages[@]}" > /dev/null ) &
     };
     function install::userland_tools () 
     { 
+        log::info "Installing userland tools";
         ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall ) &
     };
-    function main () 
+    function docker_auth () 
     { 
-        local _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
-        if is::gitpod; then
+        local var_name=DOCKER_AUTH_TOKEN;
+        local target="$HOME/.docker/config.json";
+        if test -v $var_name; then
             { 
-                log::info "Gitpod environment detected!";
-                local _workspace_persist_dir="/workspace/.persist"
+                log::info "Setting up docker login credentials";
+                mkdir -p "${target%/*}";
+                println '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}\n' "${!var_name}" > "$target"
             };
-        fi;
-        local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
-        local _private_dir="$_source_dir/.private";
-        local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
-        log::info "Installing system packages in the background";
-        install::system_packages;
-        log::info "Installing local dotfiles";
-        dotfiles_symlink;
-        log::info "Installing private dotfiles";
-        dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
-        log::info "Installing userland tools in the background";
-        install::userland_tools;
-        if is::gitpod; then
+        else
             { 
-                log::info "Persiting Gitpod shell histories to /workspace";
-                mkdir -p "$_workspace_persist_dir";
-                local _hist;
-                for _hist in "${_shell_hist_files[@]}";
-                do
+                log::warn "$var_name is not set"
+            };
+        fi
+    };
+    local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
+    function shell::persist_history () 
+    { 
+        log::info "Persiting Gitpod shell histories to /workspace";
+        local _workspace_persist_dir="/workspace/.persist";
+        mkdir -p "$_workspace_persist_dir";
+        local _hist;
+        for _hist in "${_shell_hist_files[@]}";
+        do
+            { 
+                mkdir -p "${_hist%/*}";
+                _hist_name="${_hist##*/}";
+                if test -e "$_workspace_persist_dir/$_hist_name"; then
                     { 
-                        mkdir -p "${_hist%/*}";
-                        _hist_name="${_hist##*/}";
-                        if test -e "$_workspace_persist_dir/$_hist_name"; then
-                            { 
-                                log::warn "Overwriting $_hist with workspace persisted history file";
-                                ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
-                            };
-                        else
-                            { 
-                                touch "$_hist";
-                                cp "$_hist" "$_workspace_persist_dir/";
-                                ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
-                            };
-                        fi;
-                        unset _hist_name
+                        log::warn "Overwriting $_hist with workspace persisted history file";
+                        ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
                     };
-                done;
-                log::info "Setting fish as the interactive shell for Gitpod task terminals";
-                if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc > /dev/null; then
+                else
                     { 
-                        printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec fish || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc
+                        touch "$_hist";
+                        cp "$_hist" "$_workspace_persist_dir/";
+                        ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
                     };
                 fi;
-                log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
-                while read -r _command; do
-                    { 
-                        if test -n "$_command"; then
-                            { 
-                                printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "${_shell_hist_files[2]}"
-                            };
-                        fi
-                    };
-                done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
+                unset _hist_name
             };
-        fi;
+        done
+    };
+    function fish::hijack_gitpod_tasks () 
+    { 
+        log::info "Setting fish as the interactive shell for Gitpod task terminals";
+        if ! grep 'PROMPT_COMMAND=".*exec fish"' $HOME/.bashrc > /dev/null; then
+            { 
+                printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec fish || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc
+            };
+        fi
+    };
+    function fish::append_hist_from_gitpod_tasks () 
+    { 
+        log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
+        while read -r _command; do
+            { 
+                if test -n "$_command"; then
+                    { 
+                        printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "${_shell_hist_files[2]}"
+                    };
+                fi
+            };
+        done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
+    };
+    function fish::inherit_bash_env () 
+    { 
         local _hook_snippet="eval (~/.bprofile2fish)";
         if ! grep -q "$_hook_snippet"; then
             { 
@@ -215,8 +214,37 @@ main@bashbox%26112 ()
             };
         fi
     };
+    function main () 
+    { 
+        install::system_packages;
+        install::userland_tools;
+        { 
+            local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
+            local _private_dir="$_source_dir/.private";
+            local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
+            log::info "Installing local dotfiles";
+            dotfiles_symlink;
+            log::info "Installing private dotfiles";
+            dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
+        };
+        if is::gitpod; then
+            { 
+                log::info "Gitpod environment detected!";
+                docker_auth;
+                shell::persist_history;
+                fish::hijack_gitpod_tasks;
+                fish::append_hist_from_gitpod_tasks
+            };
+        fi;
+        fish::inherit_bash_env;
+        if test -n "$(jobs -p)"; then
+            { 
+                log::warn "Waiting for background jobs to complete"
+            };
+        fi
+    };
     main "$@";
     wait;
     exit
 }
-main@bashbox%26112 "$@";
+main@bashbox%30617 "$@";

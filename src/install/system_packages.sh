@@ -4,6 +4,7 @@ _system_packages=(
     tree
 )
 
-function install::system_packages { (
+function install::system_packages {
+    log::info "Installing system packages in the background"; (
     sudo install-packages "${_system_packages[@]}" 1>/dev/null;
 ) & }
