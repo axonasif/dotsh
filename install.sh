@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%20100 () 
+main@bashbox%14801 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%20100 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%20100";
+    ___MAIN_FUNCNAME="main@bashbox%14801";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -252,6 +252,11 @@ main@bashbox%20100 ()
             };
         fi
     };
+    function bash::gitpod_start_tmux_on_start () 
+    { 
+        local file="$HOME/.bashrc.d/10-tmux";
+        printf 'tmux new-session -ds main & rm %s\n' "$file" > "$file"
+    };
     function main () 
     { 
         install::system_packages & { 
@@ -267,7 +272,7 @@ main@bashbox%20100 ()
             { 
                 log::info "Gitpod environment detected!";
                 docker_auth & shell::persist_history;
-                fish::hijack_gitpod_tasks & fish::append_hist_from_gitpod_tasks &
+                fish::hijack_gitpod_tasks & fish::append_hist_from_gitpod_tasks & bash::gitpod_start_tmux_on_start &
             };
         fi;
         fish::inherit_bash_env;
@@ -281,4 +286,4 @@ main@bashbox%20100 ()
     wait;
     exit
 }
-main@bashbox%20100 "$@";
+main@bashbox%14801 "$@";

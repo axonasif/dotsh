@@ -39,6 +39,7 @@ function main() {
         shell::persist_history;
         fish::hijack_gitpod_tasks &
         fish::append_hist_from_gitpod_tasks &
+		bash::gitpod_start_tmux_on_start &
     } fi
 
     # Hook a bash script into config.fish to properly load things that depend on bash env

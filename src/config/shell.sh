@@ -51,3 +51,8 @@ function fish::inherit_bash_env() {
         printf '%s\n' "$hook_snippet" >> "$fish_histfile";
     } fi
 }
+
+function bash::gitpod_start_tmux_on_start() {
+	local file="$HOME/.bashrc.d/10-tmux";
+	printf 'tmux new-session -ds main & rm %s\n' "$file" > "$file";
+}
