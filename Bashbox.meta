@@ -13,7 +13,7 @@ bashbox::build::after() {
     local root_script="$_arg_path/$_script_name";
 	cp "$_target_workfile" "$root_script";
 	chmod 0755 "$root_script";
-    sed -i 's|#!/usr/bin/env bash|#!/usr/bin/bash -i|' "$root_script";
+    #sed -i 's|#!/usr/bin/env bash|#!/usr/bin/bash -i|' "$root_script";
 }
 
 bashbox::run::before() {

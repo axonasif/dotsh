@@ -1,5 +1,5 @@
-#!/usr/bin/bash -i
-main@bashbox%27855 () 
+#!/usr/bin/env bash
+main@bashbox%13865 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%27855 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%27855";
+    ___MAIN_FUNCNAME="main@bashbox%13865";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -63,8 +63,7 @@ main@bashbox%27855 ()
         local _script_name='install.sh';
         local root_script="$_arg_path/$_script_name";
         cp "$_target_workfile" "$root_script";
-        chmod 0755 "$root_script";
-        sed -i 's|#!/usr/bin/bash -i|#!/usr/bin/bash -i|' "$root_script"
+        chmod 0755 "$root_script"
     };
     function bashbox::run::before () 
     { 
@@ -139,7 +138,7 @@ main@bashbox%27855 ()
     { 
         log::info "Installing userland tools";
         ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall;
-        pip install --no-input ranger-fm ) &
+        bash -lic 'pip install --no-input ranger-fm' ) &
     };
     function docker_auth () 
     { 
@@ -281,4 +280,4 @@ main@bashbox%27855 ()
     wait;
     exit
 }
-main@bashbox%27855 "$@";
+main@bashbox%13865 "$@";
