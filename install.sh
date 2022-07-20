@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%30617 () 
+main@bashbox%18647 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%30617 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%30617";
+    ___MAIN_FUNCNAME="main@bashbox%18647";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -146,7 +146,7 @@ main@bashbox%30617 ()
             { 
                 log::info "Setting up docker login credentials";
                 mkdir -p "${target%/*}";
-                println '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}\n' "${!var_name}" > "$target"
+                printf '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}\n' "${!var_name}" > "$target"
             };
         else
             { 
@@ -247,4 +247,4 @@ main@bashbox%30617 ()
     wait;
     exit
 }
-main@bashbox%30617 "$@";
+main@bashbox%18647 "$@";
