@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%18647 () 
+main@bashbox%11491 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%18647 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%18647";
+    ___MAIN_FUNCNAME="main@bashbox%11491";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -130,7 +130,7 @@ main@bashbox%18647 ()
     _system_packages=(shellcheck rsync tree);
     function install::system_packages () 
     { 
-        log::info "Installing system packages in the background";
+        log::info "Installing system packages";
         ( sudo install-packages "${_system_packages[@]}" > /dev/null ) &
     };
     function install::userland_tools () 
@@ -247,4 +247,4 @@ main@bashbox%18647 ()
     wait;
     exit
 }
-main@bashbox%18647 "$@";
+main@bashbox%11491 "$@";
