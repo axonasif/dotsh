@@ -42,18 +42,19 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 
 				if test -v can_switch; then {
-                    tmux new-session -ds main 2> /dev/null || :;
+                    # tmux new-session -ds main 2> /dev/null || :;
 					local tmux_init_lock=/tmp/.tmux.init;
 					function create_window() {
 						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
 					}
+					(set -x
 					if test -e "$tmux_init_lock"; then {
 	                    create_window;
-						exit;
+						exit 0;
 					} else {
 						create_window \; attach;
 						touch "$tmux_init_lock";
-					} fi
+					} fi) 1>>/tmp/log
 				} else {
 					bash_ran_once=true;
 				} fi
