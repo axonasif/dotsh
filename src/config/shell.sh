@@ -34,7 +34,7 @@ function shell::hijack_gitpod_task_terminals() {
 			if [ "$BASH" == /bin/bash ]; then {
 				local hist_cmd="history -a /dev/stdout";
 				if [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
-					if test -n "$($hist_cmd | grep -v "$hist_cmd")"; then {
+					if test "$($hist_cmd)" == "$hist_cmd"; then {
 						can_switch=true;
 					} elif test -v bash_ran_once; then {
 						can_switch=true;
