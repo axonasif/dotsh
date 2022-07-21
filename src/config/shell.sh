@@ -42,7 +42,7 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 
 				if test -v can_switch; then {
-                    # tmux new-session -ds main 2> /dev/null || :;
+                    tmux new-session -ds main 2> /dev/null || :;
 					local tmux_init_lock=/tmp/.tmux.init;
 					function create_window() {
 						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
