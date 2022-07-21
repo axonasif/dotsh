@@ -36,7 +36,7 @@ function shell::hijack_gitpod_task_terminals() {
 				if [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran_once; then {
 					can_switch=true;
 				} fi
-				if test "$($hist_cmd)" == "$hist_cmd"; then {
+				if test -z "$($hist_cmd)"; then {
 					can_switch=true;
 				} fi
 			} fi
