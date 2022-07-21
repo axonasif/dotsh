@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%22245 () 
+main@bashbox%31590 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%22245 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%22245";
+    ___MAIN_FUNCNAME="main@bashbox%31590";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -232,19 +232,14 @@ main@bashbox%22245 ()
                     if [ "$BASH" == /bin/bash ]; then
                         { 
                             local hist_cmd="history -a /dev/stdout";
-                            if [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                            if [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran_once; then
                                 { 
-                                    if test "$($hist_cmd)" == "$hist_cmd"; then
-                                        { 
-                                            can_switch=true
-                                        };
-                                    else
-                                        if test -v bash_ran_once; then
-                                            { 
-                                                can_switch=true
-                                            };
-                                        fi;
-                                    fi
+                                    can_switch=true
+                                };
+                            fi;
+                            if test "$($hist_cmd)" == "$hist_cmd"; then
+                                { 
+                                    can_switch=true
                                 };
                             fi
                         };
@@ -313,4 +308,4 @@ main@bashbox%22245 ()
     wait;
     exit
 }
-main@bashbox%22245 "$@";
+main@bashbox%31590 "$@";
