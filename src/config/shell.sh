@@ -41,7 +41,12 @@ function shell::hijack_gitpod_task_terminals() {
 					can_switch=true;
 				} fi
 
-				test -v can_switch && exec tmux new-session -As main || bash_ran_once=true;
+				if test -v can_switch; then {
+					tmux new-session -ds main 2>/dev/null || :;
+					exec tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p '#{default-shell}') -l \; attach;
+				} else {
+					bash_ran_once=true;
+				} fi
 			} else {
 				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
