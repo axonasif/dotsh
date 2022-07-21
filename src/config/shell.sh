@@ -52,8 +52,8 @@ function shell::hijack_gitpod_task_terminals() {
 	                    create_window;
 						exit 0;
 					} else {
-						create_window \; attach;
 						touch "$tmux_init_lock";
+						create_window \; attach;
 					} fi 2>&1)>>/tmp/log 2>&1
 				} else {
 					bash_ran_once=true;
