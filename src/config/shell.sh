@@ -47,14 +47,13 @@ function shell::hijack_gitpod_task_terminals() {
 					function create_window() {
 						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
 					}
-					(set -x
 					if test -e "$tmux_init_lock"; then {
-	                    # create_window;
+	                    create_window;
 						exit 0;
 					} else {
 						touch "$tmux_init_lock";
 						create_window \; attach;
-					} fi 2>&1)>>/tmp/log 2>&1
+					} fi
 				} else {
 					bash_ran_once=true;
 				} fi

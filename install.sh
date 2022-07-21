@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24466 () 
+main@bashbox%21118 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%24466 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%24466";
+    ___MAIN_FUNCNAME="main@bashbox%21118";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -250,9 +250,9 @@ main@bashbox%24466 ()
                                     { 
                                         tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@"
                                     };
-                                    ( set -x;
                                     if test -e "$tmux_init_lock"; then
                                         { 
+                                            create_window;
                                             exit 0
                                         };
                                     else
@@ -260,7 +260,7 @@ main@bashbox%24466 ()
                                             touch "$tmux_init_lock";
                                             create_window \; attach
                                         };
-                                    fi 2>&1 ) >> /tmp/log 2>&1
+                                    fi
                                 };
                             else
                                 { 
@@ -336,4 +336,4 @@ main@bashbox%24466 ()
     wait;
     exit
 }
-main@bashbox%24466 "$@";
+main@bashbox%21118 "$@";
