@@ -43,7 +43,7 @@ function shell::hijack_gitpod_task_terminals() {
 
 				if test -v can_switch; then {
 					tmux new-session -ds main 2>/dev/null || :;
-					tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p '#{default-shell}') -l;
+					exec tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p '#{default-shell}') -l \; attach;
 					# exit 0;
 				} else {
 					bash_ran_once=true;
