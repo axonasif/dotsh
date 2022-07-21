@@ -27,7 +27,7 @@ function shell::persist_history() {
 function shell::hijack_gitpod_task_terminals() {
     # Make gitpod task spawned terminals use fish
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
-    if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' $HOME/.bashrc; then {
+    if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' "$HOME/.bashrc"; then {
         # The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 		function inject_tmux() {
 
@@ -36,12 +36,16 @@ function shell::hijack_gitpod_task_terminals() {
 				if [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran_once; then {
 					can_switch=true;
 				} fi
+
 				if test -z "$($hist_cmd)"; then {
 					can_switch=true;
 				} fi
+
+				test -v can_switch && exec tmux new-session -As main || bash_ran_once=true;
+			} else {
+				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
 
-			test -v can_switch && exec tmux new-session -As main || bash_ran_once=true;
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
     } fi

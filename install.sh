@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%1684 () 
+main@bashbox%24978 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%1684 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%1684";
+    ___MAIN_FUNCNAME="main@bashbox%24978";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -225,7 +225,7 @@ main@bashbox%1684 ()
     function shell::hijack_gitpod_task_terminals () 
     { 
         log::info "Setting tmux as the interactive shell for Gitpod task terminals";
-        if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' $HOME/.bashrc; then
+        if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' "$HOME/.bashrc"; then
             { 
                 function inject_tmux () 
                 { 
@@ -241,10 +241,14 @@ main@bashbox%1684 ()
                                 { 
                                     can_switch=true
                                 };
-                            fi
+                            fi;
+                            test -v can_switch && exec tmux new-session -As main || bash_ran_once=true
                         };
-                    fi;
-                    test -v can_switch && exec tmux new-session -As main || bash_ran_once=true
+                    else
+                        { 
+                            unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}"
+                        };
+                    fi
                 };
                 printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
@@ -308,4 +312,4 @@ main@bashbox%1684 ()
     wait;
     exit
 }
-main@bashbox%1684 "$@";
+main@bashbox%24978 "$@";
