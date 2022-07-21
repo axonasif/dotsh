@@ -42,7 +42,7 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 
 				if test -v can_switch; then {
-                    tmux new-session -ds main 2> /dev/null || :;
+                    (cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
 					local tmux_init_lock=/tmp/.tmux.init;
 					function create_window() {
 						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
@@ -87,5 +87,5 @@ function fish::inherit_bash_env() {
 
 function bash::gitpod_start_tmux_on_start() {
 	local file="$HOME/.bashrc.d/10-tmux";
-	printf 'tmux new-session -ds main & rm %s\n' "$file" > "$file";
+	printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file";
 }

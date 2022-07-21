@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21118 () 
+main@bashbox%13759 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%21118 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%21118";
+    ___MAIN_FUNCNAME="main@bashbox%13759";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -244,7 +244,7 @@ main@bashbox%21118 ()
                             fi;
                             if test -v can_switch; then
                                 { 
-                                    tmux new-session -ds main 2> /dev/null || :;
+                                    ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
                                     local tmux_init_lock=/tmp/.tmux.init;
                                     function create_window () 
                                     { 
@@ -305,7 +305,7 @@ main@bashbox%21118 ()
     function bash::gitpod_start_tmux_on_start () 
     { 
         local file="$HOME/.bashrc.d/10-tmux";
-        printf 'tmux new-session -ds main & rm %s\n' "$file" > "$file"
+        printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file"
     };
     function main () 
     { 
@@ -336,4 +336,4 @@ main@bashbox%21118 ()
     wait;
     exit
 }
-main@bashbox%21118 "$@";
+main@bashbox%13759 "$@";
