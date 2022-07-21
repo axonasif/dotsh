@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9618 () 
+main@bashbox%2172 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%9618 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%9618";
+    ___MAIN_FUNCNAME="main@bashbox%2172";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -174,7 +174,7 @@ main@bashbox%9618 ()
         local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
         if test ! -e "$devicons_plugin_dir"; then
             { 
-                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons
+                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir"
             };
         fi
     };
@@ -227,7 +227,31 @@ main@bashbox%9618 ()
         log::info "Setting tmux as the interactive shell for Gitpod task terminals";
         if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' $HOME/.bashrc; then
             { 
-                printf '%s\n' 'PROMPT_COMMAND="[ "$BASH" == /bin/bash ] && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test -v bash_ran && exec tmux new-session -As main || bash_ran=true;$PROMPT_COMMAND"' >> $HOME/.bashrc
+                function inject_tmux () 
+                { 
+                    if [ "$BASH" == /bin/bash ]; then
+                        { 
+                            local hist_cmd="history -a /dev/stdout";
+                            if [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                                { 
+                                    if test -n "$($hist_cmd | grep -v "$hist_cmd")"; then
+                                        { 
+                                            can_switch=true
+                                        };
+                                    else
+                                        if test -v bash_ran_once; then
+                                            { 
+                                                can_switch=true
+                                            };
+                                        fi;
+                                    fi
+                                };
+                            fi
+                        };
+                    fi;
+                    test -v can_switch && exec tmux new-session -As main || bash_ran_once=true
+                };
+                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -289,4 +313,4 @@ main@bashbox%9618 ()
     wait;
     exit
 }
-main@bashbox%9618 "$@";
+main@bashbox%2172 "$@";

@@ -11,6 +11,6 @@ function ranger::setup() {
     
     local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
     if test ! -e "$devicons_plugin_dir"; then {
-        git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons;
+        git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir";
     } fi
 }
