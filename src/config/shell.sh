@@ -42,6 +42,7 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 
 				if test -v can_switch; then {
+					read -rs -N -1 -p "$(printf '\n\n>>> Press any key for switching to tmux')";
                     (cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
 					local tmux_init_lock=/tmp/.tmux.init;
 					function create_window() {
