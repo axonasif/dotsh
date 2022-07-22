@@ -39,11 +39,14 @@ function shell::hijack_gitpod_task_terminals() {
 
 				if test -z "$($hist_cmd)"; then {
 					can_switch=true;
+					not_task_terminal=true;
 				} fi
 
 				if test -v can_switch; then {
-					read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
                     (cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+					if test ! -v not_task_terminal; then {
+						read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
+					} fi
 					local tmux_init_lock=/tmp/.tmux.init;
 					function create_window() {
 						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
