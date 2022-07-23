@@ -37,13 +37,10 @@ function main() {
 
         # Shell + Fish hacks (specific to Gitpod)
         shell::persist_history;
-        shell::hijack_gitpod_task_terminals &
         fish::append_hist_from_gitpod_tasks &
 		bash::gitpod_start_tmux_on_start &
+        shell::hijack_gitpod_task_terminals &
     } fi
-
-    # Hook a bash script into config.fish to properly load things that depend on bash env
-    fish::inherit_bash_env;
 
     # Ranger + plugins
     ranger::setup &

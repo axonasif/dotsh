@@ -30,33 +30,36 @@ function shell::hijack_gitpod_task_terminals() {
     if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' "$HOME/.bashrc"; then {
         # The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 		function inject_tmux() {
-
+			function create_window() {
+				exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
+			}
+			if test ! -v TMUX; then {
+				# (cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+				create_window "$BASH" -l \; attach;
+			} fi
 			if [ "$BASH" == /bin/bash ]; then {
-				local hist_cmd="history -a /dev/stdout";
 				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 					can_switch=true;
-					echo sup
 				} fi
 
-				if test -v bash_ran_once && test -z "$($hist_cmd)"; then {
-					can_switch=true;
-					echo emp
-				} fi
+				# local hist_cmd="history -a /dev/stdout";
+				# if test -z "$($hist_cmd)"; then {
+				# 	can_switch=true;
+				# 	echo emp
+				# } fi
 
 				if test -v can_switch; then {
-                    (cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
-					read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
-					local tmux_init_lock=/tmp/.tmux.init;
-					function create_window() {
-						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
-					}
-					if test -e "$tmux_init_lock"; then {
-	                    create_window;
-						exit 0;
-					} else {
-						touch "$tmux_init_lock";
-						create_window \; attach;
-					} fi
+					# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
+					# local tmux_init_lock=/tmp/.tmux.init;
+					tmux_default_shell="$(tmux display -p '#{default-shell}')";
+
+					# if test -e "$tmux_init_lock"; then {
+	                    create_window "$tmux_default_shell" -l;
+						# exit 0;
+					# } else {
+						# touch "$tmux_init_lock";
+						# create_window "$tmux_default_shell" -l \; attach;
+					# } fi
 				} else {
 					bash_ran_once=true;
 				} fi
@@ -79,14 +82,6 @@ function fish::append_hist_from_gitpod_tasks() {
     } done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
 }
 
-function fish::inherit_bash_env() {
-    local hook_snippet="eval (~/.bprofile2fish)";
-	local fish_histfile="${_shell_hist_files[2]}";
-    if ! grep -q "$hook_snippet" "$fish_histfile"; then {
-        log::info "Injecting bash env into fish";
-        printf '%s\n' "$hook_snippet" >> "$fish_histfile";
-    } fi
-}
 
 function bash::gitpod_start_tmux_on_start() {
 	local file="$HOME/.bashrc.d/10-tmux";
