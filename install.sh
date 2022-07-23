@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%8445 () 
+main@bashbox%21044 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%8445 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%8445";
+    ___MAIN_FUNCNAME="main@bashbox%21044";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -227,28 +227,28 @@ main@bashbox%8445 ()
         if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then
             { 
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
-                function create_window () 
-                { 
-                    function cmd () 
-                    { 
-                        exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
-                    };
-                    read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
-                    local tmux_init_lock=/tmp/.tmux.init;
-                    if test -e "$tmux_init_lock"; then
-                        { 
-                            cmd "$@"
-                        };
-                    else
-                        { 
-                            touch "$tmux_init_lock";
-                            ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
-                            cmd "$@" \; attach
-                        };
-                    fi
-                };
                 function inject_tmux () 
                 { 
+                    function create_window () 
+                    { 
+                        function cmd () 
+                        { 
+                            exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
+                        };
+                        read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
+                        local tmux_init_lock=/tmp/.tmux.init;
+                        if test -e "$tmux_init_lock"; then
+                            { 
+                                cmd "$@"
+                            };
+                        else
+                            { 
+                                touch "$tmux_init_lock";
+                                ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
+                                cmd "$@" \; attach
+                            };
+                        fi
+                    };
                     if [ "$BASH" == /bin/bash ]; then
                         { 
                             if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
@@ -322,4 +322,4 @@ main@bashbox%8445 ()
     wait;
     exit
 }
-main@bashbox%8445 "$@";
+main@bashbox%21044 "$@";

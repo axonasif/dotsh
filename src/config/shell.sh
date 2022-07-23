@@ -28,23 +28,23 @@ function shell::hijack_gitpod_task_terminals() {
     # Make gitpod task spawned terminals use fish
     if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
-		function create_window() {
-			cmd() {
-				exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
-			}
-			read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
-			local tmux_init_lock=/tmp/.tmux.init;
-			if test -e "$tmux_init_lock"; then {
-				# create_window "$tmux_default_shell" -l;
-				cmd "$@";
-			} else {
-				# tmux_default_shell="$(tmux display -p '#{default-shell}')";
-				touch "$tmux_init_lock";
-				(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
-				cmd "$@" \; attach;
-			} fi
-		}
 		function inject_tmux() {
+			function create_window() {
+				cmd() {
+					exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
+				}
+				read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
+				local tmux_init_lock=/tmp/.tmux.init;
+				if test -e "$tmux_init_lock"; then {
+					# create_window "$tmux_default_shell" -l;
+					cmd "$@";
+				} else {
+					# tmux_default_shell="$(tmux display -p '#{default-shell}')";
+					touch "$tmux_init_lock";
+					(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+					cmd "$@" \; attach;
+				} fi
+			}
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 			if [ "$BASH" == /bin/bash ]; then {
 				# if test ! -v TMUX; then {
