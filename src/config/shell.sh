@@ -28,16 +28,16 @@ function shell::hijack_gitpod_task_terminals() {
     # Make gitpod task spawned terminals use fish
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
     if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' "$HOME/.bashrc"; then {
-        # The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
+		function create_window() {
+			(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+			exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
+		}
 		function inject_tmux() {
-			function create_window() {
-				(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
-				exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
-			}
+			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 			if [ "$BASH" == /bin/bash ]; then {
-				if test ! -v TMUX; then {
-					create_window "$BASH" -l \; attach;
-				} fi
+				# if test ! -v TMUX; then {
+				# 	create_window "$BASH" -l \; attach;
+				# } fi
 				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 					can_switch=true;
 				} fi
@@ -50,17 +50,16 @@ function shell::hijack_gitpod_task_terminals() {
 
 				if test -v can_switch; then {
 					# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
-					# local tmux_init_lock=/tmp/.tmux.init;
 					# tmux_default_shell="$(tmux display -p '#{default-shell}')";
+					local tmux_init_lock=/tmp/.tmux.init;
 
-					# if test -e "$tmux_init_lock"; then {
+					if test -e "$tmux_init_lock"; then {
 	                    # create_window "$tmux_default_shell" -l;
 						create_window;
-						# exit 0;
-					# } else {
-						# touch "$tmux_init_lock";
-						# create_window "$tmux_default_shell" -l \; attach;
-					# } fi
+					} else {
+						touch "$tmux_init_lock";
+						create_window -l \; attach;
+					} fi
 				} else {
 					bash_ran_once=true;
 				} fi
@@ -70,6 +69,8 @@ function shell::hijack_gitpod_task_terminals() {
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+		b=/bin/bash; 
+		sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'$b \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b";
     } fi
 }
 
