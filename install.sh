@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%12907 () 
+main@bashbox%5115 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%12907 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%12907";
+    ___MAIN_FUNCNAME="main@bashbox%5115";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -194,23 +194,6 @@ main@bashbox%12907 ()
             };
         fi
     };
-    function io::stdio::to_file () 
-    { 
-        local _stdout_target="$1";
-        local _stderr_target="$2";
-        local _file;
-        for _file in "$_stdout_target" "$_stderr_target";
-        do
-            { 
-                if test -e "$_file"; then
-                    { 
-                        rm "$_file"
-                    };
-                fi
-            };
-        done;
-        STD_IO_PPID=$$ exec > >(while test -e "/proc/$STD_IO_PPID" && read -r ___stdout; do echo "$___stdout" && echo "$___stdout" >> stdout.log; done) 2> >(test -e "/proc/$STD_IO_PPID" && while read -r ___stderr >&2; do echo "$___stderr" && echo "$___stderr" >> stderr.lol; done)
-    };
     local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
     function shell::persist_history () 
     { 
@@ -271,7 +254,7 @@ main@bashbox%12907 ()
                             stderr_file=/tmp/.stderr.$$;
                             if test ! -v bash_ran_once; then
                                 { 
-                                    io::stdio::to_file "$stdout_file" "$stderr_file"
+                                    exec > >(tee -a "$stdout_file") 2> >(tee -a "$stderr_file" >&2)
                                 };
                             fi;
                             if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
@@ -297,7 +280,7 @@ main@bashbox%12907 ()
                         };
                     fi
                 };
-                printf '%s\n' "$(declare -f io::stdio::to_file)" "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -347,4 +330,4 @@ main@bashbox%12907 ()
     wait;
     exit
 }
-main@bashbox%12907 "$@";
+main@bashbox%5115 "$@";

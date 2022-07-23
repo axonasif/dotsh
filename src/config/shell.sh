@@ -1,5 +1,3 @@
-use std::io::stdio;
-
 local -r _shell_hist_files=(
     "$HOME/.bash_history"
     "$HOME/.zsh_history"
@@ -54,7 +52,7 @@ function shell::hijack_gitpod_task_terminals() {
 				stdout_file=/tmp/.stdout.$$;
 				stderr_file=/tmp/.stderr.$$;
 				if test ! -v bash_ran_once; then {
-					io::stdio::to_file "$stdout_file" "$stderr_file";
+					exec > >(tee -a "$stdout_file") 2> >(tee -a "$stderr_file" >&2);
 				} fi
 				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 					can_switch=true;
@@ -78,7 +76,7 @@ function shell::hijack_gitpod_task_terminals() {
 			} fi
 
 		}
-		printf '%s\n' "$(declare -f io::stdio::to_file)" "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
     } fi
 }
 
