@@ -70,7 +70,7 @@ function shell::hijack_gitpod_task_terminals() {
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
 		b=/bin/bash; 
-		sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'$b \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b";
+		sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'${b}.real \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b";
     } fi
 }
 

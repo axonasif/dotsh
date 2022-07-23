@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%19623 () 
+main@bashbox%21860 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%19623 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%19623";
+    ___MAIN_FUNCNAME="main@bashbox%21860";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -269,7 +269,7 @@ main@bashbox%19623 ()
                 };
                 printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
                 b=/bin/bash;
-                sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'$b \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b"
+                sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'${b}.real \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b"
             };
         fi
     };
@@ -319,4 +319,4 @@ main@bashbox%19623 ()
     wait;
     exit
 }
-main@bashbox%19623 "$@";
+main@bashbox%21860 "$@";
