@@ -49,10 +49,9 @@ function shell::hijack_gitpod_task_terminals() {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
-				stdout_file=/tmp/.stdout.$$;
-				stderr_file=/tmp/.stderr.$$;
+				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
-					exec > >(tee -a "$stdout_file") 2> >(tee -a "$stderr_file" >&2);
+					exec > >(tee -a "$termout") 2>&1;
 				} fi
 				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 					can_switch=true;
@@ -66,7 +65,7 @@ function shell::hijack_gitpod_task_terminals() {
 
 				if test -v can_switch; then {
 					tmux_default_shell="$(tmux display -p '#{default-shell}')";
-					create_window "printf '>>>>> STDOUT\n'; cat -A $stdout_file; printf '\n\n>>>>> STDERR\n'; cat -A $stderr_file; exec $tmux_default_shell -l";
+					create_window "less -FXR $termout; exec $tmux_default_shell -l";
 					TRUE
 				} else {
 					bash_ran_once=true;
