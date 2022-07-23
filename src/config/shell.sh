@@ -66,7 +66,7 @@ function shell::hijack_gitpod_task_terminals() {
 
 				if test -v can_switch; then {
 					tmux_default_shell="$(tmux display -p '#{default-shell}')";
-					create_window "printf '>>>>> STDOUT\n%s\n\n>>>>> STDERR\n%s' (cat $stdout_file) (cat $stderr_file); exec $tmux_default_shell -l";
+					create_window "printf '>>>>> STDOUT\n'; cat -A $stdout_file; printf '\n\n>>>>> STDERR\n'; cat -A $stderr_file; exec $tmux_default_shell -l";
 					TRUE
 				} else {
 					bash_ran_once=true;
