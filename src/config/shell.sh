@@ -38,6 +38,7 @@ function shell::hijack_gitpod_task_terminals() {
 				if test -e "$tmux_init_lock"; then {
 					# create_window "$tmux_default_shell" -l;
 					cmd "$@";
+					exit;
 				} else {
 					# tmux_default_shell="$(tmux display -p '#{default-shell}')";
 					touch "$tmux_init_lock";
