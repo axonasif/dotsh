@@ -51,10 +51,11 @@ function shell::hijack_gitpod_task_terminals() {
 				if test -v can_switch; then {
 					# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
 					# local tmux_init_lock=/tmp/.tmux.init;
-					tmux_default_shell="$(tmux display -p '#{default-shell}')";
+					# tmux_default_shell="$(tmux display -p '#{default-shell}')";
 
 					# if test -e "$tmux_init_lock"; then {
-	                    create_window "$tmux_default_shell" -l;
+	                    # create_window "$tmux_default_shell" -l;
+						create_window;
 						# exit 0;
 					# } else {
 						# touch "$tmux_init_lock";
