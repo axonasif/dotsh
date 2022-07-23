@@ -26,11 +26,23 @@ function shell::persist_history() {
 }
 function shell::hijack_gitpod_task_terminals() {
     # Make gitpod task spawned terminals use fish
+    if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
-    if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' "$HOME/.bashrc"; then {
 		function create_window() {
-			(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
-			exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
+			cmd() {
+				exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
+			}
+			read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
+			local tmux_init_lock=/tmp/.tmux.init;
+			if test -e "$tmux_init_lock"; then {
+				# create_window "$tmux_default_shell" -l;
+				cmd "$@";
+			} else {
+				# tmux_default_shell="$(tmux display -p '#{default-shell}')";
+				touch "$tmux_init_lock";
+				(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+				cmd "$@" \; attach;
+			} fi
 		}
 		function inject_tmux() {
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
@@ -49,17 +61,7 @@ function shell::hijack_gitpod_task_terminals() {
 				# } fi
 
 				if test -v can_switch; then {
-					# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
-					# tmux_default_shell="$(tmux display -p '#{default-shell}')";
-					local tmux_init_lock=/tmp/.tmux.init;
-
-					if test -e "$tmux_init_lock"; then {
-	                    # create_window "$tmux_default_shell" -l;
-						create_window;
-					} else {
-						touch "$tmux_init_lock";
-						create_window -l \; attach;
-					} fi
+					create_window;
 				} else {
 					bash_ran_once=true;
 				} fi
@@ -69,8 +71,6 @@ function shell::hijack_gitpod_task_terminals() {
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
-		b=/bin/bash; 
-		sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'${b}.real \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b";
     } fi
 }
 

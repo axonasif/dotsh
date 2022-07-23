@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21860 () 
+main@bashbox%8445 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%21860 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%21860";
+    ___MAIN_FUNCNAME="main@bashbox%8445";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -224,13 +224,28 @@ main@bashbox%21860 ()
     };
     function shell::hijack_gitpod_task_terminals () 
     { 
-        log::info "Setting tmux as the interactive shell for Gitpod task terminals";
-        if ! grep -q 'PROMPT_COMMAND=".*tmux new-session -As main"' "$HOME/.bashrc"; then
+        if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then
             { 
+                log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function create_window () 
                 { 
-                    ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
-                    exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
+                    function cmd () 
+                    { 
+                        exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
+                    };
+                    read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
+                    local tmux_init_lock=/tmp/.tmux.init;
+                    if test -e "$tmux_init_lock"; then
+                        { 
+                            cmd "$@"
+                        };
+                    else
+                        { 
+                            touch "$tmux_init_lock";
+                            ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
+                            cmd "$@" \; attach
+                        };
+                    fi
                 };
                 function inject_tmux () 
                 { 
@@ -243,17 +258,7 @@ main@bashbox%21860 ()
                             fi;
                             if test -v can_switch; then
                                 { 
-                                    local tmux_init_lock=/tmp/.tmux.init;
-                                    if test -e "$tmux_init_lock"; then
-                                        { 
-                                            create_window
-                                        };
-                                    else
-                                        { 
-                                            touch "$tmux_init_lock";
-                                            create_window -l \; attach
-                                        };
-                                    fi
+                                    create_window
                                 };
                             else
                                 { 
@@ -267,9 +272,7 @@ main@bashbox%21860 ()
                         };
                     fi
                 };
-                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
-                b=/bin/bash;
-                sudo bash -c "mv $b ${b}.real && printf '%s\n' '#!'${b}.real \"$(declare -f inject_tmux)\" 'create_window \$BASH -l \; attach' >$b && chmod 755 $b"
+                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -319,4 +322,4 @@ main@bashbox%21860 ()
     wait;
     exit
 }
-main@bashbox%21860 "$@";
+main@bashbox%8445 "$@";
