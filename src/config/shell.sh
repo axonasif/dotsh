@@ -35,24 +35,21 @@ function shell::hijack_gitpod_task_terminals() {
 				local hist_cmd="history -a /dev/stdout";
 				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 					can_switch=true;
+					echo sup
 				} fi
 
 				if test -v bash_ran_once && test -z "$($hist_cmd)"; then {
 					can_switch=true;
-					not_task_terminal=true;
+					echo emp
 				} fi
 
 				if test -v can_switch; then {
                     (cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
-					if test ! -v not_task_terminal; then {
-						read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
-					} fi
+					read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux')";
 					local tmux_init_lock=/tmp/.tmux.init;
 					function create_window() {
 						tmux new-window -n "vs:${PWD##*/}" -t main $(tmux display -p "#{default-shell}") -l "$@";
 					}
-					eval echo !! && read
-					echo "$BASH_COMMAND" && read
 					if test -e "$tmux_init_lock"; then {
 	                    create_window;
 						exit 0;
