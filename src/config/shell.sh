@@ -78,7 +78,7 @@ function shell::hijack_gitpod_task_terminals() {
 			} fi
 
 		}
-		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+		printf '%s\n' "$(declare -f io::stdio::to_file)" "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
     } fi
 }
 
