@@ -1,3 +1,5 @@
+use std::io::stdio;
+
 local -r _shell_hist_files=(
     "$HOME/.bash_history"
     "$HOME/.zsh_history"
@@ -33,13 +35,12 @@ function shell::hijack_gitpod_task_terminals() {
 				cmd() {
 					exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
 				}
-				read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
+				# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
 				local tmux_init_lock=/tmp/.tmux.init;
 				if test -e "$tmux_init_lock"; then {
 					# create_window "$tmux_default_shell" -l;
 					cmd "$@";
 				} else {
-					# tmux_default_shell="$(tmux display -p '#{default-shell}')";
 					touch "$tmux_init_lock";
 					(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
 					cmd "$@" \; attach;
@@ -50,6 +51,11 @@ function shell::hijack_gitpod_task_terminals() {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
+				stdout_file=/tmp/.stdout.$$;
+				stderr_file=/tmp/.stderr.$$;
+				if test ! -v bash_ran_once; then {
+					io::stdio::to_file "$stdout_file" "$stderr_file";
+				} fi
 				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 					can_switch=true;
 				} fi
@@ -61,7 +67,9 @@ function shell::hijack_gitpod_task_terminals() {
 				# } fi
 
 				if test -v can_switch; then {
-					create_window;
+					tmux_default_shell="$(tmux display -p '#{default-shell}')";
+					create_window "printf '>>>>> STDOUT\n%s\n\n>>>>> STDERR\n%s' (cat $stdout_file) (cat $stderr_file); exec $tmux_default_shell -l";
+					TRUE
 				} else {
 					bash_ran_once=true;
 				} fi

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%32220 () 
+main@bashbox%7570 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%32220 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%32220";
+    ___MAIN_FUNCNAME="main@bashbox%7570";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -194,6 +194,23 @@ main@bashbox%32220 ()
             };
         fi
     };
+    function io::stdio::to_file () 
+    { 
+        local _stdout_target="$1";
+        local _stderr_target="$2";
+        local _file;
+        for _file in "$_stdout_target" "$_stderr_target";
+        do
+            { 
+                if test -e "$_file"; then
+                    { 
+                        rm "$_file"
+                    };
+                fi
+            };
+        done;
+        STD_IO_PPID=$$ exec > >(while test -e "/proc/$STD_IO_PPID" && read -r ___stdout; do echo "$___stdout" && echo "$___stdout" >> stdout.log; done) 2> >(test -e "/proc/$STD_IO_PPID" && while read -r ___stderr >&2; do echo "$___stderr" && echo "$___stderr" >> stderr.lol; done)
+    };
     local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
     function shell::persist_history () 
     { 
@@ -235,7 +252,6 @@ main@bashbox%32220 ()
                         { 
                             exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
                         };
-                        read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
                         local tmux_init_lock=/tmp/.tmux.init;
                         if test -e "$tmux_init_lock"; then
                             { 
@@ -251,6 +267,13 @@ main@bashbox%32220 ()
                     };
                     if [ "$BASH" == /bin/bash ]; then
                         { 
+                            stdout_file=/tmp/.stdout.$$;
+                            stderr_file=/tmp/.stderr.$$;
+                            if test ! -v bash_ran_once; then
+                                { 
+                                    io::stdio::to_file "$stdout_file" "$stderr_file"
+                                };
+                            fi;
                             if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                                 { 
                                     can_switch=true
@@ -258,7 +281,9 @@ main@bashbox%32220 ()
                             fi;
                             if test -v can_switch; then
                                 { 
-                                    create_window
+                                    tmux_default_shell="$(tmux display -p '#{default-shell}')";
+                                    create_window "printf '>>>>> STDOUT\n%s\n\n>>>>> STDERR\n%s' (cat $stdout_file) (cat $stderr_file); exec $tmux_default_shell -l";
+                                    TRUE
                                 };
                             else
                                 { 
@@ -322,4 +347,4 @@ main@bashbox%32220 ()
     wait;
     exit
 }
-main@bashbox%32220 "$@";
+main@bashbox%7570 "$@";
