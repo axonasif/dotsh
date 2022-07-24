@@ -3,4 +3,3 @@ if status is-interactive
 end
 
 source "$HOME/.config/fish/bash_env.fish";
-source "$HOME/.bashbox/env.fish";
