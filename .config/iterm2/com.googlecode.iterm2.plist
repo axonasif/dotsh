@@ -1031,19 +1031,19 @@
 			<key>Horizontal Spacing</key>
 			<real>1</real>
 			<key>HotKey Activated By Modifier</key>
-			<true/>
+			<false/>
 			<key>HotKey Alternate Shortcuts</key>
 			<array/>
 			<key>HotKey Characters</key>
-			<string></string>
+			<string>9</string>
 			<key>HotKey Characters Ignoring Modifiers</key>
-			<string></string>
+			<string>(</string>
 			<key>HotKey Key Code</key>
-			<integer>0</integer>
+			<integer>25</integer>
 			<key>HotKey Modifier Activation</key>
 			<integer>3</integer>
 			<key>HotKey Modifier Flags</key>
-			<integer>0</integer>
+			<integer>1179648</integer>
 			<key>HotKey Window Animates</key>
 			<true/>
 			<key>HotKey Window AutoHides</key>

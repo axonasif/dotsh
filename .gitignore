@@ -6,7 +6,6 @@
 /.vscode
 /.pki
 /Downloads
-/.config/fish/fish_variables
 /.config/pulse
 /.config/chromium
 /.bashbox
