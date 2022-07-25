@@ -45,7 +45,7 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 			}
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if [ "$BASH" == /bin/bash ]; then {
+			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
@@ -53,7 +53,7 @@ function shell::hijack_gitpod_task_terminals() {
 				if test ! -v bash_ran_once; then {
 					exec > >(tee -a "$termout") 2>&1;
 				} fi
-				if test -v bash_ran_once && [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+				if test -v bash_ran_once; then {
 					can_switch=true;
 				} fi
 
