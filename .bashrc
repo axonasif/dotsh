@@ -8,6 +8,9 @@ unset local_bin_dir;
 # Set default EDITOR
 export EDITOR=nvim;
 
+# Set USER if missing
+: "${USER:=axon}" && export USER;
+
 for script in "$HOME/.bashrc.d"/*; do {
   source "$script";
 } done
