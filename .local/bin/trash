@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -eu;
+
+for _file in "${@}"; do {
+	_trash_dir="$HOME/.self_trash/${RANDOM}$$" && mkdir -p "$_trash_dir";
+	mv "$_file" "$_trash_dir";
+} done
