@@ -1,4 +1,4 @@
-rust_env_file="$HOME/.cargo/env;
+rust_env_file="$HOME/.cargo/env";
 
 if test -e "$rust_env_file"; then {
   source "$rust_env_file";
