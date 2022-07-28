@@ -1,4 +1,5 @@
 ./.bashrc
+./.bashrc.d
 ./.profile
 ./.private
 ./src
