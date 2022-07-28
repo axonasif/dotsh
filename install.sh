@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14976 () 
+main@bashbox%7388 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%14976 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%14976";
+    ___MAIN_FUNCNAME="main@bashbox%7388";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -184,6 +184,7 @@ main@bashbox%14976 ()
         log::info "Installing gh CLI";
         tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
         curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
+        gp ports await 23000 > /dev/null;
         gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
         if [[ "$gp_credentials" =~ password=(.*) ]]; then
             { 
@@ -346,4 +347,4 @@ main@bashbox%14976 ()
     wait;
     exit
 }
-main@bashbox%14976 "$@";
+main@bashbox%7388 "$@";

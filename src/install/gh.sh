@@ -8,6 +8,7 @@ function gh::setup() {
 	curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
 
 	# Login into gh
+	gp ports await 23000 1>/dev/null;
 	gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
 	if [[ "$gp_credentials" =~ password=(.*) ]]; then {
 		printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token;
