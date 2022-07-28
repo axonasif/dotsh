@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%29650 () 
+main@bashbox%14976 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%29650 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%29650";
+    ___MAIN_FUNCNAME="main@bashbox%14976";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -175,6 +175,23 @@ main@bashbox%29650 ()
         if test ! -e "$devicons_plugin_dir"; then
             { 
                 git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir"
+            };
+        fi
+    };
+    function gh::setup () 
+    { 
+        local tarball_url gp_credentials;
+        log::info "Installing gh CLI";
+        tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
+        curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
+        gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
+        if [[ "$gp_credentials" =~ password=(.*) ]]; then
+            { 
+                printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token
+            };
+        else
+            { 
+                log::error "Failed to get auth token for gh" || exit 1
             };
         fi
     };
@@ -319,7 +336,7 @@ main@bashbox%29650 ()
                 fish::append_hist_from_gitpod_tasks & bash::gitpod_start_tmux_on_start & shell::hijack_gitpod_task_terminals &
             };
         fi;
-        ranger::setup & tmux::setup & if test -n "$(jobs -p)"; then
+        ranger::setup & tmux::setup & gh::setup & if test -n "$(jobs -p)"; then
             { 
                 log::warn "Waiting for background jobs to complete"
             };
@@ -329,4 +346,4 @@ main@bashbox%29650 ()
     wait;
     exit
 }
-main@bashbox%29650 "$@";
+main@bashbox%14976 "$@";

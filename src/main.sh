@@ -48,6 +48,9 @@ function main() {
     # Tmux + plugins
     tmux::setup &
 
+	# Install and login into gh
+	gh::setup &
+
     # Wait for background processess to exit
     if test -n "$(jobs -p)"; then {
         log::warn "Waiting for background jobs to complete";
