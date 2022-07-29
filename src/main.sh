@@ -27,13 +27,13 @@ function main() {
     }
 
     # Install userland tools (background)
-    install::userland_tools &
+    install::userland_tools & disown
 
     if is::gitpod; then {
         log::info "Gitpod environment detected!";
         
         # Configure docker credentials
-        docker_auth &
+        docker_auth & disown
 
         # Shell + Fish hacks (specific to Gitpod)
         shell::persist_history;
@@ -43,13 +43,13 @@ function main() {
     } fi
 
     # Ranger + plugins
-    ranger::setup &
+    ranger::setup & disown
 
     # Tmux + plugins
     tmux::setup &
 
 	# Install and login into gh
-	gh::setup &
+	gh::setup & disown;
 
     # Wait for background processess to exit
     if test -n "$(jobs -p)"; then {

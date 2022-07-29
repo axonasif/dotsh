@@ -3,7 +3,7 @@
 export SHELL="$(which sh)";
 
 # float system preferences. Most of these just diable Yabai form resizing them.
-yabai -m rule --add app="^CopyQ$" sticky=on layer=above manage=off
+yabai -m rule --add app="^CopyQ$" sticky=on layer=above manage=on
 yabai -m rule --add app="^System Preferences$" sticky=on layer=above manage=off
 yabai -m rule --add app="^Karabiner-Elements$" sticky=on layer=above manage=off
 yabai -m rule --add app="^Karabiner-EventViewer$" sticky=on layer=above manage=off
