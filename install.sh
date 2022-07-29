@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7388 () 
+main@bashbox%5069 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%7388 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%7388";
+    ___MAIN_FUNCNAME="main@bashbox%5069";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -330,14 +330,18 @@ main@bashbox%7388 ()
             log::info "Installing private dotfiles";
             dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
         };
-        install::userland_tools & if is::gitpod; then
+        install::userland_tools & disown;
+        if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
-                docker_auth & shell::persist_history;
+                docker_auth & disown;
+                shell::persist_history;
                 fish::append_hist_from_gitpod_tasks & bash::gitpod_start_tmux_on_start & shell::hijack_gitpod_task_terminals &
             };
         fi;
-        ranger::setup & tmux::setup & gh::setup & if test -n "$(jobs -p)"; then
+        ranger::setup & disown;
+        tmux::setup & gh::setup & disown;
+        if test -n "$(jobs -p)"; then
             { 
                 log::warn "Waiting for background jobs to complete"
             };
@@ -347,4 +351,4 @@ main@bashbox%7388 ()
     wait;
     exit
 }
-main@bashbox%7388 "$@";
+main@bashbox%5069 "$@";
