@@ -40,7 +40,7 @@ function shell::hijack_gitpod_task_terminals() {
 					touch "$tmux_init_lock";
 					(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
 					local tasks_count;
-					tasks_count="$(echo $GITPOD_TASKS | grep -o '":"' | wc -l)"
+					tasks_count="$(echo $GITPOD_TASKS | grep -Eo '(before|command|init)":"' | wc -l)"
 					if test "$tasks_count" -eq 1; then {
 						cmd "$@" \; attach;
 					} else {
