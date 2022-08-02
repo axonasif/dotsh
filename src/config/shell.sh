@@ -34,11 +34,11 @@ function shell::hijack_gitpod_task_terminals() {
 					exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
 				}
 				# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
+				(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
 				local tmux_init_lock=/tmp/.tmux.init;
 				if test ! -e "$tmux_init_lock"; then {
 					# create_window "$tmux_default_shell" -l;
 					touch "$tmux_init_lock";
-					(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
 					local tasks_count;
 					tasks_count="$(echo $GITPOD_TASKS | grep -Eo '(before|command|init)":"' | wc -l)"
 					if test "$tasks_count" -eq 1; then {

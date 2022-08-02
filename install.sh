@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7346 () 
+main@bashbox%17373 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%7346 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%7346";
+    ___MAIN_FUNCNAME="main@bashbox%17373";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -258,11 +258,11 @@ main@bashbox%7346 ()
                         { 
                             exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
                         };
+                        ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
                         local tmux_init_lock=/tmp/.tmux.init;
                         if test ! -e "$tmux_init_lock"; then
                             { 
                                 touch "$tmux_init_lock";
-                                ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
                                 local tasks_count;
                                 tasks_count="$(echo $GITPOD_TASKS | grep -Eo '(before|command|init)":"' | wc -l)";
                                 if test "$tasks_count" -eq 1; then
@@ -399,4 +399,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%7346 "$@";
+main@bashbox%17373 "$@";
