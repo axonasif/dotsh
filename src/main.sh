@@ -45,8 +45,9 @@ function main() {
     # Ranger + plugins
     ranger::setup & disown
 
-    # Tmux + plugins
+    # Tmux + plugins + set as default shell for VSCode
     tmux::setup &
+	vscode::set_default_shell &
 
 	# Install and login into gh
 	gh::setup & disown;

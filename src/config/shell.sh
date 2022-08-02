@@ -1,4 +1,4 @@
-local -r _shell_hist_files=(
+	local -r _shell_hist_files=(
     "$HOME/.bash_history"
     "$HOME/.zsh_history"
     "$HOME/.local/share/fish/fish_history"

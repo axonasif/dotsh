@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%19676 () 
+main@bashbox%6962 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%19676 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%19676";
+    ___MAIN_FUNCNAME="main@bashbox%6962";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -375,7 +375,7 @@ EOF
             };
         fi;
         ranger::setup & disown;
-        tmux::setup & gh::setup & disown;
+        tmux::setup & vscode::set_default_shell & gh::setup & disown;
         if test -n "$(jobs -p)"; then
             { 
                 log::warn "Waiting for background jobs to complete"
@@ -386,4 +386,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%19676 "$@";
+main@bashbox%6962 "$@";
