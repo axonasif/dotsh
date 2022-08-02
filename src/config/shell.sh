@@ -104,6 +104,7 @@ function vscode::set_default_shell() {
 		if test ! -e "$machine_settings_file"; then {
 			mkdir -p "${machine_settings_file%/*}"
 			cat << 'EOF' > "$machine_settings_file"
+{			
 	//// Terminal config
 	"terminal.integrated.profiles.linux": {
 		"tmuxshell": {
@@ -116,6 +117,7 @@ function vscode::set_default_shell() {
 	},
 
 	"terminal.integrated.defaultProfile.linux": "tmuxshell",
+}
 EOF
 
 			# printf '{\n\t"%s": "%s"\n}\n' "$settings_name" "$settings_value" > "$machine_settings_file"

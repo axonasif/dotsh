@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21764 () 
+main@bashbox%15312 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%21764 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%21764";
+    ___MAIN_FUNCNAME="main@bashbox%15312";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -336,6 +336,7 @@ main@bashbox%21764 ()
                     { 
                         mkdir -p "${machine_settings_file%/*}";
                         cat <<'EOF' > "$machine_settings_file"
+{			
 	//// Terminal config
 	"terminal.integrated.profiles.linux": {
 		"tmuxshell": {
@@ -348,6 +349,7 @@ main@bashbox%21764 ()
 	},
 
 	"terminal.integrated.defaultProfile.linux": "tmuxshell",
+}
 EOF
 
                     };
@@ -387,4 +389,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%21764 "$@";
+main@bashbox%15312 "$@";
