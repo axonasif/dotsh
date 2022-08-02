@@ -94,3 +94,32 @@ function bash::gitpod_start_tmux_on_start() {
 	local file="$HOME/.bashrc.d/10-tmux";
 	printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file";
 }
+
+function vscode::set_default_shell() {
+
+	local settings_name="terminal.integrated.profiles.linux";
+	local machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
+	if grep -q "$settings_name" "$machine_settings_file" 2>/dev/null; then {
+		if test ! -e "$machine_settings_file"; then {
+			mkdir -p "${machine_settings_file%/*}"
+			cat << 'EOF' > "$machine_settings_file"
+	//// Terminal config
+	"terminal.integrated.profiles.linux": {
+		"tmuxshell": {
+			"path": "bash",
+			"args": [
+				"-c",
+				"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+			]
+		}
+	},
+
+	"terminal.integrated.defaultProfile.linux": "tmuxshell",
+EOF
+
+			# printf '{\n\t"%s": "%s"\n}\n' "$settings_name" "$settings_value" > "$machine_settings_file"
+		# } else {
+			# sed -i "1s|^{|{ \"$settings_name\": \"$settings_value\"\n|" "$machine_settings_file"
+		} fi
+	} fi
+}

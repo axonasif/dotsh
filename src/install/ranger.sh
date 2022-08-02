@@ -1,6 +1,6 @@
 function ranger::setup() {
 	# Install ranger-fm
-	bash -lic 'pip install --no-input ranger-fm';
+	bash -lic 'pip install --no-input ranger-fm' 1>/dev/null;
     local target=$HOME/.config/ranger/rc.conf;
     local target_dir="${target%/*}";
     local devicons_activation_string="default_linemode devicons";

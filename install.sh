@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5069 () 
+main@bashbox%3340 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%5069 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%5069";
+    ___MAIN_FUNCNAME="main@bashbox%3340";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -136,10 +136,12 @@ main@bashbox%5069 ()
     function install::system_packages () 
     { 
         log::info "Installing system packages";
-        sudo apt-get update;
-        sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-        sudo apt-get install -yq --no-install-recommends "${_system_packages[@]}" > /dev/null;
-        sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
+        { 
+            sudo apt-get update;
+            sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
+            sudo apt-get install -yq --no-install-recommends "${_system_packages[@]}";
+            sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
+        } > /dev/null
     };
     function install::userland_tools () 
     { 
@@ -148,6 +150,7 @@ main@bashbox%5069 ()
     };
     function tmux::setup () 
     { 
+        log::info "Setting up tmux";
         local target="$HOME/.tmux/plugins/tpm";
         if test ! -e "$target"; then
             { 
@@ -161,7 +164,7 @@ main@bashbox%5069 ()
     };
     function ranger::setup () 
     { 
-        bash -lic 'pip install --no-input ranger-fm';
+        bash -lic 'pip install --no-input ranger-fm' > /dev/null;
         local target=$HOME/.config/ranger/rc.conf;
         local target_dir="${target%/*}";
         local devicons_activation_string="default_linemode devicons";
@@ -319,6 +322,35 @@ main@bashbox%5069 ()
         local file="$HOME/.bashrc.d/10-tmux";
         printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file"
     };
+    function vscode::set_default_shell () 
+    { 
+        local settings_name="terminal.integrated.profiles.linux";
+        local machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
+        if grep -q "$settings_name" "$machine_settings_file" 2> /dev/null; then
+            { 
+                if test ! -e "$machine_settings_file"; then
+                    { 
+                        mkdir -p "${machine_settings_file%/*}";
+                        cat <<'EOF' > "$machine_settings_file"
+	//// Terminal config
+	"terminal.integrated.profiles.linux": {
+		"tmuxshell": {
+			"path": "bash",
+			"args": [
+				"-c",
+				"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+			]
+		}
+	},
+
+	"terminal.integrated.defaultProfile.linux": "tmuxshell",
+EOF
+
+                    };
+                fi
+            };
+        fi
+    }
     function main () 
     { 
         install::system_packages & { 
@@ -351,4 +383,4 @@ main@bashbox%5069 ()
     wait;
     exit
 }
-main@bashbox%5069 "$@";
+main@bashbox%3340 "$@";
