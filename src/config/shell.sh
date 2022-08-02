@@ -96,7 +96,7 @@ function bash::gitpod_start_tmux_on_start() {
 }
 
 function vscode::set_default_shell() {
-
+	log::info "Setting the integrated tmux shell for VScode as default";
 	local settings_name="terminal.integrated.profiles.linux";
 	local machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
 	if grep -q "$settings_name" "$machine_settings_file" 2>/dev/null; then {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3340 () 
+main@bashbox%19676 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%3340 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%3340";
+    ___MAIN_FUNCNAME="main@bashbox%19676";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -154,11 +154,13 @@ main@bashbox%3340 ()
         local target="$HOME/.tmux/plugins/tpm";
         if test ! -e "$target"; then
             { 
-                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
-                until command -v tmux; do
-                    sleep 0.5;
-                done;
-                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
+                { 
+                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
+                    until command -v tmux; do
+                        sleep 0.5;
+                    done;
+                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
+                } > /dev/null
             };
         fi
     };
@@ -324,6 +326,7 @@ main@bashbox%3340 ()
     };
     function vscode::set_default_shell () 
     { 
+        log::info "Setting the integrated tmux shell for VScode as default";
         local settings_name="terminal.integrated.profiles.linux";
         local machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
         if grep -q "$settings_name" "$machine_settings_file" 2> /dev/null; then
@@ -383,4 +386,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%3340 "$@";
+main@bashbox%19676 "$@";
