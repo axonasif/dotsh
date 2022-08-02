@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2968 () 
+main@bashbox%9476 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2968 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2968";
+    ___MAIN_FUNCNAME="main@bashbox%9476";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -262,10 +262,24 @@ main@bashbox%2968 ()
                         if test ! -e "$tmux_init_lock"; then
                             { 
                                 touch "$tmux_init_lock";
-                                ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : )
+                                ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
+                                local tasks_count;
+                                tasks_count="$(echo $GITPOD_TASKS | grep -o '":"' | wc -l)";
+                                if test "$tasks_count" -eq 1; then
+                                    { 
+                                        cmd "$@" \; attach
+                                    };
+                                else
+                                    { 
+                                        cmd "$@"
+                                    };
+                                fi
                             };
-                        fi;
-                        cmd "$@" \; attach
+                        else
+                            { 
+                                cmd "$@"
+                            };
+                        fi
                     };
                     if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
@@ -385,4 +399,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%2968 "$@";
+main@bashbox%9476 "$@";

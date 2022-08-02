@@ -39,9 +39,17 @@ function shell::hijack_gitpod_task_terminals() {
 					# create_window "$tmux_default_shell" -l;
 					touch "$tmux_init_lock";
 					(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+					local tasks_count;
+					tasks_count="$(echo $GITPOD_TASKS | grep -o '":"' | wc -l)"
+					if test "$tasks_count" -eq 1; then {
+						cmd "$@" \; attach;
+					} else {
+						cmd "$@";
+					} fi
+				} else {
+					cmd "$@";
 				} fi
 				
-				cmd "$@" \; attach;
 			}
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
