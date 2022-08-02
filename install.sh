@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6962 () 
+main@bashbox%21764 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%6962 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%6962";
+    ___MAIN_FUNCNAME="main@bashbox%21764";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -329,7 +329,8 @@ main@bashbox%6962 ()
         log::info "Setting the integrated tmux shell for VScode as default";
         local settings_name="terminal.integrated.profiles.linux";
         local machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
-        if grep -q "$settings_name" "$machine_settings_file" 2> /dev/null; then
+        set -x;
+        if ! grep -q "$settings_name" "$machine_settings_file" 2> /dev/null; then
             { 
                 if test ! -e "$machine_settings_file"; then
                     { 
@@ -386,4 +387,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%6962 "$@";
+main@bashbox%21764 "$@";
