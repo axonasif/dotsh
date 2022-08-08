@@ -55,7 +55,7 @@ yabai -m config mouse_action1 move
 #yabai -m config --space 3 layout             float
 
 ## Change how yabai looks
-yabai -m config layout bsp
+yabai -m config layout stack
 yabai -m config top_padding 5
 yabai -m config bottom_padding 7
 yabai -m config left_padding 5

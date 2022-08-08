@@ -11,6 +11,9 @@ export EDITOR=nvim;
 # Set USER if missing
 : "${USER:=axon}" && export USER;
 
+# Disable nullglob
+shopt -s nullglob
+
 for script in "$HOME/.bashrc.d"/*; do {
   source "$script";
 } done
