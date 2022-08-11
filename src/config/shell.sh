@@ -66,9 +66,8 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 
 				# Check for external input
-				if ! read -t 2 -r external_commands; then {
-					can_switch=true;
-				} fi
+				read -t 2 -r external_commands
+				echo "${external_commands:-}" > /tmp/some
 
 				if test -v can_switch; then {
 					tmux_default_shell="$(tmux display -p '#{default-shell}')";
