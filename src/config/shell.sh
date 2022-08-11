@@ -58,26 +58,20 @@ function shell::hijack_gitpod_task_terminals() {
 				# } fi
 
 				# Check for external input
-				if ! read -t 2 -r external_commands; then {
+				if ! read -t 0.001 -r external_commands; then {
 					bash_ran_once=true;
 				} fi
 
-				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
+					termout=/tmp/.termout.$$
 					exec > >(tee -a "$termout") 2>&1;
 				} else {
 					can_switch=true;
 				} fi
 
-				# local hist_cmd="history -a /dev/stdout";
-				# if test -z "$($hist_cmd)"; then {
-				# 	can_switch=true;
-				# 	echo emp
-				# } fi
-
 				if test -v can_switch; then {
 					tmux_default_shell="$(tmux display -p '#{default-shell}')";
-					create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
+					create_window "test -e '$termout' && less -FXR $termout | cat; exec $tmux_default_shell -l";
 					TRUE
 				} else {
 					bash_ran_once=true;
