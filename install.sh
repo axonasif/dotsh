@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%20916 () 
+main@bashbox%4687 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%20916 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%20916";
+    ___MAIN_FUNCNAME="main@bashbox%4687";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -282,13 +282,11 @@ main@bashbox%20916 ()
                                     eval "$stdin"
                                 };
                             else
-                                { 
-                                    if test ! -v bash_ran_once; then
-                                        { 
-                                            exit
-                                        };
-                                    fi
-                                };
+                                if test ! -v bash_ran_once; then
+                                    { 
+                                        exit
+                                    };
+                                fi;
                             fi;
                             termout=/tmp/.termout.$$;
                             if test ! -v bash_ran_once; then
@@ -406,4 +404,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%20916 "$@";
+main@bashbox%4687 "$@";
