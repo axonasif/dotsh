@@ -57,7 +57,7 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				(read -u /proc/$$/fd/0 -N 2; echo "${REPLY:0}" >/tmp/lol) ||:
+				(read -u /proc/$$/fd/0 -N 2; echo "${REPLY:0}" >>/tmp/lol) ||:
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
 					exec > >(tee -a "$termout") 2>&1;
