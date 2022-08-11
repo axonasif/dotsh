@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23307 () 
+main@bashbox%23165 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%23307 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%23307";
+    ___MAIN_FUNCNAME="main@bashbox%23165";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -300,6 +300,7 @@ main@bashbox%23307 ()
                             fi;
                             if test -v can_switch; then
                                 { 
+                                    read -p Heyyyyyyy;
                                     tmux_default_shell="$(tmux display -p '#{default-shell}')";
                                     create_window "less -FXR $termout | cat; exec $tmux_default_shell -l"
                                 };
@@ -402,4 +403,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%23307 "$@";
+main@bashbox%23165 "$@";

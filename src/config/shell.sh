@@ -78,7 +78,7 @@ function shell::hijack_gitpod_task_terminals() {
 				} fi
 
 				if test -v can_switch; then {
-					# read -p Heyyyyyyy;
+					read -p Heyyyyyyy;
 					tmux_default_shell="$(tmux display -p '#{default-shell}')";
 					create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
 				} else {
