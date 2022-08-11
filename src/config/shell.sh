@@ -63,7 +63,9 @@ function shell::hijack_gitpod_task_terminals() {
 					printf '%s' "$stdin";
 					eval "$stdin";
 				} else {
-					exit;
+					if test ! -v bash_ran_once; then {
+						exit;
+					} fi
 				} fi
 
 				termout=/tmp/.termout.$$
