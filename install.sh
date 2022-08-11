@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%22795 () 
+main@bashbox%24345 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%22795 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%22795";
+    ___MAIN_FUNCNAME="main@bashbox%24345";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -274,22 +274,21 @@ main@bashbox%22795 ()
                     };
                     if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
+                            termout=/tmp/.termout.$$;
                             if test ! -v bash_ran_once; then
                                 { 
-                                    termout=/tmp/.termout.$$;
                                     exec > >(tee -a "$termout") 2>&1
                                 };
-                            else
+                            fi;
+                            if test -v bash_ran_once; then
                                 { 
                                     can_switch=true
                                 };
                             fi;
-                            read -t 2 -r external_commands;
-                            echo "${external_commands:-}" > /tmp/some;
                             if test -v can_switch; then
                                 { 
                                     tmux_default_shell="$(tmux display -p '#{default-shell}')";
-                                    create_window "test -e '$termout' && less -FXR $termout | cat; exec $tmux_default_shell -l";
+                                    create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
                                     TRUE
                                 };
                             else
@@ -391,4 +390,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%22795 "$@";
+main@bashbox%24345 "$@";
