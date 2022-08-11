@@ -57,7 +57,7 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				if [[ ! -t 0 ]]; then {
+				# if [[ ! -t 0 ]]; then {
 					stdin="$(< /dev/stdin)"
 					if test -n "$stdin"; then {
 						echo "$stdin";
@@ -65,7 +65,7 @@ function shell::hijack_gitpod_task_terminals() {
 					} else {
 						exit;
 					} fi
-				} fi
+				# } fi
 
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
