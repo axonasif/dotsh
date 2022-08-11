@@ -57,7 +57,7 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				if test /proc/self/fd/0 -ef /dev/null; then {
+				if ! read -u0 -t0.1; then {
 					exit;
 				} fi
 
