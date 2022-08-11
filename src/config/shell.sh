@@ -57,15 +57,16 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				# Check for external input
-				if ! read -t 0.001 -r external_commands; then {
-					bash_ran_once=true;
-				} fi
 
 				if test ! -v bash_ran_once; then {
 					termout=/tmp/.termout.$$
 					exec > >(tee -a "$termout") 2>&1;
 				} else {
+					can_switch=true;
+				} fi
+
+				# Check for external input
+				if ! read -t 2 -r external_commands; then {
 					can_switch=true;
 				} fi
 
