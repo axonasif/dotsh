@@ -56,10 +56,12 @@ function shell::hijack_gitpod_task_terminals() {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
+				(
 				read -s -r -t 2 external || :;
 				if test -z "${external:-}"; then {
 					exit;
 				} fi
+				) || :
 
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
