@@ -57,10 +57,15 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				if [[ ! -t 0 ]]; then {
-					exit;
-				} fi
-
+				first_byte=$(dd bs=1 count=1 2>/dev/null | od -t o1 -A n | tr -dc 0-9)
+if [ -z "$first_byte" ]; then
+  exit
+else
+  {
+    printf "\\$first_byte"
+    cat
+  }    
+fi
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
 					exec > >(tee -a "$termout") 2>&1;
