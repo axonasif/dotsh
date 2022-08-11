@@ -57,14 +57,12 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				# if [[ ! -t 0 ]]; then {
-				lines=();
-				while read -t 2 -sr line; do {
-					lines+=("$line");
-				} done
-				echo "${lines[@]}";
-				eval "${lines[@]}";
-				# } fi
+				if ! test -t 0; then {
+					stdin="$(</dev/stdin)"
+					eval "$stdin"
+				} else {
+					exit;
+				} fi
 
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
