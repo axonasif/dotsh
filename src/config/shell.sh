@@ -56,14 +56,6 @@ function shell::hijack_gitpod_task_terminals() {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
-
-				set -x; exec 2>>/tmp/log
-
-				if read -t 1 -r external; then {
-					echo "###### ${external:-}" >> /tmp/ext
-				} fi
-			
-
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
 					exec > >(tee -a "$termout") 2>&1;
@@ -85,8 +77,6 @@ function shell::hijack_gitpod_task_terminals() {
 				} else {
 					bash_ran_once=true;
 				} fi
-
-				set +x
 			} else {
 				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
