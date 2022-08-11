@@ -57,9 +57,11 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				if ! test -t 0; then {
-					stdin="$(</dev/stdin)"
-					eval "$stdin"
+				local stdin;
+				IFS= read -t 0.01 -r -d '' stdin;
+				if test -n "$stdin"; then {
+					printf '%s' "$stdin";
+					eval "$stdin";
 				} else {
 					exit;
 				} fi

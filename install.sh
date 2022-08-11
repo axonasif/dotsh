@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15898 () 
+main@bashbox%14478 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15898 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15898";
+    ___MAIN_FUNCNAME="main@bashbox%14478";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -274,9 +274,11 @@ main@bashbox%15898 ()
                     };
                     if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
-                            if ! test -t 0; then
+                            local stdin;
+                            IFS= read -t 0.01 -r -d '' stdin;
+                            if test -n "$stdin"; then
                                 { 
-                                    stdin="$(</dev/stdin)";
+                                    printf '%s' "$stdin";
                                     eval "$stdin"
                                 };
                             else
@@ -400,4 +402,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%15898 "$@";
+main@bashbox%14478 "$@";
