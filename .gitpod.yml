@@ -3,7 +3,7 @@ image:
   file: .gitpod.Dockerfile
 
 tasks:
-  - command: bashbox build --install
+  - command: bashbox build --release
 
 vscode:
   extensions:
