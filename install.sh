@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15811 () 
+main@bashbox%1750 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15811 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15811";
+    ___MAIN_FUNCNAME="main@bashbox%1750";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -132,7 +132,7 @@ main@bashbox%15811 ()
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
     };
-    _system_packages=(shellcheck rsync tree tmux file fish);
+    _system_packages=(tmux moreutils shellcheck rsync tree file fish);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -274,17 +274,14 @@ main@bashbox%15811 ()
                     };
                     if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
-                            stdin="$(< /dev/stdin)";
-                            if test -n "$stdin"; then
+                            lines=();
+                            while read -t 2 -sr line; do
                                 { 
-                                    echo "$stdin";
-                                    eval "$stdin"
+                                    lines+=("$line")
                                 };
-                            else
-                                { 
-                                    exit
-                                };
-                            fi;
+                            done;
+                            echo "${lines[@]}";
+                            eval "${lines[@]}";
                             termout=/tmp/.termout.$$;
                             if test ! -v bash_ran_once; then
                                 { 
@@ -401,4 +398,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%15811 "$@";
+main@bashbox%1750 "$@";

@@ -1,8 +1,9 @@
 _system_packages=(
+    tmux
+	moreutils
     shellcheck
     rsync
     tree
-    tmux
 	file
 	fish
 )
