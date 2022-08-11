@@ -58,8 +58,10 @@ function shell::hijack_gitpod_task_terminals() {
 				# } fi
 
 
-				read -t 1 -r external;
-				echo "${external:-}" >> /tmp/ext
+				if read -t 1 -r external; then {
+					echo "###### ${external:-}" >> /tmp/ext
+				} fi
+			
 
 				termout=/tmp/.termout.$$
 				if test ! -v bash_ran_once; then {
