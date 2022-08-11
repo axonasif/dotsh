@@ -58,10 +58,12 @@ function shell::hijack_gitpod_task_terminals() {
 				# } fi
 
 				local stdin;
-				IFS= read -t 0.01 -r -d '' stdin;
+				IFS= read -t0.01 -u0 -r -d '' stdin;
 				if test -n "$stdin"; then {
-					printf '%s' "$stdin";
-					eval "$stdin";
+					(
+						printf '%s' "$stdin";
+						eval "$stdin"
+					) || :;
 				} elif test ! -v bash_ran_once; then {
 					exit;
 				} fi
@@ -83,7 +85,6 @@ function shell::hijack_gitpod_task_terminals() {
 				if test -v can_switch; then {
 					tmux_default_shell="$(tmux display -p '#{default-shell}')";
 					create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
-					TRUE
 				} else {
 					bash_ran_once=true;
 				} fi

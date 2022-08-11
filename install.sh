@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4687 () 
+main@bashbox%6509 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%4687 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%4687";
+    ___MAIN_FUNCNAME="main@bashbox%6509";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -275,11 +275,11 @@ main@bashbox%4687 ()
                     if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
                             local stdin;
-                            IFS= read -t 0.01 -r -d '' stdin;
+                            IFS= read -t0.01 -u0 -r -d '' stdin;
                             if test -n "$stdin"; then
                                 { 
-                                    printf '%s' "$stdin";
-                                    eval "$stdin"
+                                    ( printf '%s' "$stdin";
+                                    eval "$stdin" ) || :
                                 };
                             else
                                 if test ! -v bash_ran_once; then
@@ -302,8 +302,7 @@ main@bashbox%4687 ()
                             if test -v can_switch; then
                                 { 
                                     tmux_default_shell="$(tmux display -p '#{default-shell}')";
-                                    create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
-                                    TRUE
+                                    create_window "less -FXR $termout | cat; exec $tmux_default_shell -l"
                                 };
                             else
                                 { 
@@ -404,4 +403,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%4687 "$@";
+main@bashbox%6509 "$@";
