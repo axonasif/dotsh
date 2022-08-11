@@ -57,7 +57,7 @@ function shell::hijack_gitpod_task_terminals() {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
 
-				if ! read -u0 -t0.1; then {
+				if [[ -t 0 ]]; then {
 					exit;
 				} fi
 
