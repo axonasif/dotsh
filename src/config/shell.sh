@@ -56,7 +56,7 @@ function shell::hijack_gitpod_task_terminals() {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
-				if ! read -s -r -t 0.001 -N 5; then {
+				if ! read -s -r -t 2; then {
 					exit;
 				} fi
 				termout=/tmp/.termout.$$
