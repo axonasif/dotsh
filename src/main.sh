@@ -7,16 +7,16 @@ use config;
 
 function main() {
 
-    # Start installation of system(apt) packages (background)
+    # Start installation of system(apt) packages (async)
     install::system_packages &
 
-    # Dotfiles installation
+    # Dotfiles installation (blocking - sync)
     {
-        local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
+        local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}"; # Full path to this repository directory.
         local _private_dir="$_source_dir/.private";
         local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
 
-        # Local dotfiles
+        # Local dotfiles from this repository
         log::info "Installing local dotfiles";
         dotfiles_symlink;
 
