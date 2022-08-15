@@ -52,7 +52,7 @@ function shell::hijack_gitpod_task_terminals() {
 				
 			}
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test ! -v SSH_CONNECTION; then {
 				# if test ! -v TMUX; then {
 				# 	create_window "$BASH" -l \; attach;
 				# } fi
