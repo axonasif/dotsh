@@ -1,6 +1,5 @@
 use std::print::log;
 use std::native::sleep;
-use dotfiles_symlink;
 use utils;
 use install;
 use config;
@@ -18,12 +17,12 @@ function main() {
 
         # Local dotfiles from this repository
         log::info "Installing local dotfiles";
-        dotfiles_symlink;
+        install::dotfiles;
 
         # Private dotfiles
         # Note: you can set PRIVATE_DOTFILES_REPO with */* scope in https://gitpod.io/variables for your personal dotfiles
         log::info "Installing private dotfiles";
-        dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
+        install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
     }
 
     # Install userland tools (background)

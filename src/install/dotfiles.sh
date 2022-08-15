@@ -1,4 +1,4 @@
-function dotfiles_symlink() {
+function install::dotfiles() {
     local _dotfiles_repo="${1:-"$___self_REPOSITORY"}";
     local _dotfiles_dir="${2:-$HOME/.dotfiles}";
     local _target_file _target_dir;
