@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%28035 () 
+main@bashbox%4474 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%28035 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%28035";
+    ___MAIN_FUNCNAME="main@bashbox%4474";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -81,58 +81,41 @@ main@bashbox%28035 ()
     { 
         read -rt "$1" 0<> <(:) || :
     };
-    function dotfiles_symlink () 
-    { 
-        local _dotfiles_repo="${1:-"$___self_REPOSITORY"}";
-        local _dotfiles_dir="${2:-$HOME/.dotfiles}";
-        local _target_file _target_dir;
-        local _git_output;
-        if test ! -e "$_dotfiles_dir"; then
-            { 
-                git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" || :
-            };
-        fi;
-        if test -e "$_dotfiles_dir"; then
-            { 
-                local _dotfiles_ignore="$_dotfiles_dir/.dotfilesignore";
-                local _thing_path;
-                local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'*/.gitpod.yml'");
-                if test -e "$_dotfiles_ignore"; then
-                    { 
-                        while read _ignore_thing; do
-                            { 
-                                if [[ ! "$_ignore_thing" =~ ^\# ]]; then
-                                    { 
-                                        _ignore_list+=(-not -path "'$_ignore_thing'")
-                                    };
-                                fi
-                            };
-                        done < "$_dotfiles_ignore"
-                    };
-                fi;
-                pushd "$_dotfiles_dir" > /dev/null;
-                while read -r _file; do
-                    { 
-                        _target_file="$HOME/${_file##${_dotfiles_dir}/}";
-                        _target_dir="${_target_file%/*}";
-                        if test ! -d "$_target_dir"; then
-                            { 
-                                mkdir -p "$_target_dir"
-                            };
-                        fi;
-                        ln -srf "$_file" "$_target_file";
-                        unset _target_file _target_dir
-                    };
-                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find . -type f);
-                popd > /dev/null
-            };
-        fi
-    };
+    declare -r workspace_dir="/workspace";
+    declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
+    local source_dir="$(readlink -f "$0")" && declare -r source_dir="${source_dir%/*}";
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
     };
-    _system_packages=(tmux moreutils shellcheck rsync tree file fish);
+    function vscode::add_settings () 
+    { 
+        local input="${1:-}";
+        if test ! -n "$input"; then
+            { 
+                read -t0.1 -u0 -r -d '' input
+            };
+        else
+            if test -e "$input"; then
+                { 
+                    input="$(< "$input")"
+                };
+            fi;
+        fi;
+        if test -n "${input:-}"; then
+            { 
+                if test ! -e "$vscode_machine_settings_file"; then
+                    { 
+                        mkdir -p "${vscode_machine_settings_file%/*}";
+                        touch "$vscode_machine_settings_file"
+                    };
+                fi;
+                sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
+                jq -s '.[0] * .[1]' - "$vscode_machine_settings_file" <<< "$input"
+            };
+        fi
+    };
+    _system_packages=(tmux fish jq shellcheck rsync tree file);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -148,7 +131,7 @@ main@bashbox%28035 ()
         log::info "Installing userland tools";
         curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
     };
-    function tmux::setup () 
+    function install::tmux () 
     { 
         log::info "Setting up tmux";
         local target="$HOME/.tmux/plugins/tpm";
@@ -156,15 +139,13 @@ main@bashbox%28035 ()
             { 
                 { 
                     git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
-                    until command -v tmux; do
-                        sleep 0.5;
-                    done;
+                    wait::for_file_existence "$(command -v tmux)";
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
                 } > /dev/null
             };
         fi
     };
-    function ranger::setup () 
+    function install::ranger () 
     { 
         bash -lic 'pip install --no-input ranger-fm' > /dev/null;
         local target=$HOME/.config/ranger/rc.conf;
@@ -183,7 +164,7 @@ main@bashbox%28035 ()
             };
         fi
     };
-    function gh::setup () 
+    function install::gh () 
     { 
         local tarball_url gp_credentials;
         log::info "Installing gh CLI";
@@ -201,7 +182,7 @@ main@bashbox%28035 ()
             };
         fi
     };
-    function docker_auth () 
+    function config::docker_auth () 
     { 
         local var_name=DOCKER_AUTH_TOKEN;
         local target="$HOME/.docker/config.json";
@@ -218,7 +199,7 @@ main@bashbox%28035 ()
         fi
     };
     local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
-    function shell::persist_history () 
+    function config::shell::persist_history () 
     { 
         log::info "Persiting Gitpod shell histories to /workspace";
         local _workspace_persist_dir="/workspace/.persist";
@@ -245,7 +226,7 @@ main@bashbox%28035 ()
             };
         done
     };
-    function shell::hijack_gitpod_task_terminals () 
+    function config::shell::hijack_gitpod_task_terminals () 
     { 
         if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then
             { 
@@ -272,7 +253,7 @@ main@bashbox%28035 ()
                             };
                         fi
                     };
-                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test ! -v SSH_CONNECTION; then
                         { 
                             termout=/tmp/.termout.$$;
                             if test ! -v bash_ran_once; then
@@ -319,7 +300,7 @@ main@bashbox%28035 ()
             };
         fi
     };
-    function fish::append_hist_from_gitpod_tasks () 
+    function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
         while read -r _command; do
@@ -332,74 +313,47 @@ main@bashbox%28035 ()
             };
         done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
     };
-    function bash::gitpod_start_tmux_on_start () 
+    function config::shell::bash::gitpod_start_tmux_on_start () 
     { 
         local file="$HOME/.bashrc.d/10-tmux";
         printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file"
     };
-    function vscode::set_default_shell () 
+    function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        local settings_name="terminal.integrated.profiles.linux";
-        local machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
-        set -x;
-        if ! grep -q "$settings_name" "$machine_settings_file" 2> /dev/null; then
-            { 
-                if test ! -e "$machine_settings_file"; then
-                    { 
-                        mkdir -p "${machine_settings_file%/*}";
-                        cat <<'EOF' > "$machine_settings_file"
-{			
-	//// Terminal config
-	"terminal.integrated.profiles.linux": {
-		"tmuxshell": {
-			"path": "bash",
-			"args": [
-				"-c",
-				"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
-			]
-		}
-	},
-
-	"terminal.integrated.defaultProfile.linux": "tmuxshell",
-}
-EOF
-
-                    };
-                fi
-            };
-        fi
-    }
+        vscode::add_settings "$source_dir/config/shell_settings.json"
+    };
     function main () 
     { 
-        install::system_packages & { 
-            local _source_dir="$(readlink -f "$0")" && _source_dir="${_source_dir%/*}";
-            local _private_dir="$_source_dir/.private";
+        install::system_packages & disown;
+        { 
+            local _private_dir="$source_dir/.private";
             local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
             log::info "Installing local dotfiles";
-            dotfiles_symlink;
+            install::dotfiles;
             log::info "Installing private dotfiles";
-            dotfiles_symlink "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
+            install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
         };
         install::userland_tools & disown;
         if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
-                docker_auth & disown;
-                shell::persist_history;
-                fish::append_hist_from_gitpod_tasks & bash::gitpod_start_tmux_on_start & shell::hijack_gitpod_task_terminals &
+                config::docker_auth & disown;
+                config::shell::persist_history;
+                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & shell::config::shell::hijack_gitpod_task_terminals & gh::setup & disown;
+                install::tmux & config::shell::vscode::set_tmux_as_default_shell &
             };
         fi;
-        ranger::setup & disown;
-        tmux::setup & vscode::set_default_shell & gh::setup & disown;
+        install::ranger & disown;
         if test -n "$(jobs -p)"; then
             { 
                 log::warn "Waiting for background jobs to complete"
             };
-        fi
+        fi;
+        log::info "Dotfiles script exited in ${SECONDS} seconds"
     };
     main "$@";
     wait;
     exit
 }
-main@bashbox%28035 "$@";
+main@bashbox%4474 "$@";

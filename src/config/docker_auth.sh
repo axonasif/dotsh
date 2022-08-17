@@ -1,4 +1,4 @@
-function docker_auth() {
+function config::docker_auth() {
     local var_name=DOCKER_AUTH_TOKEN;
     local target="$HOME/.docker/config.json";
     if test -v $var_name; then {

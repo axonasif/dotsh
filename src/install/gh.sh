@@ -1,4 +1,4 @@
-function gh::setup() {
+function install::gh() {
 	local tarball_url gp_credentials;
 
 	# Install gh

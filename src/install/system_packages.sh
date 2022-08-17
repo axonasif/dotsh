@@ -1,11 +1,11 @@
 _system_packages=(
     tmux
-	moreutils
+	fish
+	jq
     shellcheck
     rsync
     tree
 	file
-	fish
 )
 
 function install::system_packages {
