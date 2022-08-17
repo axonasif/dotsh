@@ -13,6 +13,8 @@ function vscode::add_settings() {
 	} elif test -e "$input"; then {
 		# Read the input file into a variable
 		input="$(< "$input")";
+	} else {
+		log::error "$FUNCNAME: $input does not exist" || exit 1;
 	} fi
 	# TODOEND
 
@@ -27,7 +29,10 @@ function vscode::add_settings() {
 		sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
 
 		# Merge the input settings with machine settings.json
-		jq -s '.[0] * .[1]' - "$vscode_machine_settings_file" <<<"$input";
+		local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
+		cp -a "$vscode_machine_settings_file" "$tmp_file";
+		jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" > "$vscode_machine_settings_file";
+		rm "$tmp_file";
 	} fi
 }
 

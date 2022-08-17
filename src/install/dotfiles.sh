@@ -5,7 +5,7 @@ function install::dotfiles() {
     local _git_output;
     
     if test ! -e "$_dotfiles_dir"; then {
-        git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" || :;
+        git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :;
     } fi
     
     if test -e "$_dotfiles_dir" ; then {

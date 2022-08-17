@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4474 () 
+main@bashbox%16229 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%4474 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%4474";
+    ___MAIN_FUNCNAME="main@bashbox%16229";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -100,6 +100,10 @@ main@bashbox%4474 ()
                 { 
                     input="$(< "$input")"
                 };
+            else
+                { 
+                    log::error "$FUNCNAME: $input does not exist" || exit 1
+                };
             fi;
         fi;
         if test -n "${input:-}"; then
@@ -111,9 +115,21 @@ main@bashbox%4474 ()
                     };
                 fi;
                 sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
-                jq -s '.[0] * .[1]' - "$vscode_machine_settings_file" <<< "$input"
+                local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
+                cp -a "$vscode_machine_settings_file" "$tmp_file";
+                jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$vscode_machine_settings_file";
+                rm "$tmp_file"
             };
         fi
+    };
+    function wait::for_file_existence () 
+    { 
+        local file="$1";
+        until sleep 0.5 && test -e "$file"; do
+            { 
+                continue
+            };
+        done
     };
     _system_packages=(tmux fish jq shellcheck rsync tree file);
     function install::system_packages () 
@@ -138,8 +154,8 @@ main@bashbox%4474 ()
         if test ! -e "$target"; then
             { 
                 { 
-                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target";
-                    wait::for_file_existence "$(command -v tmux)";
+                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
+                    wait::for_file_existence "/usr/bin/tmux";
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
                 } > /dev/null
             };
@@ -160,7 +176,7 @@ main@bashbox%4474 ()
         local devicons_plugin_dir="$target_dir/plugins/ranger_devicons";
         if test ! -e "$devicons_plugin_dir"; then
             { 
-                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir"
+                git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir" > /dev/null 2>&1
             };
         fi
     };
@@ -179,6 +195,53 @@ main@bashbox%4474 ()
         else
             { 
                 log::error "Failed to get auth token for gh" || exit 1
+            };
+        fi
+    };
+    function install::dotfiles () 
+    { 
+        local _dotfiles_repo="${1:-"$___self_REPOSITORY"}";
+        local _dotfiles_dir="${2:-$HOME/.dotfiles}";
+        local _target_file _target_dir;
+        local _git_output;
+        if test ! -e "$_dotfiles_dir"; then
+            { 
+                git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :
+            };
+        fi;
+        if test -e "$_dotfiles_dir"; then
+            { 
+                local _dotfiles_ignore="$_dotfiles_dir/.dotfilesignore";
+                local _thing_path;
+                local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'*/.gitpod.yml'");
+                if test -e "$_dotfiles_ignore"; then
+                    { 
+                        while read _ignore_thing; do
+                            { 
+                                if [[ ! "$_ignore_thing" =~ ^\# ]]; then
+                                    { 
+                                        _ignore_list+=(-not -path "'$_ignore_thing'")
+                                    };
+                                fi
+                            };
+                        done < "$_dotfiles_ignore"
+                    };
+                fi;
+                pushd "$_dotfiles_dir" > /dev/null;
+                while read -r _file; do
+                    { 
+                        _target_file="$HOME/${_file##${_dotfiles_dir}/}";
+                        _target_dir="${_target_file%/*}";
+                        if test ! -d "$_target_dir"; then
+                            { 
+                                mkdir -p "$_target_dir"
+                            };
+                        fi;
+                        ln -srf "$_file" "$_target_file";
+                        unset _target_file _target_dir
+                    };
+                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find . -type f);
+                popd > /dev/null
             };
         fi
     };
@@ -321,18 +384,22 @@ main@bashbox%4474 ()
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        vscode::add_settings "$source_dir/config/shell_settings.json"
+        vscode::add_settings "$source_dir/src/config/shell_settings.json"
     };
     function main () 
     { 
         install::system_packages & disown;
         { 
             local _private_dir="$source_dir/.private";
-            local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
+            local _private_dotfiles_repo="${PRIVATE_DOTFILES_REPO:-}";
             log::info "Installing local dotfiles";
             install::dotfiles;
-            log::info "Installing private dotfiles";
-            install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
+            if test -n "$_private_dotfiles_repo"; then
+                { 
+                    log::info "Installing private dotfiles";
+                    install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
+                };
+            fi
         };
         install::userland_tools & disown;
         if is::gitpod; then
@@ -340,20 +407,22 @@ main@bashbox%4474 ()
                 log::info "Gitpod environment detected!";
                 config::docker_auth & disown;
                 config::shell::persist_history;
-                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & shell::config::shell::hijack_gitpod_task_terminals & gh::setup & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & config::shell::hijack_gitpod_task_terminals & install::gh & disown;
                 install::tmux & config::shell::vscode::set_tmux_as_default_shell &
             };
         fi;
         install::ranger & disown;
-        if test -n "$(jobs -p)"; then
+        log::warn "Waiting for background jobs to complete";
+        while sleep 0.2 && test -n "$(jobs -p)"; do
             { 
-                log::warn "Waiting for background jobs to complete"
+                printf '.';
+                continue
             };
-        fi;
+        done;
         log::info "Dotfiles script exited in ${SECONDS} seconds"
     };
     main "$@";
     wait;
     exit
 }
-main@bashbox%4474 "$@";
+main@bashbox%16229 "$@";

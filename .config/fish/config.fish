@@ -3,3 +3,4 @@ if status is-interactive
 end
 
 source "$HOME/.config/fish/bash_env.fish";
+source "/home/gitpod/.bashbox/env.fish";

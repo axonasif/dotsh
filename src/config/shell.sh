@@ -114,5 +114,5 @@ function config::shell::bash::gitpod_start_tmux_on_start() {
 
 function config::shell::vscode::set_tmux_as_default_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	vscode::add_settings "$source_dir/config/shell_settings.json";
+	vscode::add_settings "$source_dir/src/config/shell_settings.json";
 }

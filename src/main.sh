@@ -16,16 +16,18 @@ function main() {
     {
         
         local _private_dir="$source_dir/.private"; # Path to private dotfiles directory
-        local _private_dotfiles_repo="https://github.com/axonasif/dotfiles.private";
+        # You can set PRIVATE_DOTFILES_REPO with */* scope in https://gitpod.io/variables for your personal dotfiles
+        local _private_dotfiles_repo="${PRIVATE_DOTFILES_REPO:-}"; # This is a git URL
 
         # Local dotfiles from this repository
         log::info "Installing local dotfiles";
         install::dotfiles;
 
         # Private dotfiles
-        # Note: you can set PRIVATE_DOTFILES_REPO with */* scope in https://gitpod.io/variables for your personal dotfiles
-        log::info "Installing private dotfiles";
-        install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
+		if test -n "$_private_dotfiles_repo"; then {
+			log::info "Installing private dotfiles";
+			install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :;
+		} fi
     }
 
     # Install userland tools
@@ -41,10 +43,10 @@ function main() {
         config::shell::persist_history;
         config::shell::fish::append_hist_from_gitpod_tasks &
 		config::shell::bash::gitpod_start_tmux_on_start &
-        shell::config::shell::hijack_gitpod_task_terminals &
+        config::shell::hijack_gitpod_task_terminals &
 		
 		# Install and login into gh
-		gh::setup & disown;
+		install::gh & disown;
 
 		# Tmux + plugins + set as default shell for VSCode
 		install::tmux &
@@ -56,9 +58,11 @@ function main() {
 
     # Wait for "owned" background processess to exit
 	# it will ignore "disown"ed commands as you can see up there.
-    if test -n "$(jobs -p)"; then {
-        log::warn "Waiting for background jobs to complete";
-    } fi
+	log::warn "Waiting for background jobs to complete";
+    while sleep 0.2 && test -n "$(jobs -p)"; do {
+		printf '.';
+		continue;
+    } done
 
 	log::info "Dotfiles script exited in ${SECONDS} seconds";
 }
