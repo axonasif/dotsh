@@ -14,7 +14,7 @@ function config::shell::persist_history() {
         mkdir -p "${_hist%/*}";
         _hist_name="${_hist##*/}";
         if test -e "$_workspace_persist_dir/$_hist_name"; then {
-            log::warn "Overwriting $_hist with workspace persisted history file";
+            log::info "Overwriting $_hist with workspace persisted history file";
             ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist";
         } else {
             touch "$_hist";

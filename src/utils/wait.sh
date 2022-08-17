@@ -4,3 +4,7 @@ function wait::for_file_existence() {
 		continue;
 	} done
 }
+
+function wait::for_vscode_ide_start() {
+	gp ports await 23000 1>/dev/null;
+}

@@ -4,6 +4,13 @@ function is::gitpod() {
 }
 
 function vscode::add_settings() {
+	local lockfile="/tmp/.vscs_add.lock";
+	trap "rm -f $lockfile" ERR SIGINT;
+	while test -e "$lockfile" && sleep 0.2; do {
+		continue;
+	} done
+	touch "$lockfile";
+
 	# TODO: Convert this into a stdlib (arg_or_stdin)
 	local input="${1:-}";
 	
@@ -22,7 +29,11 @@ function vscode::add_settings() {
 		# Create the vscode machine settings file if it doesnt exist
 		if test ! -e "$vscode_machine_settings_file"; then {
 			mkdir -p "${vscode_machine_settings_file%/*}";
-			touch "$vscode_machine_settings_file";
+		} fi
+		
+		# Check json syntax
+		if ! jq -e . "$vscode_machine_settings_file" >/dev/null 2>&1; then {
+			printf '{}\n' > "$vscode_machine_settings_file";
 		} fi
 
 		# Remove any trailing commas

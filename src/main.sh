@@ -45,12 +45,13 @@ function main() {
 		config::shell::bash::gitpod_start_tmux_on_start &
         config::shell::hijack_gitpod_task_terminals &
 		
+		# Tmux + plugins + set as default shell for VSCode
+		install::tmux &
+		config::shell::vscode::set_tmux_as_default_shell & disown
+		
 		# Install and login into gh
 		install::gh & disown;
 
-		# Tmux + plugins + set as default shell for VSCode
-		install::tmux &
-		config::shell::vscode::set_tmux_as_default_shell &
     } fi
 
     # Ranger + plugins
@@ -58,8 +59,8 @@ function main() {
 
     # Wait for "owned" background processess to exit
 	# it will ignore "disown"ed commands as you can see up there.
-	log::warn "Waiting for background jobs to complete";
-    while sleep 0.2 && test -n "$(jobs -p)"; do {
+	log::info "Waiting for background jobs to complete" && jobs -l;
+    while test -n "$(jobs -p)" && sleep 0.2; do {
 		printf '.';
 		continue;
     } done

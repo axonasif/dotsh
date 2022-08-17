@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16229 () 
+main@bashbox%15600 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%16229 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%16229";
+    ___MAIN_FUNCNAME="main@bashbox%15600";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -90,6 +90,14 @@ main@bashbox%16229 ()
     };
     function vscode::add_settings () 
     { 
+        local lockfile="/tmp/.vscs_add.lock";
+        trap "rm -f $lockfile" ERR SIGINT;
+        while test -e "$lockfile" && sleep 0.2; do
+            { 
+                continue
+            };
+        done;
+        touch "$lockfile";
         local input="${1:-}";
         if test ! -n "$input"; then
             { 
@@ -110,8 +118,12 @@ main@bashbox%16229 ()
             { 
                 if test ! -e "$vscode_machine_settings_file"; then
                     { 
-                        mkdir -p "${vscode_machine_settings_file%/*}";
-                        touch "$vscode_machine_settings_file"
+                        mkdir -p "${vscode_machine_settings_file%/*}"
+                    };
+                fi;
+                if ! jq -e . "$vscode_machine_settings_file" > /dev/null 2>&1; then
+                    { 
+                        printf '{}\n' > "$vscode_machine_settings_file"
                     };
                 fi;
                 sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
@@ -130,6 +142,10 @@ main@bashbox%16229 ()
                 continue
             };
         done
+    };
+    function wait::for_vscode_ide_start () 
+    { 
+        gp ports await 23000 > /dev/null
     };
     _system_packages=(tmux fish jq shellcheck rsync tree file);
     function install::system_packages () 
@@ -183,10 +199,10 @@ main@bashbox%16229 ()
     function install::gh () 
     { 
         local tarball_url gp_credentials;
-        log::info "Installing gh CLI";
+        log::info "Installing gh CLI and logging in";
         tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
         curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
-        gp ports await 23000 > /dev/null;
+        wait::for_vscode_ide_start;
         gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
         if [[ "$gp_credentials" =~ password=(.*) ]]; then
             { 
@@ -275,7 +291,7 @@ main@bashbox%16229 ()
                 _hist_name="${_hist##*/}";
                 if test -e "$_workspace_persist_dir/$_hist_name"; then
                     { 
-                        log::warn "Overwriting $_hist with workspace persisted history file";
+                        log::info "Overwriting $_hist with workspace persisted history file";
                         ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
                     };
                 else
@@ -384,7 +400,8 @@ main@bashbox%16229 ()
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        vscode::add_settings "$source_dir/src/config/shell_settings.json"
+        vscode::add_settings "$source_dir/src/config/shell_settings.json";
+        vscode::add_settings "$source_dir/test.json"
     };
     function main () 
     { 
@@ -407,13 +424,13 @@ main@bashbox%16229 ()
                 log::info "Gitpod environment detected!";
                 config::docker_auth & disown;
                 config::shell::persist_history;
-                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & config::shell::hijack_gitpod_task_terminals & install::gh & disown;
-                install::tmux & config::shell::vscode::set_tmux_as_default_shell &
+                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
+                install::gh & disown
             };
         fi;
         install::ranger & disown;
-        log::warn "Waiting for background jobs to complete";
-        while sleep 0.2 && test -n "$(jobs -p)"; do
+        log::info "Waiting for background jobs to complete" && jobs -l;
+        while test -n "$(jobs -p)" && sleep 0.2; do
             { 
                 printf '.';
                 continue
@@ -425,4 +442,4 @@ main@bashbox%16229 ()
     wait;
     exit
 }
-main@bashbox%16229 "$@";
+main@bashbox%15600 "$@";
