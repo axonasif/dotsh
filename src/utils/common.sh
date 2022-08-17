@@ -16,7 +16,7 @@ function vscode::add_settings() {
 	
 	if test ! -n "$input"; then {
 		# Read from standard input
-		read -t0.1 -u0 -r -d '' input;
+		read -t0.5 -u0 -r -d '' input || :;
 	} elif test -e "$input"; then {
 		# Read the input file into a variable
 		input="$(< "$input")";
@@ -32,6 +32,7 @@ function vscode::add_settings() {
 		} fi
 		
 		# Check json syntax
+		wait::for_file_existence "/usr/bin/jq";
 		if ! jq -e . "$vscode_machine_settings_file" >/dev/null 2>&1; then {
 			printf '{}\n' > "$vscode_machine_settings_file";
 		} fi

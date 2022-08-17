@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15600 () 
+main@bashbox%18973 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15600 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15600";
+    ___MAIN_FUNCNAME="main@bashbox%18973";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -101,7 +101,7 @@ main@bashbox%15600 ()
         local input="${1:-}";
         if test ! -n "$input"; then
             { 
-                read -t0.1 -u0 -r -d '' input
+                read -t0.5 -u0 -r -d '' input || :
             };
         else
             if test -e "$input"; then
@@ -121,6 +121,7 @@ main@bashbox%15600 ()
                         mkdir -p "${vscode_machine_settings_file%/*}"
                     };
                 fi;
+                wait::for_file_existence "/usr/bin/jq";
                 if ! jq -e . "$vscode_machine_settings_file" > /dev/null 2>&1; then
                     { 
                         printf '{}\n' > "$vscode_machine_settings_file"
@@ -145,16 +146,22 @@ main@bashbox%15600 ()
     };
     function wait::for_vscode_ide_start () 
     { 
-        gp ports await 23000 > /dev/null
+        if grep -q 'supervisor' /proc/1/cmdline; then
+            { 
+                gp ports await 23000 > /dev/null
+            };
+        fi
     };
-    _system_packages=(tmux fish jq shellcheck rsync tree file);
+    levelone_syspkgs=(tmux fish jq);
+    leveltwo_syspkgs=(shellcheck rsync tree file mosh neovim);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
         { 
             sudo apt-get update;
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-            sudo apt-get install -yq --no-install-recommends "${_system_packages[@]}";
+            sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
+            sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
         } > /dev/null
     };
@@ -400,9 +407,22 @@ main@bashbox%15600 ()
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        vscode::add_settings "$source_dir/src/config/shell_settings.json";
-        vscode::add_settings "$source_dir/test.json"
-    };
+        vscode::add_settings <<-'JSON'
+{
+"terminal.integrated.profiles.linux": {
+"tmuxshell": {
+"path": "bash",
+"args": [
+"-c",
+"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+]
+}
+},
+"terminal.integrated.defaultProfile.linux": "tmuxshell"
+}
+JSON
+
+    }
     function main () 
     { 
         install::system_packages & disown;
@@ -442,4 +462,4 @@ main@bashbox%15600 ()
     wait;
     exit
 }
-main@bashbox%15600 "$@";
+main@bashbox%18973 "$@";

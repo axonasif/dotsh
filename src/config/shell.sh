@@ -114,5 +114,18 @@ function config::shell::bash::gitpod_start_tmux_on_start() {
 
 function config::shell::vscode::set_tmux_as_default_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	vscode::add_settings "$source_dir/src/config/shell_settings.json";
+	vscode::add_settings <<-'JSON'
+		{
+			"terminal.integrated.profiles.linux": {
+				"tmuxshell": {
+					"path": "bash",
+					"args": [
+						"-c",
+						"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+					]
+				}
+			},
+			"terminal.integrated.defaultProfile.linux": "tmuxshell"
+		}
+	JSON
 }

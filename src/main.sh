@@ -47,7 +47,7 @@ function main() {
 		
 		# Tmux + plugins + set as default shell for VSCode
 		install::tmux &
-		config::shell::vscode::set_tmux_as_default_shell & disown
+		config::shell::vscode::set_tmux_as_default_shell & disown;
 		
 		# Install and login into gh
 		install::gh & disown;
