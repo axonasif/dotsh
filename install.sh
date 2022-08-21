@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3777 () 
+main@bashbox%10943 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%3777 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%3777";
+    ___MAIN_FUNCNAME="main@bashbox%10943";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -377,8 +377,8 @@ main@bashbox%3777 ()
                         { 
                             touch "$tmux_init_lock";
                             printf '%s\n' '#!/usr/bin/env bash';
-                            '{' "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" "create_task_terms_for_ssh_in_tmux";
-                            '}'
+                            '{' "tmux_init_lock=$tmux_init_lock" "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" "create_task_terms_for_ssh_in_tmux";
+                            '}' > /ide/startup.sh
                         };
                     fi;
                     if test ! -v SSH_CONNECTION && test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
@@ -506,4 +506,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%3777 "$@";
+main@bashbox%10943 "$@";

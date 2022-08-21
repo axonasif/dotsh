@@ -83,9 +83,10 @@ function config::shell::hijack_gitpod_task_terminals() {
 				touch "$tmux_init_lock";
 				printf '%s\n' '#!/usr/bin/env bash'
 				'{' \
+						"tmux_init_lock=$tmux_init_lock" \
 						"$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
 						"create_task_terms_for_ssh_in_tmux"
-				'}'
+				'}' >/ide/startup.sh
 				# create_session
 				# create_task_terms_for_ssh_in_tmux;
 				# declare -p BASH_SOURCE >/tmp/bs;
