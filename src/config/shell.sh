@@ -33,8 +33,9 @@ function config::shell::hijack_gitpod_task_terminals() {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
 			function create_session() {
-				tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
-				tmux new-session -n home -ds main "cat $HOME/.dotfiles.log; exec $tmux_default_shell -l" 2>/dev/null || :;
+				tmux new-session -n home -ds main|| :;
+				tmux send-keys -t main "cat $HOME/.dotfiles" Enter;
+				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
 			}
@@ -95,23 +96,23 @@ function config::shell::hijack_gitpod_task_terminals() {
 					local stdin;
 					IFS= read -t0.01 -u0 -r -d '' stdin;
 					if test -n "$stdin"; then {
-						declare -p stdin
-						read -p running
+						# declare -p stdin
+						# read -p running
 						# (
-							set -x
-							hmm=$(printf '%q' "$stdin")
-							create_window bash -c "trap 'read -p test;exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm; read -p lol";
+							# set -x
+							stdin=$(printf '%q' "$stdin")
+							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;";
 							# exit; 
 							# eval "$stdin"
 						# ) || :;
 						# can_switch=true;
 					} else {
-						read -p exiting
+						# read -p exiting
 						exit;
 					} fi
 
 					# if test -v can_switch; then {
-						read -p waiting;
+						# read -p waiting;
 					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
 					# } else {
 						bash_ran_once=true;

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16380 () 
+main@bashbox%25456 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%16380 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%16380";
+    ___MAIN_FUNCNAME="main@bashbox%25456";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -322,8 +322,9 @@ main@bashbox%16380 ()
                 { 
                     function create_session () 
                     { 
-                        tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
-                        tmux new-session -n home -ds main "cat $HOME/.dotfiles.log; exec $tmux_default_shell -l" 2> /dev/null || :
+                        tmux new-session -n home -ds main || :;
+                        tmux send-keys -t main "cat $HOME/.dotfiles" Enter;
+                        tmux_default_shell="$(tmux display -p '#{default-shell}')"
                     };
                     function new_window () 
                     { 
@@ -390,19 +391,14 @@ main@bashbox%16380 ()
                                     IFS= read -t0.01 -u0 -r -d '' stdin;
                                     if test -n "$stdin"; then
                                         { 
-                                            declare -p stdin;
-                                            read -p running;
-                                            set -x;
-                                            hmm=$(printf '%q' "$stdin");
-                                            create_window bash -c "trap 'read -p test;exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm; read -p lol"
+                                            stdin=$(printf '%q' "$stdin");
+                                            create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;"
                                         };
                                     else
                                         { 
-                                            read -p exiting;
                                             exit
                                         };
                                     fi;
-                                    read -p waiting;
                                     bash_ran_once=true
                                 };
                             fi
@@ -488,4 +484,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%16380 "$@";
+main@bashbox%25456 "$@";
