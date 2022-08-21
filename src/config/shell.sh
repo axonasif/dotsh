@@ -73,17 +73,19 @@ function config::shell::hijack_gitpod_task_terminals() {
 						unset symbol ref;
 					} fi
 				} done < <(gp tasks list --no-color)
-				# exec tmux attach-session -t main;
-				if test ! -v SSH_CONNECTION; then exit; fi
+				exec tmux attach-session -t main;
 			}
 
-			if test "${NO_VSCODE:-false}" == "true"; then {
+			if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
 				# printf '%s\n' '#!/usr/bin/env bash'
 				# '{' \
-						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
+				# 		"$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
 				# '}'
 				create_session
 				create_task_terms_for_ssh_in_tmux;
+				if test "${BASH_SOURCE[0]}" == /ide/startup.sh; then {
+					exit 0;
+				} fi
 			} fi
 
 
