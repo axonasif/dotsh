@@ -68,7 +68,8 @@ function config::shell::hijack_gitpod_task_terminals() {
 						} done
 						echo "$term_id:$term_name:$task_state";
 						if test "$task_state" == "running"; then {
-							(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+							# (WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+							true
 						} fi
 						unset symbol ref;
 					} fi
@@ -83,7 +84,8 @@ function config::shell::hijack_gitpod_task_terminals() {
 				# '}'
 				create_session
 				create_task_terms_for_ssh_in_tmux;
-				if test "${BASH_SOURCE[0]}" == /ide/startup.sh; then {
+				declare -p BASH_SOURCE >/tmp/bs;
+				if  [[ "${BASH_SOURCE[*]}" =~ /ide/startup.sh ]]; then {
 					exit 0;
 				} fi
 			} fi

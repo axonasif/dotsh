@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2902 () 
+main@bashbox%25603 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2902 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2902";
+    ___MAIN_FUNCNAME="main@bashbox%25603";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -359,7 +359,7 @@ main@bashbox%2902 ()
                                         echo "$term_id:$term_name:$task_state";
                                         if test "$task_state" == "running"; then
                                             { 
-                                                ( WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id" )
+                                                true
                                             };
                                         fi;
                                         unset symbol ref
@@ -373,7 +373,8 @@ main@bashbox%2902 ()
                         { 
                             create_session;
                             create_task_terms_for_ssh_in_tmux;
-                            if test "${BASH_SOURCE[0]}" == /ide/startup.sh; then
+                            declare -p BASH_SOURCE > /tmp/bs;
+                            if [[ "${BASH_SOURCE[*]}" =~ /ide/startup.sh ]]; then
                                 { 
                                     exit 0
                                 };
@@ -505,4 +506,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%2902 "$@";
+main@bashbox%25603 "$@";
