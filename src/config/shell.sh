@@ -100,7 +100,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 						# (
 							set -x
 							hmm=$(printf '%q' "$stdin")
-							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm";
+							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm; read -p lol";
 							# exit; 
 							# eval "$stdin"
 						# ) || :;
