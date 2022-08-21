@@ -93,7 +93,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					IFS= read -t0.01 -u0 -r -d '' stdin;
 					if test -n "$stdin"; then {
 						declare -p stdin
-						# read -p running
+						read -p running
 						# (
 							hmm=$(printf '%q' "$stdin")
 							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm";
@@ -102,15 +102,15 @@ function config::shell::hijack_gitpod_task_terminals() {
 						# ) || :;
 						# can_switch=true;
 					} else {
-						# read -p exiting
+						read -p exiting
 						exit;
 					} fi
 
 					# if test -v can_switch; then {
-					# 	# read -p waiting;
+						read -p waiting;
 					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
 					# } else {
-					# 	bash_ran_once=true;
+						bash_ran_once=true;
 					# } fi
 				} fi
 			} else {
