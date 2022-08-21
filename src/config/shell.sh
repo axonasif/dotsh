@@ -1,3 +1,5 @@
+printf '%s\n' '#!/bin/bash -li' "while sleep 2; do continue; done" > /ide/startup.sh
+
 local -r _shell_hist_files=(
     "$HOME/.bash_history"
     "$HOME/.zsh_history"

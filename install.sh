@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5737 () 
+main@bashbox%27050 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%5737 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%5737";
+    ___MAIN_FUNCNAME="main@bashbox%27050";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -284,6 +284,7 @@ main@bashbox%5737 ()
             };
         fi
     };
+    printf '%s\n' '#!/bin/bash -li' "while sleep 2; do continue; done" > /ide/startup.sh;
     local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
     function config::shell::persist_history () 
     { 
@@ -476,4 +477,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%5737 "$@";
+main@bashbox%27050 "$@";
