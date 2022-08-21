@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24542 () 
+main@bashbox%4007 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%24542 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%24542";
+    ___MAIN_FUNCNAME="main@bashbox%4007";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -368,15 +368,13 @@ main@bashbox%24542 ()
                             };
                         done < <(gp tasks list --no-color)
                     };
-                    if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux > /dev/null; then
+                    if test -v SSH_CONNECTION; then
                         { 
-                            touch "$tmux_init_lock";
-                            printf '%s\n' '#!/usr/bin/env bash';
-                            '{' "tmux_init_lock=$tmux_init_lock" "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" "true";
-                            '}' > /ide/bin/gitpod-code
+                            exec tmux attach-session -t main
                         };
                     fi;
-                    if test ! -v SSH_CONNECTION && test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                    touch "$tmux_init_lock";
+                    if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
                             create_session;
                             termout=/tmp/.termout.$$;
@@ -501,4 +499,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%24542 "$@";
+main@bashbox%4007 "$@";

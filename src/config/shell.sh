@@ -75,29 +75,29 @@ function config::shell::hijack_gitpod_task_terminals() {
 					} fi
 				} done < <(gp tasks list --no-color)
 			}
-				# if test -v SSH_CONNECTION; then {
-				# 	exec tmux attach-session -t main;
-				# } fi
+				if test -v SSH_CONNECTION; then {
+					exec tmux attach-session -t main;
+				} fi
 
-			if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
 				touch "$tmux_init_lock";
-				printf '%s\n' '#!/usr/bin/env bash'
-				'{' \
-						"tmux_init_lock=$tmux_init_lock" \
-						"$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
-						"true"
-				'}' >/ide/bin/gitpod-code
-				# create_session
-				# create_task_terms_for_ssh_in_tmux;
-				# declare -p BASH_SOURCE >/tmp/bs;
-				# if  [[ "${BASH_SOURCE[*]}" =~ /ide/startup.sh ]]; then {
-				# 	exit 0;
-				# } fi
-			} fi
+			# if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
+			# 	printf '%s\n' '#!/usr/bin/env bash'
+			# 	'{' \
+			# 			"tmux_init_lock=$tmux_init_lock" \
+			# 			"$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
+			# 			"true"
+			# 	'}' >/ide/bin/gitpod-code
+			# 	# create_session
+			# 	# create_task_terms_for_ssh_in_tmux;
+			# 	# declare -p BASH_SOURCE >/tmp/bs;
+			# 	# if  [[ "${BASH_SOURCE[*]}" =~ /ide/startup.sh ]]; then {
+			# 	# 	exit 0;
+			# 	# } fi
+			# } fi
 
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if test ! -v SSH_CONNECTION && test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 				create_session;
 				
 				# if test -v SSH_CONNECTION; then {
