@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%10637 () 
+main@bashbox%18213 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%10637 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%10637";
+    ___MAIN_FUNCNAME="main@bashbox%18213";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -322,7 +322,7 @@ main@bashbox%10637 ()
                     function create_session () 
                     { 
                         tmux new-session -n home -ds main || :;
-                        tmux send-keys -t main "cat $HOME/.dotfiles.log" Enter;
+                        tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
                         tmux_default_shell="$(tmux display -p '#{default-shell}')"
                     };
                     function new_window () 
@@ -390,12 +390,28 @@ main@bashbox%10637 ()
                                     IFS= read -t0.01 -u0 -r -d '' stdin;
                                     if test -n "$stdin"; then
                                         { 
+                                            if test -v DEBUG_DOTFILES; then
+                                                { 
+                                                    declare -p stdin;
+                                                    read -p running
+                                                };
+                                            fi;
                                             stdin=$(printf '%q' "$stdin");
                                             create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;"
                                         };
                                     else
                                         { 
+                                            if test -v DEBUG_DOTFILES; then
+                                                { 
+                                                    read -p exiting
+                                                };
+                                            fi;
                                             exit
+                                        };
+                                    fi;
+                                    if test -v DEBUG_DOTFILES; then
+                                        { 
+                                            read -p waiting
                                         };
                                     fi;
                                     bash_ran_once=true
@@ -483,4 +499,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%10637 "$@";
+main@bashbox%18213 "$@";

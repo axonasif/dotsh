@@ -34,7 +34,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 		function inject_tmux() {
 			function create_session() {
 				tmux new-session -n home -ds main|| :;
-				tmux send-keys -t main "cat $HOME/.dotfiles.log" Enter;
+				tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
@@ -97,10 +97,14 @@ function config::shell::hijack_gitpod_task_terminals() {
 					local stdin;
 					IFS= read -t0.01 -u0 -r -d '' stdin;
 					if test -n "$stdin"; then {
-						# declare -p stdin
-						# read -p running
-						# (
+						# DEBUG
+						if test -v DEBUG_DOTFILES; then {
+							declare -p stdin
+							read -p running
 							# set -x
+						} fi
+						# DEBUG
+						# (
 							stdin=$(printf '%q' "$stdin")
 							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;";
 							# exit; 
@@ -108,12 +112,16 @@ function config::shell::hijack_gitpod_task_terminals() {
 						# ) || :;
 						# can_switch=true;
 					} else {
-						# read -p exiting
+						if test -v DEBUG_DOTFILES; then {
+							read -p exiting;
+						} fi
 						exit;
 					} fi
 
 					# if test -v can_switch; then {
-						# read -p waiting;
+						if test -v DEBUG_DOTFILES; then {
+							read -p waiting;
+						} fi
 					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
 					# } else {
 						bash_ran_once=true;
