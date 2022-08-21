@@ -75,9 +75,9 @@ function config::shell::hijack_gitpod_task_terminals() {
 					} fi
 				} done < <(gp tasks list --no-color)
 			}
-				if test -v SSH_CONNECTION; then {
-					exec tmux attach-session -t main;
-				} fi
+				# if test -v SSH_CONNECTION; then {
+				# 	exec tmux attach-session -t main;
+				# } fi
 
 			if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
 				touch "$tmux_init_lock";
