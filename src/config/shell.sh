@@ -66,21 +66,22 @@ function config::shell::hijack_gitpod_task_terminals() {
 				
 				if test -v SSH_CONNECTION; then {
 					# Connect task terminals to tmux windows
-					local term_id term_name task_state symbol ref;
-					while IFS='|' read -r _ term_id term_name task_state _; do {
-						if [[ "$term_id" =~ [0-9]+ ]]; then {
-							for symbol in term_id term_name task_state; do {
-								declare -n ref="$symbol";
-								ref="${ref% }" && ref="${ref# }";
-							} done
-							echo "$term_id:$term_name:$task_state";
-							if test "$task_state" == "running"; then {
-								(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
-							} fi
-							unset symbol ref;
-						} fi
-					} done < <(gp tasks list --no-color)
-					exec tmux attach-session -t main;
+					# local term_id term_name task_state symbol ref;
+					# while IFS='|' read -r _ term_id term_name task_state _; do {
+					# 	if [[ "$term_id" =~ [0-9]+ ]]; then {
+					# 		for symbol in term_id term_name task_state; do {
+					# 			declare -n ref="$symbol";
+					# 			ref="${ref% }" && ref="${ref# }";
+					# 		} done
+					# 		echo "$term_id:$term_name:$task_state";
+					# 		if test "$task_state" == "running"; then {
+					# 			(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+					# 		} fi
+					# 		unset symbol ref;
+					# 	} fi
+					# } done < <(gp tasks list --no-color)
+					# exec tmux attach-session -t main;
+					true;
 				} else {
 					# if test ! -v TMUX; then {
 					# 	create_window "$BASH" -l \; attach;

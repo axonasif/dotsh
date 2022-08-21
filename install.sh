@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%1860 () 
+main@bashbox%5737 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%1860 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%1860";
+    ___MAIN_FUNCNAME="main@bashbox%5737";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -348,30 +348,7 @@ main@bashbox%1860 ()
                             create_session;
                             if test -v SSH_CONNECTION; then
                                 { 
-                                    local term_id term_name task_state symbol ref;
-                                    while IFS='|' read -r _ term_id term_name task_state _; do
-                                        { 
-                                            if [[ "$term_id" =~ [0-9]+ ]]; then
-                                                { 
-                                                    for symbol in term_id term_name task_state;
-                                                    do
-                                                        { 
-                                                            declare -n ref="$symbol";
-                                                            ref="${ref% }" && ref="${ref# }"
-                                                        };
-                                                    done;
-                                                    echo "$term_id:$term_name:$task_state";
-                                                    if test "$task_state" == "running"; then
-                                                        { 
-                                                            ( WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id" )
-                                                        };
-                                                    fi;
-                                                    unset symbol ref
-                                                };
-                                            fi
-                                        };
-                                    done < <(gp tasks list --no-color);
-                                    exec tmux attach-session -t main
+                                    true
                                 };
                             else
                                 { 
@@ -499,4 +476,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%1860 "$@";
+main@bashbox%5737 "$@";
