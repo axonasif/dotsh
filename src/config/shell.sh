@@ -30,7 +30,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
 			function create_session() {
-				tmux new-session -n home -ds main 2>/dev/null || :;
+				tmux new-session -n home -ds main cat $HOME/.dotfiles.log 2>/dev/null || :;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
