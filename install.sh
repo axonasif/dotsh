@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6603 () 
+main@bashbox%10637 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%6603 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%6603";
+    ___MAIN_FUNCNAME="main@bashbox%10637";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -210,10 +210,9 @@ main@bashbox%6603 ()
         tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
         curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
         wait::for_vscode_ide_start;
-        gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
-        if [[ "$gp_credentials" =~ password=(.*) ]]; then
+        if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
             { 
-                printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token
+                printf '%s\n' "${token}" | gh auth login --with-token
             };
         else
             { 
@@ -484,4 +483,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%6603 "$@";
+main@bashbox%10637 "$@";

@@ -9,10 +9,10 @@ function install::gh() {
 
 	# Login into gh
 	wait::for_vscode_ide_start;
-gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
-if [[ "$gp_credentials" =~ password=(.*) ]]; then {
-	printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token;
-} else {
-	log::error "Failed to get auth token for gh" || exit 1;
-} fi
+	if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then {
+	# if [[ "$gp_credentials" =~ password=(.*) ]]; then {
+		printf '%s\n' "${token}" | gh auth login --with-token;
+	} else {
+		log::error "Failed to get auth token for gh" || exit 1;
+	} fi
 }
