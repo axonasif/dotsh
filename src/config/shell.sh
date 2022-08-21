@@ -1,4 +1,4 @@
-	local -r _shell_hist_files=(
+local -r _shell_hist_files=(
     "$HOME/.bash_history"
     "$HOME/.zsh_history"
     "$HOME/.local/share/fish/fish_history"
@@ -25,68 +25,108 @@ function config::shell::persist_history() {
     } done
 }
 function config::shell::hijack_gitpod_task_terminals() {
-    # Make gitpod task spawned terminals use fish
-    if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then {
+	# For debugging
+	# trap 'read -p eval: && eval "$REPLY"' ERR EXIT SIGTERM SIGINT
+    
+	# Make gitpod task spawned terminals use fish
+    if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
-			(cd $HOME && tmux new-session -n home -ds main 2> /dev/null || :);
+			function create_session() {
+				tmux new-session -n home -ds main|| :;
+				tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
+				tmux_default_shell="$(tmux display -p '#{default-shell}')";
+				# local tmux_default_shell;
+				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
+			}
+			function new_window() {
+				exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@";
+			}
 			function create_window() {
-				cmd() {
-					exec tmux new-window -n "vs:${PWD##*/}" -t main "$@";
-				}
-				# read -n 1 -rs -p "$(printf '\n\n>>> Press any key for switching to tmux or Ctrl+c to exit')" || exit;
 				local tmux_init_lock=/tmp/.tmux.init;
-				if test ! -e "$tmux_init_lock"; then {
+				if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then {
 					# create_window "$tmux_default_shell" -l;
 					touch "$tmux_init_lock";
-					local tasks_count;
+					# local tasks_count;
 					# tasks_count="$(echo $GITPOD_TASKS | grep -Eo '(before|command|init)":"' | wc -l)"
 					# if test "$tasks_count" -eq 1; then {
-						cmd "$@" \; attach;
+						new_window "$@" \; attach;
 					# } else {
 						# cmd "$@";
 					# } fi
 				} else {
-					cmd "$@";
-				} fi
-				
+					new_window "$@";
+				} fi		
 			}
+
+
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test ! -v SSH_CONNECTION; then {
-				# if test ! -v TMUX; then {
-				# 	create_window "$BASH" -l \; attach;
-				# } fi
-
-				termout=/tmp/.termout.$$
-				if test ! -v bash_ran_once; then {
-					exec > >(tee -a "$termout") 2>&1;
-				} fi
-				if test -v bash_ran_once; then {
-					can_switch=true;
-				} fi
-
-				local stdin;
-				IFS= read -t0.01 -u0 -r -d '' stdin;
-				if test -n "$stdin"; then {
-					# read -p running
-					(
-						printf '%s' "$stdin";
-						eval "$stdin"
-					) || :;
-					can_switch=true;
+			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+				create_session;
+				
+				if test -v SSH_CONNECTION; then {
+					# Connect task terminals to tmux windows
+					local term_id term_name task_state symbol ref;
+					while IFS='|' read -r _ term_id term_name task_state _; do {
+						if [[ "$term_id" =~ [0-9]+ ]]; then {
+							for symbol in term_id term_name task_state; do {
+								declare -n ref="$symbol";
+								ref="${ref% }" && ref="${ref# }";
+							} done
+							echo "$term_id:$term_name:$task_state";
+							if test "$task_state" == "running"; then {
+								(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+							} fi
+							unset symbol ref;
+						} fi
+					} done < <(gp tasks list --no-color)
+					exec tmux attach-session -t main;
 				} else {
-					# read -p exiting
-					exit;
-				} fi
+					# if test ! -v TMUX; then {
+					# 	create_window "$BASH" -l \; attach;
+					# } fi
 
-				if test -v can_switch; then {
-					# read -p waiting;
-					tmux_default_shell="$(tmux display -p '#{default-shell}')";
-					create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
-				} else {
-					bash_ran_once=true;
-				} fi
+					termout=/tmp/.termout.$$
+					if test ! -v bash_ran_once; then {
+						exec > >(tee -a "$termout") 2>&1;
+					} fi
+					if test -v bash_ran_once; then {
+						can_switch=true;
+					} fi
 
+					local stdin;
+					IFS= read -t0.01 -u0 -r -d '' stdin;
+					if test -n "$stdin"; then {
+						# DEBUG
+						if test "${DEBUG_DOTFILES:-false}" == true; then {
+							declare -p stdin
+							read -p running
+							# set -x
+						} fi
+						# DEBUG
+						# (
+							stdin=$(printf '%q' "$stdin")
+							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;";
+							# exit; 
+							# eval "$stdin"
+						# ) || :;
+						# can_switch=true;
+					} else {
+						if test "${DEBUG_DOTFILES:-false}" == true; then {
+							read -p exiting;
+						} fi
+						exit;
+					} fi
+
+					# if test -v can_switch; then {
+						if test "${DEBUG_DOTFILES:-false}" == true; then {
+							read -p waiting;
+						} fi
+					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
+					# } else {
+						bash_ran_once=true;
+					# } fi
+				} fi
 			} else {
 				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
@@ -107,10 +147,7 @@ function config::shell::fish::append_hist_from_gitpod_tasks() {
 }
 
 
-function config::shell::bash::gitpod_start_tmux_on_start() {
-	local file="$HOME/.bashrc.d/10-tmux";
-	printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file";
-}
+
 
 function config::shell::vscode::set_tmux_as_default_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";

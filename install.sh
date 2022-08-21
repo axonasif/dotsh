@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24093 () 
+main@bashbox%1860 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%24093 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%24093";
+    ___MAIN_FUNCNAME="main@bashbox%1860";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -210,10 +210,9 @@ main@bashbox%24093 ()
         tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
         curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
         wait::for_vscode_ide_start;
-        gp_credentials="$(printf '%s\n' host=github.com | gp credential-helper get)";
-        if [[ "$gp_credentials" =~ password=(.*) ]]; then
+        if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
             { 
-                printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token
+                printf '%s\n' "${token}" | gh auth login --with-token
             };
         else
             { 
@@ -315,64 +314,106 @@ main@bashbox%24093 ()
     };
     function config::shell::hijack_gitpod_task_terminals () 
     { 
-        if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then
+        if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2> /dev/null; then
             { 
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
-                    ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
+                    function create_session () 
+                    { 
+                        tmux new-session -n home -ds main || :;
+                        tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
+                        tmux_default_shell="$(tmux display -p '#{default-shell}')"
+                    };
+                    function new_window () 
+                    { 
+                        exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@"
+                    };
                     function create_window () 
                     { 
-                        function cmd () 
-                        { 
-                            exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
-                        };
                         local tmux_init_lock=/tmp/.tmux.init;
-                        if test ! -e "$tmux_init_lock"; then
+                        if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then
                             { 
                                 touch "$tmux_init_lock";
-                                local tasks_count;
-                                cmd "$@" \; attach
+                                new_window "$@" \; attach
                             };
                         else
                             { 
-                                cmd "$@"
+                                new_window "$@"
                             };
                         fi
                     };
-                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ] && test ! -v SSH_CONNECTION; then
+                    if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
-                            termout=/tmp/.termout.$$;
-                            if test ! -v bash_ran_once; then
+                            create_session;
+                            if test -v SSH_CONNECTION; then
                                 { 
-                                    exec > >(tee -a "$termout") 2>&1
-                                };
-                            fi;
-                            if test -v bash_ran_once; then
-                                { 
-                                    can_switch=true
-                                };
-                            fi;
-                            local stdin;
-                            IFS= read -t0.01 -u0 -r -d '' stdin;
-                            if test -n "$stdin"; then
-                                { 
-                                    ( printf '%s' "$stdin";
-                                    eval "$stdin" ) || :;
-                                    can_switch=true
+                                    local term_id term_name task_state symbol ref;
+                                    while IFS='|' read -r _ term_id term_name task_state _; do
+                                        { 
+                                            if [[ "$term_id" =~ [0-9]+ ]]; then
+                                                { 
+                                                    for symbol in term_id term_name task_state;
+                                                    do
+                                                        { 
+                                                            declare -n ref="$symbol";
+                                                            ref="${ref% }" && ref="${ref# }"
+                                                        };
+                                                    done;
+                                                    echo "$term_id:$term_name:$task_state";
+                                                    if test "$task_state" == "running"; then
+                                                        { 
+                                                            ( WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id" )
+                                                        };
+                                                    fi;
+                                                    unset symbol ref
+                                                };
+                                            fi
+                                        };
+                                    done < <(gp tasks list --no-color);
+                                    exec tmux attach-session -t main
                                 };
                             else
                                 { 
-                                    exit
-                                };
-                            fi;
-                            if test -v can_switch; then
-                                { 
-                                    tmux_default_shell="$(tmux display -p '#{default-shell}')";
-                                    create_window "less -FXR $termout | cat; exec $tmux_default_shell -l"
-                                };
-                            else
-                                { 
+                                    termout=/tmp/.termout.$$;
+                                    if test ! -v bash_ran_once; then
+                                        { 
+                                            exec > >(tee -a "$termout") 2>&1
+                                        };
+                                    fi;
+                                    if test -v bash_ran_once; then
+                                        { 
+                                            can_switch=true
+                                        };
+                                    fi;
+                                    local stdin;
+                                    IFS= read -t0.01 -u0 -r -d '' stdin;
+                                    if test -n "$stdin"; then
+                                        { 
+                                            if test "${DEBUG_DOTFILES:-false}" == true; then
+                                                { 
+                                                    declare -p stdin;
+                                                    read -p running
+                                                };
+                                            fi;
+                                            stdin=$(printf '%q' "$stdin");
+                                            create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;"
+                                        };
+                                    else
+                                        { 
+                                            if test "${DEBUG_DOTFILES:-false}" == true; then
+                                                { 
+                                                    read -p exiting
+                                                };
+                                            fi;
+                                            exit
+                                        };
+                                    fi;
+                                    if test "${DEBUG_DOTFILES:-false}" == true; then
+                                        { 
+                                            read -p waiting
+                                        };
+                                    fi;
                                     bash_ran_once=true
                                 };
                             fi
@@ -399,11 +440,6 @@ main@bashbox%24093 ()
                 fi
             };
         done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
-    };
-    function config::shell::bash::gitpod_start_tmux_on_start () 
-    { 
-        local file="$HOME/.bashrc.d/10-tmux";
-        printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file"
     };
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
@@ -445,7 +481,7 @@ JSON
                 log::info "Gitpod environment detected!";
                 config::docker_auth & disown;
                 config::shell::persist_history;
-                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
                 install::gh & disown
             };
         fi;
@@ -463,4 +499,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%24093 "$@";
+main@bashbox%1860 "$@";
