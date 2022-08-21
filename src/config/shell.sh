@@ -25,8 +25,10 @@ function config::shell::persist_history() {
     } done
 }
 function config::shell::hijack_gitpod_task_terminals() {
-    # Make gitpod task spawned terminals use fish
-	trap 'read -p eval: && eval "$REPLY"' ERR EXIT SIGTERM SIGINT
+	# For debugging
+	# trap 'read -p eval: && eval "$REPLY"' ERR EXIT SIGTERM SIGINT
+    
+	# Make gitpod task spawned terminals use fish
     if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
@@ -96,6 +98,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 						declare -p stdin
 						read -p running
 						# (
+							set -x
 							hmm=$(printf '%q' "$stdin")
 							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm";
 							# exit; 
