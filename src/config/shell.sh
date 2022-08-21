@@ -29,7 +29,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
-			trap 'read -p waiting...' EXIT ERR SIGTERM SIGINT;
+			trap 'read -p waiting... && exec $BASH' EXIT ERR SIGTERM SIGINT;
 			function create_session() {
 				tmux new-session -n home -ds main 2>/dev/null || :;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";

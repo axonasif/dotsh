@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%19846 () 
+main@bashbox%5467 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%19846 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%19846";
+    ___MAIN_FUNCNAME="main@bashbox%5467";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -320,7 +320,7 @@ main@bashbox%19846 ()
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
-                    trap 'read -p waiting...' EXIT ERR SIGTERM SIGINT;
+                    trap 'read -p waiting... && exec $BASH' EXIT ERR SIGTERM SIGINT;
                     function create_session () 
                     { 
                         tmux new-session -n home -ds main 2> /dev/null || :;
@@ -482,4 +482,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%19846 "$@";
+main@bashbox%5467 "$@";
