@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24093 () 
+main@bashbox%21538 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%24093 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%24093";
+    ___MAIN_FUNCNAME="main@bashbox%21538";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -320,18 +320,17 @@ main@bashbox%24093 ()
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
-                    ( cd $HOME && tmux new-session -n home -ds main 2> /dev/null || : );
+                    config::shell::bash::start_tmux_on_start;
                     function create_window () 
                     { 
                         function cmd () 
                         { 
-                            exec tmux new-window -n "vs:${PWD##*/}" -t main "$@"
+                            exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@"
                         };
                         local tmux_init_lock=/tmp/.tmux.init;
                         if test ! -e "$tmux_init_lock"; then
                             { 
                                 touch "$tmux_init_lock";
-                                local tasks_count;
                                 cmd "$@" \; attach
                             };
                         else
@@ -353,12 +352,13 @@ main@bashbox%24093 ()
                                     can_switch=true
                                 };
                             fi;
+                            tmux_default_shell="$(tmux display -p '#{default-shell}')";
                             local stdin;
                             IFS= read -t0.01 -u0 -r -d '' stdin;
                             if test -n "$stdin"; then
                                 { 
-                                    ( printf '%s' "$stdin";
-                                    eval "$stdin" ) || :;
+                                    ( printf '%s\n' "$stdin";
+                                    create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdout; $stdout" ) || :;
                                     can_switch=true
                                 };
                             else
@@ -368,7 +368,6 @@ main@bashbox%24093 ()
                             fi;
                             if test -v can_switch; then
                                 { 
-                                    tmux_default_shell="$(tmux display -p '#{default-shell}')";
                                     create_window "less -FXR $termout | cat; exec $tmux_default_shell -l"
                                 };
                             else
@@ -400,10 +399,9 @@ main@bashbox%24093 ()
             };
         done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
     };
-    function config::shell::bash::gitpod_start_tmux_on_start () 
+    function config::shell::bash::start_tmux_on_start () 
     { 
-        local file="$HOME/.bashrc.d/10-tmux";
-        printf '(cd $HOME && tmux new-session -n home -ds main 2>/dev/null || :) & rm %s\n' "$file" > "$file"
+        tmux new-session -n home -ds main 2> /dev/null || :
     };
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
@@ -445,7 +443,7 @@ JSON
                 log::info "Gitpod environment detected!";
                 config::docker_auth & disown;
                 config::shell::persist_history;
-                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::bash::gitpod_start_tmux_on_start & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
                 install::gh & disown
             };
         fi;
@@ -463,4 +461,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%24093 "$@";
+main@bashbox%21538 "$@";

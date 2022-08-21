@@ -42,7 +42,7 @@ function main() {
         # Shell + Fish hacks (specific to Gitpod)
         config::shell::persist_history;
         config::shell::fish::append_hist_from_gitpod_tasks &
-		config::shell::bash::gitpod_start_tmux_on_start &
+		# config::shell::bash::gitpod_start_tmux_on_start &
         config::shell::hijack_gitpod_task_terminals &
 		
 		# Tmux + plugins + set as default shell for VSCode
