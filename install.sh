@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11551 () 
+main@bashbox%13317 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%11551 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%11551";
+    ___MAIN_FUNCNAME="main@bashbox%13317";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -320,6 +320,7 @@ main@bashbox%11551 ()
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
+                    trap 'read -p waiting...' EXIT ERR SIGTERM SIGINT;
                     function create_session () 
                     { 
                         tmux new-session -n home -ds main 2> /dev/null || :;
@@ -344,36 +345,36 @@ main@bashbox%11551 ()
                         fi
                     };
                     create_session;
-                    if test -v SSH_CONNECTION; then
+                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
-                            local term_id term_name task_state symbol ref;
-                            while IFS='|' read -r _ term_id term_name task_state _; do
+                            if test -v SSH_CONNECTION; then
                                 { 
-                                    if [[ "$term_id" =~ [0-9]+ ]]; then
+                                    local term_id term_name task_state symbol ref;
+                                    while IFS='|' read -r _ term_id term_name task_state _; do
                                         { 
-                                            for symbol in term_id term_name task_state;
-                                            do
+                                            if [[ "$term_id" =~ [0-9]+ ]]; then
                                                 { 
-                                                    declare -n ref="$symbol";
-                                                    ref="${ref% }" && ref="${ref# }"
+                                                    for symbol in term_id term_name task_state;
+                                                    do
+                                                        { 
+                                                            declare -n ref="$symbol";
+                                                            ref="${ref% }" && ref="${ref# }"
+                                                        };
+                                                    done;
+                                                    echo "$term_id:$term_name:$task_state";
+                                                    if test "$task_state" == "running"; then
+                                                        { 
+                                                            ( WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id" )
+                                                        };
+                                                    fi;
+                                                    unset symbol ref
                                                 };
-                                            done;
-                                            echo "$term_id:$term_name:$task_state";
-                                            if test "$task_state" == "running"; then
-                                                { 
-                                                    ( WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id" )
-                                                };
-                                            fi;
-                                            unset symbol ref
+                                            fi
                                         };
-                                    fi
+                                    done < <(gp tasks list --no-color);
+                                    exec tmux attach-session -t main
                                 };
-                            done < <(gp tasks list --no-color);
-                            exec tmux attach-session -t main
-                        };
-                    else
-                        { 
-                            if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                            else
                                 { 
                                     termout=/tmp/.termout.$$;
                                     if test ! -v bash_ran_once; then
@@ -390,29 +391,19 @@ main@bashbox%11551 ()
                                     IFS= read -t0.01 -u0 -r -d '' stdin;
                                     if test -n "$stdin"; then
                                         { 
-                                            ( create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdout; $stdout" ) || :;
-                                            can_switch=true
+                                            ( create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' \"$stdin\"; eval \"$stdin\"" ) || :
                                         };
                                     else
                                         { 
                                             exit
                                         };
-                                    fi;
-                                    if test -v can_switch; then
-                                        { 
-                                            create_window "less -FXR $termout | cat; exec $tmux_default_shell -l"
-                                        };
-                                    else
-                                        { 
-                                            bash_ran_once=true
-                                        };
                                     fi
                                 };
-                            else
-                                { 
-                                    unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}"
-                                };
                             fi
+                        };
+                    else
+                        { 
+                            unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}"
                         };
                     fi
                 };
@@ -491,4 +482,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%11551 "$@";
+main@bashbox%13317 "$@";

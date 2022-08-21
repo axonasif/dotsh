@@ -29,6 +29,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
+			trap 'read -p waiting...' EXIT ERR SIGTERM SIGINT;
 			function create_session() {
 				tmux new-session -n home -ds main 2>/dev/null || :;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
@@ -57,63 +58,63 @@ function config::shell::hijack_gitpod_task_terminals() {
 
 			create_session;
 
-			if test -v SSH_CONNECTION; then {
-				# Connect task terminals to tmux windows
-				local term_id term_name task_state symbol ref;
-				while IFS='|' read -r _ term_id term_name task_state _; do {
-					if [[ "$term_id" =~ [0-9]+ ]]; then {
-						for symbol in term_id term_name task_state; do {
-							declare -n ref="$symbol";
-							ref="${ref% }" && ref="${ref# }";
-						} done
-						echo "$term_id:$term_name:$task_state";
-						if test "$task_state" == "running"; then {
-							(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
+			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+				if test -v SSH_CONNECTION; then {
+					# Connect task terminals to tmux windows
+					local term_id term_name task_state symbol ref;
+					while IFS='|' read -r _ term_id term_name task_state _; do {
+						if [[ "$term_id" =~ [0-9]+ ]]; then {
+							for symbol in term_id term_name task_state; do {
+								declare -n ref="$symbol";
+								ref="${ref% }" && ref="${ref# }";
+							} done
+							echo "$term_id:$term_name:$task_state";
+							if test "$task_state" == "running"; then {
+								(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+							} fi
+							unset symbol ref;
 						} fi
-						unset symbol ref;
-					} fi
-				} done < <(gp tasks list --no-color)
-				exec tmux attach-session -t main;
-			} else {
-				# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-				if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
-					# if test ! -v TMUX; then {
-					# 	create_window "$BASH" -l \; attach;
-					# } fi
-
-					termout=/tmp/.termout.$$
-					if test ! -v bash_ran_once; then {
-						exec > >(tee -a "$termout") 2>&1;
-					} fi
-					if test -v bash_ran_once; then {
-						can_switch=true;
-					} fi
-
-					local stdin;
-					IFS= read -t0.01 -u0 -r -d '' stdin;
-					if test -n "$stdin"; then {
-						# read -p running
-						(
-							# printf '%s\n' "$stdin";
-							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdout; $stdout";
-							# eval "$stdin"
-						) || :;
-						can_switch=true;
-					} else {
-						# read -p exiting
-						exit;
-					} fi
-
-					if test -v can_switch; then {
-						# read -p waiting;
-						create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
-					} else {
-						bash_ran_once=true;
-					} fi
-
+					} done < <(gp tasks list --no-color)
+					exec tmux attach-session -t main;
 				} else {
-					unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
+						# if test ! -v TMUX; then {
+						# 	create_window "$BASH" -l \; attach;
+						# } fi
+
+						termout=/tmp/.termout.$$
+						if test ! -v bash_ran_once; then {
+							exec > >(tee -a "$termout") 2>&1;
+						} fi
+						if test -v bash_ran_once; then {
+							can_switch=true;
+						} fi
+
+						local stdin;
+						IFS= read -t0.01 -u0 -r -d '' stdin;
+						if test -n "$stdin"; then {
+							# read -p running
+							(
+								# printf '%s\n' "$stdin";
+								create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' \"$stdin\"; eval \"$stdin\"";
+								# eval "$stdin"
+							) || :;
+							# can_switch=true;
+						} else {
+							# read -p exiting
+							exit;
+						} fi
+
+						# if test -v can_switch; then {
+						# 	# read -p waiting;
+						# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
+						# } else {
+						# 	bash_ran_once=true;
+						# } fi
+
 				} fi
+			} else {
+				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
 
 		}
