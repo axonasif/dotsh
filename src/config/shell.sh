@@ -1,5 +1,3 @@
-printf '%s\n' '#!/bin/bash -li' "while sleep 2; do continue; done" > /ide/startup.sh
-
 local -r _shell_hist_files=(
     "$HOME/.bash_history"
     "$HOME/.zsh_history"
@@ -35,8 +33,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
 			function create_session() {
-				tmux new-session -n home -ds main|| :;
-				tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
+				tmux new-session -n home -ds main 2>/dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
@@ -60,31 +57,41 @@ function config::shell::hijack_gitpod_task_terminals() {
 					new_window "$@";
 				} fi		
 			}
+			function create_task_terms_for_ssh_in_tmux() {
+				# Connect task terminals to tmux windows
+				local term_id term_name task_state symbol ref;
+				while IFS='|' read -r _ term_id term_name task_state _; do {
+					if [[ "$term_id" =~ [0-9]+ ]]; then {
+						for symbol in term_id term_name task_state; do {
+							declare -n ref="$symbol";
+							ref="${ref% }" && ref="${ref# }";
+						} done
+						echo "$term_id:$term_name:$task_state";
+						if test "$task_state" == "running"; then {
+							(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+						} fi
+						unset symbol ref;
+					} fi
+				} done < <(gp tasks list --no-color)
+				exec tmux attach-session -t main;
+			}
+
+			if test "${NO_VSCODE:-false}" == "true"; then {
+				# printf '%s\n' '#!/usr/bin/env bash'
+				# '{' \
+						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
+				# '}'
+				create_session
+				create_task_terms_for_ssh_in_tmux;
+			} fi
 
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+			if test ! -v SSH_CONNECTION && test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 				create_session;
 				
-				if test -v SSH_CONNECTION; then {
-					# Connect task terminals to tmux windows
-					# local term_id term_name task_state symbol ref;
-					# while IFS='|' read -r _ term_id term_name task_state _; do {
-					# 	if [[ "$term_id" =~ [0-9]+ ]]; then {
-					# 		for symbol in term_id term_name task_state; do {
-					# 			declare -n ref="$symbol";
-					# 			ref="${ref% }" && ref="${ref# }";
-					# 		} done
-					# 		echo "$term_id:$term_name:$task_state";
-					# 		if test "$task_state" == "running"; then {
-					# 			(WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
-					# 		} fi
-					# 		unset symbol ref;
-					# 	} fi
-					# } done < <(gp tasks list --no-color)
-					# exec tmux attach-session -t main;
-					true;
-				} else {
+				# if test -v SSH_CONNECTION; then {
+				# } else {
 					# if test ! -v TMUX; then {
 					# 	create_window "$BASH" -l \; attach;
 					# } fi
@@ -129,13 +136,14 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# } else {
 						bash_ran_once=true;
 					# } fi
-				} fi
+				# } fi
 			} else {
 				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+		
     } fi
 }
 

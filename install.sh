@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%27050 () 
+main@bashbox%24756 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%27050 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%27050";
+    ___MAIN_FUNCNAME="main@bashbox%24756";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -284,7 +284,6 @@ main@bashbox%27050 ()
             };
         fi
     };
-    printf '%s\n' '#!/bin/bash -li' "while sleep 2; do continue; done" > /ide/startup.sh;
     local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
     function config::shell::persist_history () 
     { 
@@ -322,8 +321,7 @@ main@bashbox%27050 ()
                 { 
                     function create_session () 
                     { 
-                        tmux new-session -n home -ds main || :;
-                        tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
+                        tmux new-session -n home -ds main 2> /dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
                         tmux_default_shell="$(tmux display -p '#{default-shell}')"
                     };
                     function new_window () 
@@ -344,57 +342,82 @@ main@bashbox%27050 ()
                             };
                         fi
                     };
-                    if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                    function create_task_terms_for_ssh_in_tmux () 
+                    { 
+                        local term_id term_name task_state symbol ref;
+                        while IFS='|' read -r _ term_id term_name task_state _; do
+                            { 
+                                if [[ "$term_id" =~ [0-9]+ ]]; then
+                                    { 
+                                        for symbol in term_id term_name task_state;
+                                        do
+                                            { 
+                                                declare -n ref="$symbol";
+                                                ref="${ref% }" && ref="${ref# }"
+                                            };
+                                        done;
+                                        echo "$term_id:$term_name:$task_state";
+                                        if test "$task_state" == "running"; then
+                                            { 
+                                                ( WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id" )
+                                            };
+                                        fi;
+                                        unset symbol ref
+                                    };
+                                fi
+                            };
+                        done < <(gp tasks list --no-color);
+                        exec tmux attach-session -t main
+                    };
+                    if test "${NO_VSCODE:-false}" == "true"; then
                         { 
                             create_session;
-                            if test -v SSH_CONNECTION; then
+                            create_task_terms_for_ssh_in_tmux
+                        };
+                    fi;
+                    if test ! -v SSH_CONNECTION && test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                        { 
+                            create_session;
+                            termout=/tmp/.termout.$$;
+                            if test ! -v bash_ran_once; then
                                 { 
-                                    true
+                                    exec > >(tee -a "$termout") 2>&1
+                                };
+                            fi;
+                            if test -v bash_ran_once; then
+                                { 
+                                    can_switch=true
+                                };
+                            fi;
+                            local stdin;
+                            IFS= read -t0.01 -u0 -r -d '' stdin;
+                            if test -n "$stdin"; then
+                                { 
+                                    if test "${DEBUG_DOTFILES:-false}" == true; then
+                                        { 
+                                            declare -p stdin;
+                                            read -p running
+                                        };
+                                    fi;
+                                    stdin=$(printf '%q' "$stdin");
+                                    create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;"
                                 };
                             else
                                 { 
-                                    termout=/tmp/.termout.$$;
-                                    if test ! -v bash_ran_once; then
-                                        { 
-                                            exec > >(tee -a "$termout") 2>&1
-                                        };
-                                    fi;
-                                    if test -v bash_ran_once; then
-                                        { 
-                                            can_switch=true
-                                        };
-                                    fi;
-                                    local stdin;
-                                    IFS= read -t0.01 -u0 -r -d '' stdin;
-                                    if test -n "$stdin"; then
-                                        { 
-                                            if test "${DEBUG_DOTFILES:-false}" == true; then
-                                                { 
-                                                    declare -p stdin;
-                                                    read -p running
-                                                };
-                                            fi;
-                                            stdin=$(printf '%q' "$stdin");
-                                            create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;"
-                                        };
-                                    else
-                                        { 
-                                            if test "${DEBUG_DOTFILES:-false}" == true; then
-                                                { 
-                                                    read -p exiting
-                                                };
-                                            fi;
-                                            exit
-                                        };
-                                    fi;
                                     if test "${DEBUG_DOTFILES:-false}" == true; then
                                         { 
-                                            read -p waiting
+                                            read -p exiting
                                         };
                                     fi;
-                                    bash_ran_once=true
+                                    exit
                                 };
-                            fi
+                            fi;
+                            if test "${DEBUG_DOTFILES:-false}" == true; then
+                                { 
+                                    read -p waiting
+                                };
+                            fi;
+                            bash_ran_once=true
                         };
                     else
                         { 
@@ -477,4 +500,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%27050 "$@";
+main@bashbox%24756 "$@";
