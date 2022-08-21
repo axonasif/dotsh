@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14808 () 
+main@bashbox%6603 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%14808 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%14808";
+    ___MAIN_FUNCNAME="main@bashbox%6603";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -344,9 +344,9 @@ main@bashbox%14808 ()
                             };
                         fi
                     };
-                    create_session;
                     if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
+                            create_session;
                             if test -v SSH_CONNECTION; then
                                 { 
                                     local term_id term_name task_state symbol ref;
@@ -484,4 +484,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%14808 "$@";
+main@bashbox%6603 "$@";

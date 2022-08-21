@@ -59,10 +59,11 @@ function config::shell::hijack_gitpod_task_terminals() {
 				} fi		
 			}
 
-			create_session;
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+				create_session;
+				
 				if test -v SSH_CONNECTION; then {
 					# Connect task terminals to tmux windows
 					local term_id term_name task_state symbol ref;
