@@ -81,12 +81,12 @@ function config::shell::hijack_gitpod_task_terminals() {
 
 				touch "$tmux_init_lock";
 			# if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
-			# 	printf '%s\n' '#!/usr/bin/env bash'
-			# 	'{' \
-			# 			"tmux_init_lock=$tmux_init_lock" \
-			# 			"$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
-			# 			"true"
-			# 	'}' >/ide/bin/gitpod-code
+				printf '%s\n' '#!/usr/bin/env bash'
+				'{' \
+						"true"
+				'}' >/ide/bin/gitpod-code
+						# "tmux_init_lock=$tmux_init_lock" \
+						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
 			# 	# create_session
 			# 	# create_task_terms_for_ssh_in_tmux;
 			# 	# declare -p BASH_SOURCE >/tmp/bs;
