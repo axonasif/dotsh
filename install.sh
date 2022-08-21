@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15923 () 
+main@bashbox%7353 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15923 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15923";
+    ___MAIN_FUNCNAME="main@bashbox%7353";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -391,16 +391,14 @@ main@bashbox%15923 ()
                                     if test -n "$stdin"; then
                                         { 
                                             declare -p stdin;
-                                            ( hmm=$(printf '%q' "$stdin");
-                                            create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm";
-                                            exit ) || :
+                                            hmm=$(printf '%q' "$stdin");
+                                            create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm"
                                         };
                                     else
                                         { 
                                             exit
                                         };
-                                    fi;
-                                    echo lol && read -p lol
+                                    fi
                                 };
                             fi
                         };
@@ -485,4 +483,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%15923 "$@";
+main@bashbox%7353 "$@";
