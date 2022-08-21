@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25603 () 
+main@bashbox%6781 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%25603 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%25603";
+    ___MAIN_FUNCNAME="main@bashbox%6781";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -319,6 +319,7 @@ main@bashbox%25603 ()
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
+                    local tmux_init_lock=/tmp/.tmux.init;
                     function create_session () 
                     { 
                         tmux new-session -n home -ds main 2> /dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
@@ -330,7 +331,6 @@ main@bashbox%25603 ()
                     };
                     function create_window () 
                     { 
-                        local tmux_init_lock=/tmp/.tmux.init;
                         if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then
                             { 
                                 touch "$tmux_init_lock";
@@ -367,10 +367,15 @@ main@bashbox%25603 ()
                                 fi
                             };
                         done < <(gp tasks list --no-color);
-                        exec tmux attach-session -t main
+                        if test -v SSH_CONNECTION; then
+                            { 
+                                exec tmux attach-session -t main
+                            };
+                        fi
                     };
                     if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux > /dev/null; then
                         { 
+                            touch "$tmux_init_lock";
                             create_session;
                             create_task_terms_for_ssh_in_tmux;
                             declare -p BASH_SOURCE > /tmp/bs;
@@ -506,4 +511,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%25603 "$@";
+main@bashbox%6781 "$@";

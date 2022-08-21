@@ -32,6 +32,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
+			local tmux_init_lock=/tmp/.tmux.init;
 			function create_session() {
 				tmux new-session -n home -ds main 2>/dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
@@ -42,7 +43,6 @@ function config::shell::hijack_gitpod_task_terminals() {
 				exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@";
 			}
 			function create_window() {
-				local tmux_init_lock=/tmp/.tmux.init;
 				if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then {
 					# create_window "$tmux_default_shell" -l;
 					touch "$tmux_init_lock";
@@ -74,10 +74,13 @@ function config::shell::hijack_gitpod_task_terminals() {
 						unset symbol ref;
 					} fi
 				} done < <(gp tasks list --no-color)
-				exec tmux attach-session -t main;
+				if test -v SSH_CONNECTION; then {
+					exec tmux attach-session -t main;
+				} fi
 			}
 
 			if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
+				touch "$tmux_init_lock";
 				# printf '%s\n' '#!/usr/bin/env bash'
 				# '{' \
 				# 		"$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
