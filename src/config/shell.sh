@@ -34,7 +34,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 		function inject_tmux() {
 			function create_session() {
 				tmux new-session -n home -ds main|| :;
-				tmux send-keys -t main "cat $HOME/.dotfiles" Enter;
+				tmux send-keys -t main "cat $HOME/.dotfiles.log" Enter;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
@@ -62,7 +62,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			create_session;
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 				if test -v SSH_CONNECTION; then {
 					# Connect task terminals to tmux windows
 					local term_id term_name task_state symbol ref;
