@@ -73,7 +73,8 @@ function config::shell::hijack_gitpod_task_terminals() {
 						unset symbol ref;
 					} fi
 				} done < <(gp tasks list --no-color)
-				exec tmux attach-session -t main;
+				# exec tmux attach-session -t main;
+				if test ! -v SSH_CONNECTION; then exit; fi
 			}
 
 			if test "${NO_VSCODE:-false}" == "true"; then {
