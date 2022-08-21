@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%17543 () 
+main@bashbox%32049 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%17543 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%17543";
+    ___MAIN_FUNCNAME="main@bashbox%32049";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -315,7 +315,7 @@ main@bashbox%17543 ()
     };
     function config::shell::hijack_gitpod_task_terminals () 
     { 
-        trap 'read -p eval: && eval "$REPLY"' ERR;
+        trap 'read -p eval: && eval "$REPLY"' ERR EXIT SIGTERM SIGINT;
         if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2> /dev/null; then
             { 
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
@@ -488,4 +488,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%17543 "$@";
+main@bashbox%32049 "$@";
