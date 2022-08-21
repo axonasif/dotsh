@@ -29,7 +29,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     if ! grep -q 'PROMPT_COMMAND="inject_tmux;.*"' "$HOME/.bashrc"; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
-			config::shell::bash::start_tmux_on_start;
+			config::shell::bash::start_tmux_on_start
 			function create_window() {
 				cmd() {
 					exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@";
