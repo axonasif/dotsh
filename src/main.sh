@@ -21,7 +21,7 @@ function main() {
 
         # Local dotfiles from this repository
         log::info "Installing local dotfiles";
-        install::dotfiles;
+        install::dotfiles "$___self_REPOSITORY" "$source_dir/raw";
 
         # Private dotfiles
 		if test -n "$_private_dotfiles_repo"; then {
