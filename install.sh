@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%923 () 
+main@bashbox%7094 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%923 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%923";
+    ___MAIN_FUNCNAME="main@bashbox%7094";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -390,7 +390,7 @@ main@bashbox%923 ()
                                     IFS= read -t0.01 -u0 -r -d '' stdin;
                                     if test -n "$stdin"; then
                                         { 
-                                            if test -v DEBUG_DOTFILES; then
+                                            if test "${DEBUG_DOTFILES:-false}" == true; then
                                                 { 
                                                     declare -p stdin;
                                                     read -p running
@@ -401,7 +401,7 @@ main@bashbox%923 ()
                                         };
                                     else
                                         { 
-                                            if test -v DEBUG_DOTFILES; then
+                                            if test "${DEBUG_DOTFILES:-false}" == true; then
                                                 { 
                                                     read -p exiting
                                                 };
@@ -409,7 +409,7 @@ main@bashbox%923 ()
                                             exit
                                         };
                                     fi;
-                                    if test -v DEBUG_DOTFILES; then
+                                    if test "${DEBUG_DOTFILES:-false}" == true; then
                                         { 
                                             read -p waiting
                                         };
@@ -499,4 +499,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%923 "$@";
+main@bashbox%7094 "$@";

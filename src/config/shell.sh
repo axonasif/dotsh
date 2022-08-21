@@ -98,7 +98,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					IFS= read -t0.01 -u0 -r -d '' stdin;
 					if test -n "$stdin"; then {
 						# DEBUG
-						if test -v DEBUG_DOTFILES; then {
+						if test "${DEBUG_DOTFILES:-false}" == true; then {
 							declare -p stdin
 							read -p running
 							# set -x
@@ -112,14 +112,14 @@ function config::shell::hijack_gitpod_task_terminals() {
 						# ) || :;
 						# can_switch=true;
 					} else {
-						if test -v DEBUG_DOTFILES; then {
+						if test "${DEBUG_DOTFILES:-false}" == true; then {
 							read -p exiting;
 						} fi
 						exit;
 					} fi
 
 					# if test -v can_switch; then {
-						if test -v DEBUG_DOTFILES; then {
+						if test "${DEBUG_DOTFILES:-false}" == true; then {
 							read -p waiting;
 						} fi
 					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
