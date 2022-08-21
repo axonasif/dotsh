@@ -77,41 +77,41 @@ function config::shell::hijack_gitpod_task_terminals() {
 					} done < <(gp tasks list --no-color)
 					exec tmux attach-session -t main;
 				} else {
-						# if test ! -v TMUX; then {
-						# 	create_window "$BASH" -l \; attach;
-						# } fi
+					# if test ! -v TMUX; then {
+					# 	create_window "$BASH" -l \; attach;
+					# } fi
 
-						termout=/tmp/.termout.$$
-						if test ! -v bash_ran_once; then {
-							exec > >(tee -a "$termout") 2>&1;
-						} fi
-						if test -v bash_ran_once; then {
-							can_switch=true;
-						} fi
+					termout=/tmp/.termout.$$
+					if test ! -v bash_ran_once; then {
+						exec > >(tee -a "$termout") 2>&1;
+					} fi
+					if test -v bash_ran_once; then {
+						can_switch=true;
+					} fi
 
-						local stdin;
-						IFS= read -t0.01 -u0 -r -d '' stdin;
-						if test -n "$stdin"; then {
-							# read -p running
-							(
-								hmm=$(printf '%q' "$stdin")
-								create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm";
-								exit;
-								# eval "$stdin"
-							) || :;
-							# can_switch=true;
-						} else {
-							# read -p exiting
+					local stdin;
+					IFS= read -t0.01 -u0 -r -d '' stdin;
+					if test -n "$stdin"; then {
+						declare -p stdin
+						# read -p running
+						(
+							hmm=$(printf '%q' "$stdin")
+							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $hmm; eval $hmm";
 							exit;
-						} fi
+							# eval "$stdin"
+						) || :;
+						# can_switch=true;
+					} else {
+						# read -p exiting
+						exit;
+					} fi
 
-						# if test -v can_switch; then {
-						# 	# read -p waiting;
-						# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
-						# } else {
-						# 	bash_ran_once=true;
-						# } fi
-
+					# if test -v can_switch; then {
+					# 	# read -p waiting;
+					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
+					# } else {
+					# 	bash_ran_once=true;
+					# } fi
 				} fi
 			} else {
 				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
