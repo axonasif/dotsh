@@ -44,7 +44,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			}
 			function create_window() {
 				local tmux_init_lock=/tmp/.tmux.init;
-				if test ! -e "$tmux_init_lock"; then {
+				if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then {
 					# create_window "$tmux_default_shell" -l;
 					touch "$tmux_init_lock";
 					# local tasks_count;
