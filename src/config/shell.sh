@@ -89,12 +89,10 @@ function config::shell::hijack_gitpod_task_terminals() {
 						--quiet --background --start \
 						--startas "$BASH" -- -c "exec $executable ${args[*]} > /tmp/${executable_name}.log 2>&1"
 				}
-				printf '%s\n' '#!/bin/bash' \
+				printf '%s\n' '#!/usr/bin/sh' \
 				'{' \
-						"$(declare -f start_service)" \
-						"start_service vimpod" \
-						"exit 0" \
-				'}' >/ide/bin/gitpod-code
+						"vimpod" \
+				'} >/tmp/vimlog 2>&1' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
 						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
 			# 	# create_session

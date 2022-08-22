@@ -14,5 +14,5 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-with HTTPServer(('', 23000), handler) as server:
+with HTTPServer(('0.0.0.0', 22000), handler) as server:
     server.serve_forever()
