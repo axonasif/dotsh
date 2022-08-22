@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15491 () 
+main@bashbox%3812 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15491 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15491";
+    ___MAIN_FUNCNAME="main@bashbox%3812";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -371,7 +371,7 @@ main@bashbox%15491 ()
                     };
                     if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
-                            vimpod & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external ) & kill_vscode=true
+                            "$HOME/.dotfiles/src/utils/vimpod" & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external ) &
                         };
                     fi;
                     touch "$tmux_init_lock";
@@ -379,7 +379,7 @@ main@bashbox%15491 ()
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
-                                    if test -v kill_vscode; then
+                                    if test "${NO_VSCODE:-false}" == "true"; then
                                         { 
                                             printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
                                             pkill -9 -f 'sh /ide/bin/gitpod-code';
@@ -428,8 +428,7 @@ main@bashbox%15491 ()
                         };
                     fi
                 };
-                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
-                sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod
+                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -504,4 +503,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%15491 "$@";
+main@bashbox%3812 "$@";

@@ -82,8 +82,8 @@ function config::shell::hijack_gitpod_task_terminals() {
 			# By default it's off, to turn it on, set NO_VSCODE=true on https://gitpod.io/variables with */* as scope
 			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
 				# local target="ssh://${GITPOD_WORKSPACE_ID}@${GITPOD_WORKSPACE_ID}.ssh.${GITPOD_WORKSPACE_CLUSTER_HOST}";
-				vimpod & (gp ports await 23000 1>/dev/null && gp preview "$(gp url 29000)" --external) &
-				kill_vscode=true;
+				"$HOME/.dotfiles/src/utils/vimpod" &
+				(gp ports await 23000 1>/dev/null && gp preview "$(gp url 29000)" --external) &
 				# printf '%s\n' '#!/usr/bin/env sh' \
 				# 				'vimpod 2>&1' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
@@ -103,10 +103,10 @@ function config::shell::hijack_gitpod_task_terminals() {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
-					if test -v kill_vscode; then {
+					if test "${NO_VSCODE:-false}" == "true"; then {
 						printf '%s\n' '#!/usr/bin/env sh' \
 										'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
-						pkill -9 -f 'sh /ide/bin/gitpod-code'
+						pkill -9 -f 'sh /ide/bin/gitpod-code';
 						pkill -9 vimpod;
 					} fi
 
@@ -165,7 +165,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
-		sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod # Sad noises :')
+		# sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod # Sad noises :')
 		
     } fi
 }
