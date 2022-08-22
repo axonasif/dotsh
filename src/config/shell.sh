@@ -58,24 +58,29 @@ function config::shell::hijack_gitpod_task_terminals() {
 					new_window "$@";
 				} fi		
 			}
-			function create_task_terms_for_ssh_in_tmux() {
+			function get_task_term_name() {
 				# Connect task terminals to tmux windows
 				# Note: This is useless for now, however it works.
-				local term_id term_name task_state symbol ref;
-				while IFS='|' read -r _ term_id term_name task_state _; do {
-					if [[ "$term_id" =~ [0-9]+ ]]; then {
-						for symbol in term_id term_name task_state; do {
-							declare -n ref="$symbol";
-							ref="${ref% }" && ref="${ref# }";
-						} done
-						echo "$term_id:$term_name:$task_state";
-						if test "$task_state" == "running"; then {
-							# (WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
-							true
+				local file_loc="/tmp/.gp_tasks_names";
+				if test ! -e "$file_loc"; then {
+					local term_id term_name task_state symbol ref;
+					while IFS='|' read -r _ term_id term_name task_state _; do {
+						if [[ "$term_id" =~ [0-9]+ ]]; then {
+							for symbol in term_id term_name task_state; do {
+								declare -n ref="$symbol";
+								ref="${ref% }" && ref="${ref# }";
+							} done
+							if test "$task_state" == "running"; then {
+								# (WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+								printf '%s\n' "$term_name" >> "$file_loc";
+							} fi
+							unset symbol ref;
 						} fi
-						unset symbol ref;
-					} fi
-				} done < <(gp tasks list --no-color)
+					} done < <(gp tasks list --no-color)
+				} fi
+
+				head -n 1 "$file_loc";
+				sed -i '1d' "$file_loc";
 			}
 
 			# For preventing the launch of VSCode process, we want to stay minimal and BLAZINGLY FAST LOL
@@ -137,7 +142,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 						set -x
 					} fi
 					stdin=$(printf '%q' "$stdin")
-					create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;";
+					WINDOW_NAME="$(get_task_term_name)" create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;";
 					# (eval "$stdin")
 					# exit; 
 					# can_switch=true;

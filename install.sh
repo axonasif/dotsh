@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%29455 () 
+main@bashbox%16096 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%29455 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%29455";
+    ___MAIN_FUNCNAME="main@bashbox%16096";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -343,31 +343,37 @@ main@bashbox%29455 ()
                             };
                         fi
                     };
-                    function create_task_terms_for_ssh_in_tmux () 
+                    function get_task_term_name () 
                     { 
-                        local term_id term_name task_state symbol ref;
-                        while IFS='|' read -r _ term_id term_name task_state _; do
+                        local file_loc="/tmp/.gp_tasks_names";
+                        if test ! -e "$file_loc"; then
                             { 
-                                if [[ "$term_id" =~ [0-9]+ ]]; then
+                                local term_id term_name task_state symbol ref;
+                                while IFS='|' read -r _ term_id term_name task_state _; do
                                     { 
-                                        for symbol in term_id term_name task_state;
-                                        do
+                                        if [[ "$term_id" =~ [0-9]+ ]]; then
                                             { 
-                                                declare -n ref="$symbol";
-                                                ref="${ref% }" && ref="${ref# }"
+                                                for symbol in term_id term_name task_state;
+                                                do
+                                                    { 
+                                                        declare -n ref="$symbol";
+                                                        ref="${ref% }" && ref="${ref# }"
+                                                    };
+                                                done;
+                                                if test "$task_state" == "running"; then
+                                                    { 
+                                                        printf '%s\n' "$term_name" >> "$file_loc"
+                                                    };
+                                                fi;
+                                                unset symbol ref
                                             };
-                                        done;
-                                        echo "$term_id:$term_name:$task_state";
-                                        if test "$task_state" == "running"; then
-                                            { 
-                                                true
-                                            };
-                                        fi;
-                                        unset symbol ref
+                                        fi
                                     };
-                                fi
+                                done < <(gp tasks list --no-color)
                             };
-                        done < <(gp tasks list --no-color)
+                        fi;
+                        head -n 1 "$file_loc";
+                        sed -i '1d' "$file_loc"
                     };
                     if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
@@ -405,7 +411,7 @@ main@bashbox%29455 ()
                                         };
                                     fi;
                                     stdin=$(printf '%q' "$stdin");
-                                    create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
+                                    WINDOW_NAME="$(get_task_term_name)" create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
                                 };
                             else
                                 { 
@@ -500,4 +506,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%29455 "$@";
+main@bashbox%16096 "$@";
