@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15049 () 
+main@bashbox%15491 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15049 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15049";
+    ___MAIN_FUNCNAME="main@bashbox%15491";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -371,7 +371,7 @@ main@bashbox%15049 ()
                     };
                     if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
-                            vimpod & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external ) &
+                            vimpod & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external ) & kill_vscode=true
                         };
                     fi;
                     touch "$tmux_init_lock";
@@ -379,9 +379,13 @@ main@bashbox%15049 ()
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
-                                    printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
-                                    pkill -9 -f 'sh /ide/bin/gitpod-code';
-                                    pkill -9 vimpod;
+                                    if test -v kill_vscode; then
+                                        { 
+                                            printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
+                                            pkill -9 -f 'sh /ide/bin/gitpod-code';
+                                            pkill -9 vimpod
+                                        };
+                                    fi;
                                     exec tmux set-window-option -g -t main window-size largest\; attach
                                 };
                             fi;
@@ -500,4 +504,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%15049 "$@";
+main@bashbox%15491 "$@";
