@@ -100,9 +100,11 @@ function config::shell::hijack_gitpod_task_terminals() {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
-					# Workarounds sizing issiues if you attach vscode to tmux manually. (i.e toggling the terminal focus on Vscode)
-					tmux set-window-option -t main -g aggressive-resize on;
-					# Detach from this shell and completely switch to tmux
+					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
+					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
+					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
+					# I'll go with the second option for now
+					tmux set -t main -g window-size largest;
 					exec tmux attach-session -t main;
 				} fi
 
