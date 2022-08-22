@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5184 () 
+main@bashbox%22171 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%5184 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%5184";
+    ___MAIN_FUNCNAME="main@bashbox%22171";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -371,9 +371,7 @@ main@bashbox%5184 ()
                     };
                     if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
-                            printf '%s\n' '#!/usr/bin/env bash';
-                            '{' "exit 0";
-                            '}' > /ide/bin/gitpod-code
+                            printf '%s\n' '#!/usr/bin/env bash' '{' "vimpod" "exit 0" '}' > /ide/bin/gitpod-code
                         };
                     fi;
                     touch "$tmux_init_lock";
@@ -423,7 +421,8 @@ main@bashbox%5184 ()
                         };
                     fi
                 };
-                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+                sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod
             };
         fi
     };
@@ -498,4 +497,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%5184 "$@";
+main@bashbox%22171 "$@";

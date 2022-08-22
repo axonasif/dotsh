@@ -81,9 +81,10 @@ function config::shell::hijack_gitpod_task_terminals() {
 			# For preventing the launch of VSCode process, we want to stay minimal and BLAZINGLY FAST LOL
 			# By default it's off, to turn it on, set NO_VSCODE=true on https://gitpod.io/variables with */* as scope
 			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
-				printf '%s\n' '#!/usr/bin/env bash'
+				printf '%s\n' '#!/usr/bin/env bash' \
 				'{' \
-						"exit 0"
+						"vimpod" \
+						"exit 0" \
 				'}' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
 						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
@@ -157,6 +158,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+		sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod
 		
     } fi
 }
