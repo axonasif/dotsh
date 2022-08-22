@@ -106,7 +106,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
 					# I'll go with the second option for now
-					tmux set-window-option -g -t main window-size largest;
+					(for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
 					exec tmux attach-session -t main;
 				} fi
 
