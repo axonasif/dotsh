@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%27129 () 
+main@bashbox%10111 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%27129 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%27129";
+    ___MAIN_FUNCNAME="main@bashbox%10111";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -378,7 +378,7 @@ main@bashbox%27129 ()
                                 local args=("$@");
                                 start-stop-daemon --make-pidfile --pidfile "/tmp/${executable_name}.pid" --remove-pidfile --quiet --background --start --startas "$BASH" -- -c "exec $executable ${args[*]} > /tmp/${executable_name}.log 2>&1"
                             };
-                            printf '%s\n' '#!/usr/bin/sh' '{' "vimpod 2>&1" '} >/tmp/vimlog 2>&1' > /ide/bin/gitpod-code
+                            printf '%s\n' '#!/usr/bin/env sh' '{ vimpod 2>&1; } >/tmp/vimlog 2>&1' > /ide/bin/gitpod-code
                         };
                     fi;
                     touch "$tmux_init_lock";
@@ -504,4 +504,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%27129 "$@";
+main@bashbox%10111 "$@";
