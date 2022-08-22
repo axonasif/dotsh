@@ -33,6 +33,7 @@ function config::shell::hijack_gitpod_task_terminals() {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
 			local tmux_init_lock=/tmp/.tmux.init;
+			local tmux tmux_default_shell;
 			function create_session() {
 				tmux new-session -n home -ds main 2>/dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
@@ -59,6 +60,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			}
 			function create_task_terms_for_ssh_in_tmux() {
 				# Connect task terminals to tmux windows
+				# Note: This is useless for now, however it works.
 				local term_id term_name task_state symbol ref;
 				while IFS='|' read -r _ term_id term_name task_state _; do {
 					if [[ "$term_id" =~ [0-9]+ ]]; then {
@@ -76,8 +78,8 @@ function config::shell::hijack_gitpod_task_terminals() {
 				} done < <(gp tasks list --no-color)
 			}
 
-
-			# 
+			# For preventing the launch of VSCode process, we want to stay minimal and BLAZINGLY FAST LOL
+			# By default it's off, to turn it on, set NO_VSCODE=true on https://gitpod.io/variables with */* as scope
 			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
 				printf '%s\n' '#!/usr/bin/env bash'
 				'{' \
