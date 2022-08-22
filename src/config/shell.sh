@@ -100,6 +100,9 @@ function config::shell::hijack_gitpod_task_terminals() {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
+					# Workarounds sizing issiues if you attach vscode to tmux manually. (i.e toggling the terminal focus on Vscode)
+					tmux set-window-option -t main -g aggressive-resize on;
+					# Detach from this shell and completely switch to tmux
 					exec tmux attach-session -t main;
 				} fi
 

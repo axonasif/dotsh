@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%22198 () 
+main@bashbox%3800 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%22198 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%22198";
+    ___MAIN_FUNCNAME="main@bashbox%3800";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -380,6 +380,7 @@ main@bashbox%22198 ()
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
+                                    tmux set-window-option -t main -g aggressive-resize on;
                                     exec tmux attach-session -t main
                                 };
                             fi;
@@ -497,4 +498,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%22198 "$@";
+main@bashbox%3800 "$@";
