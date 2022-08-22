@@ -106,7 +106,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
 					# I'll go with the second option for now
-					tmux set -t main -g window-size largest;
+					tmux set -g window-size largest;
 					exec tmux attach-session -t main;
 				} fi
 
@@ -123,19 +123,15 @@ function config::shell::hijack_gitpod_task_terminals() {
 				local stdin;
 				IFS= read -t0.01 -u0 -r -d '' stdin;
 				if test -n "$stdin"; then {
-					# DEBUG
 					if test "${DEBUG_DOTFILES:-false}" == true; then {
 						declare -p stdin
 						read -rp running
 						set -x
 					} fi
-					# DEBUG
-					# (
-						stdin=$(printf '%q' "$stdin")
-						create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;";
-						# exit; 
-						# eval "$stdin"
-					# ) || :;
+					stdin=$(printf '%q' "$stdin")
+					create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;";
+					# (eval "$stdin")
+					# exit; 
 					# can_switch=true;
 				} else {
 					if test "${DEBUG_DOTFILES:-false}" == true; then {
