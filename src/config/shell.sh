@@ -75,15 +75,13 @@ function config::shell::hijack_gitpod_task_terminals() {
 					} fi
 				} done < <(gp tasks list --no-color)
 			}
-				if test -v SSH_CONNECTION; then {
-					exec tmux attach-session -t main;
-				} fi
 
-				touch "$tmux_init_lock";
-			# if test "${NO_VSCODE:-false}" == "true" && ! pgrep tmux 1>/dev/null; then {
+
+			# 
+			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
 				printf '%s\n' '#!/usr/bin/env bash'
 				'{' \
-						"true"
+						"exit 0"
 				'}' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
 						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
@@ -93,63 +91,66 @@ function config::shell::hijack_gitpod_task_terminals() {
 			# 	# if  [[ "${BASH_SOURCE[*]}" =~ /ide/startup.sh ]]; then {
 			# 	# 	exit 0;
 			# 	# } fi
-			# } fi
+			} fi
 
+			touch "$tmux_init_lock"; # This skips auto focus & attachment to the TERMINAL view on VSCode, helpful for SSH_CONNECTION
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
-				create_session;
 				
-				# if test -v SSH_CONNECTION; then {
-				# } else {
-					# if test ! -v TMUX; then {
-					# 	create_window "$BASH" -l \; attach;
-					# } fi
+				# Switch to tmux on SSH.
+				if test -v SSH_CONNECTION; then {
+					exec tmux attach-session -t main;
+				} fi
 
-					termout=/tmp/.termout.$$
-					if test ! -v bash_ran_once; then {
-						exec > >(tee -a "$termout") 2>&1;
-					} fi
-					if test -v bash_ran_once; then {
-						can_switch=true;
-					} fi
+				create_session;
 
-					local stdin;
-					IFS= read -t0.01 -u0 -r -d '' stdin;
-					if test -n "$stdin"; then {
-						# DEBUG
-						if test "${DEBUG_DOTFILES:-false}" == true; then {
-							declare -p stdin
-							read -p running
-							# set -x
-						} fi
-						# DEBUG
-						# (
-							stdin=$(printf '%q' "$stdin")
-							create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;";
-							# exit; 
-							# eval "$stdin"
-						# ) || :;
-						# can_switch=true;
-					} else {
-						if test "${DEBUG_DOTFILES:-false}" == true; then {
-							read -p exiting;
-						} fi
-						exit;
-					} fi
-
-					# if test -v can_switch; then {
-						if test "${DEBUG_DOTFILES:-false}" == true; then {
-							read -p waiting;
-						} fi
-					# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
-					# } else {
-						bash_ran_once=true;
-					# } fi
+				termout=/tmp/.termout.$$
+				if test ! -v bash_ran_once; then {
+					exec > >(tee -a "$termout") 2>&1;
+				} fi
+				# if test -v bash_ran_once; then {
+				# 	can_switch=true;
 				# } fi
+
+				local stdin;
+				IFS= read -t0.01 -u0 -r -d '' stdin;
+				if test -n "$stdin"; then {
+					# DEBUG
+					if test "${DEBUG_DOTFILES:-false}" == true; then {
+						declare -p stdin
+						read -rp running
+						set -x
+					} fi
+					# DEBUG
+					# (
+						stdin=$(printf '%q' "$stdin")
+						create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;";
+						# exit; 
+						# eval "$stdin"
+					# ) || :;
+					# can_switch=true;
+				} else {
+					if test "${DEBUG_DOTFILES:-false}" == true; then {
+						read -rp exiting;
+					} fi
+					exit;
+				} fi
+
+				# if test -v can_switch; then {
+					# if test "${DEBUG_DOTFILES:-false}" == true; then {
+						# read -p waiting;
+					# } fi
+				# 	create_window "less -FXR $termout | cat; exec $tmux_default_shell -l";
+				# } else {
+					bash_ran_once=true;
+				# } fi
+			# } fi
+
 			} else {
 				unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}";
 			} fi
+
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";

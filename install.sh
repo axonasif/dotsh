@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7808 () 
+main@bashbox%22198 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%7808 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%7808";
+    ___MAIN_FUNCNAME="main@bashbox%22198";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -368,27 +368,26 @@ main@bashbox%7808 ()
                             };
                         done < <(gp tasks list --no-color)
                     };
-                    if test -v SSH_CONNECTION; then
+                    if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
-                            exec tmux attach-session -t main
+                            printf '%s\n' '#!/usr/bin/env bash';
+                            '{' "exit 0";
+                            '}' > /ide/bin/gitpod-code
                         };
                     fi;
                     touch "$tmux_init_lock";
-                    printf '%s\n' '#!/usr/bin/env bash';
-                    '{' "true";
-                    '}' > /ide/bin/gitpod-code;
                     if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
+                            if test -v SSH_CONNECTION; then
+                                { 
+                                    exec tmux attach-session -t main
+                                };
+                            fi;
                             create_session;
                             termout=/tmp/.termout.$$;
                             if test ! -v bash_ran_once; then
                                 { 
                                     exec > >(tee -a "$termout") 2>&1
-                                };
-                            fi;
-                            if test -v bash_ran_once; then
-                                { 
-                                    can_switch=true
                                 };
                             fi;
                             local stdin;
@@ -398,25 +397,21 @@ main@bashbox%7808 ()
                                     if test "${DEBUG_DOTFILES:-false}" == true; then
                                         { 
                                             declare -p stdin;
-                                            read -p running
+                                            read -rp running;
+                                            set -x
                                         };
                                     fi;
                                     stdin=$(printf '%q' "$stdin");
-                                    create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdij; eval $stdin;"
+                                    create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
                                 };
                             else
                                 { 
                                     if test "${DEBUG_DOTFILES:-false}" == true; then
                                         { 
-                                            read -p exiting
+                                            read -rp exiting
                                         };
                                     fi;
                                     exit
-                                };
-                            fi;
-                            if test "${DEBUG_DOTFILES:-false}" == true; then
-                                { 
-                                    read -p waiting
                                 };
                             fi;
                             bash_ran_once=true
@@ -502,4 +497,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%7808 "$@";
+main@bashbox%22198 "$@";
