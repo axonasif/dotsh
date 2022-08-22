@@ -88,7 +88,6 @@ function config::shell::hijack_gitpod_task_terminals() {
 						printf '%s\n' '#!/usr/bin/env sh' \
 										'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
 						pkill -9 -f 'sh /ide/bin/gitpod-code';
-						pkill -9 vimpod;
 					}
 				) &
 				# printf '%s\n' '#!/usr/bin/env sh' \
@@ -110,8 +109,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
-
-
+					pkill -9 vimpod || :;
 					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
 					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.

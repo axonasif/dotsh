@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2837 () 
+main@bashbox%29455 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2837 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2837";
+    ___MAIN_FUNCNAME="main@bashbox%29455";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -373,8 +373,7 @@ main@bashbox%2837 ()
                         { 
                             "$HOME/.dotfiles/src/utils/vimpod.py" & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external && { 
                                 printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
-                                pkill -9 -f 'sh /ide/bin/gitpod-code';
-                                pkill -9 vimpod
+                                pkill -9 -f 'sh /ide/bin/gitpod-code'
                             } ) &
                         };
                     fi;
@@ -383,6 +382,7 @@ main@bashbox%2837 ()
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
+                                    pkill -9 vimpod || :;
                                     exec tmux set-window-option -g -t main window-size largest\; attach
                                 };
                             fi;
@@ -500,4 +500,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%2837 "$@";
+main@bashbox%29455 "$@";
