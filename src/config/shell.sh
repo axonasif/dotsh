@@ -72,6 +72,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 							} done
 							if test "$task_state" == "running"; then {
 								# (WINDOW_NAME="${term_name}" new_window gp tasks attach "$term_id")
+								declare -p term_id term_name task_state > /tmp/dbg
 								printf '%s\n' "$term_name" >> "$file_loc";
 							} fi
 							unset symbol ref;
@@ -79,8 +80,10 @@ function config::shell::hijack_gitpod_task_terminals() {
 					} done < <(gp tasks list --no-color)
 				} fi
 
-				head -n 1 "$file_loc";
-				sed -i '1d' "$file_loc";
+				if test -e "$file_loc"; then {
+					head -n 1 "$file_loc";
+					sed -i '1d' "$file_loc";
+				} fi
 			}
 
 			# For preventing the launch of VSCode process, we want to stay minimal and BLAZINGLY FAST LOL

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16096 () 
+main@bashbox%30368 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%16096 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%16096";
+    ___MAIN_FUNCNAME="main@bashbox%30368";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -362,6 +362,7 @@ main@bashbox%16096 ()
                                                 done;
                                                 if test "$task_state" == "running"; then
                                                     { 
+                                                        declare -p term_id term_name task_state > /tmp/dbg;
                                                         printf '%s\n' "$term_name" >> "$file_loc"
                                                     };
                                                 fi;
@@ -372,8 +373,12 @@ main@bashbox%16096 ()
                                 done < <(gp tasks list --no-color)
                             };
                         fi;
-                        head -n 1 "$file_loc";
-                        sed -i '1d' "$file_loc"
+                        if test -e "$file_loc"; then
+                            { 
+                                head -n 1 "$file_loc";
+                                sed -i '1d' "$file_loc"
+                            };
+                        fi
                     };
                     if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
@@ -506,4 +511,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%16096 "$@";
+main@bashbox%30368 "$@";
