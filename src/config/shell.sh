@@ -104,9 +104,9 @@ function config::shell::hijack_gitpod_task_terminals() {
 				if test -v SSH_CONNECTION; then {
 
 					printf '%s\n' '#!/usr/bin/env sh' \
-									'sleep 10 && exit' > /ide/bin/gitpod-code
-					pgrep -f 'sh /ide/bin/gitpod-code' | xargs kill -9
-									# 'while sleep $(( 60 * 60 )); do continue; done'
+									'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
+					pkill -9 -f 'sh /ide/bin/gitpod-code'
+					pkill -9 vimpod;
 
 					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
 					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
