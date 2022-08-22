@@ -157,7 +157,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 
 		}
 		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
-		# sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod # Sad noises :')
+		sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod # Sad noises :')
 		
     } fi
 }

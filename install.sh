@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11382 () 
+main@bashbox%26562 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%11382 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%11382";
+    ___MAIN_FUNCNAME="main@bashbox%26562";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -421,7 +421,8 @@ main@bashbox%11382 ()
                         };
                     fi
                 };
-                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+                sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod
             };
         fi
     };
@@ -496,4 +497,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%11382 "$@";
+main@bashbox%26562 "$@";
