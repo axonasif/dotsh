@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%26562 () 
+main@bashbox%7099 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%26562 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%26562";
+    ___MAIN_FUNCNAME="main@bashbox%7099";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -371,7 +371,7 @@ main@bashbox%26562 ()
                     };
                     if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
                         { 
-                            printf '%s\n' '#!/usr/bin/env sh' 'vimpod 2>&1' > /ide/bin/gitpod-code
+                            vimpod & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external ) &
                         };
                     fi;
                     touch "$tmux_init_lock";
@@ -379,6 +379,8 @@ main@bashbox%26562 ()
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
+                                    printf '%s\n' '#!/usr/bin/env sh' 'sleep 10 && exit' > /ide/bin/gitpod-code;
+                                    pgrep -f 'sh /ide/bin/gitpod-code' | xargs kill -9;
                                     exec tmux set-window-option -g -t main window-size largest\; attach
                                 };
                             fi;
@@ -497,4 +499,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%26562 "$@";
+main@bashbox%7099 "$@";

@@ -82,9 +82,9 @@ function config::shell::hijack_gitpod_task_terminals() {
 			# By default it's off, to turn it on, set NO_VSCODE=true on https://gitpod.io/variables with */* as scope
 			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
 				# local target="ssh://${GITPOD_WORKSPACE_ID}@${GITPOD_WORKSPACE_ID}.ssh.${GITPOD_WORKSPACE_CLUSTER_HOST}";
-				
-				printf '%s\n' '#!/usr/bin/env sh' \
-								'vimpod 2>&1' >/ide/bin/gitpod-code
+				vimpod & (gp ports await 23000 1>/dev/null && gp preview "$(gp url 29000)" --external) &
+				# printf '%s\n' '#!/usr/bin/env sh' \
+				# 				'vimpod 2>&1' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
 						# "$(declare -f  new_window create_session create_task_terms_for_ssh_in_tmux)" \
 				# create_session
@@ -102,6 +102,12 @@ function config::shell::hijack_gitpod_task_terminals() {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
+
+					printf '%s\n' '#!/usr/bin/env sh' \
+									'sleep 10 && exit' > /ide/bin/gitpod-code
+					pgrep -f 'sh /ide/bin/gitpod-code' | xargs kill -9
+									# 'while sleep $(( 60 * 60 )); do continue; done'
+
 					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
 					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
