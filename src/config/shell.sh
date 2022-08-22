@@ -83,7 +83,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
 				printf '%s\n' '#!/usr/bin/env bash' \
 				'{' \
-						"vimpod" \
+						"vimpod & disown" \
 						"exit 0" \
 				'}' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
