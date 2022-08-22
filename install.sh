@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3800 () 
+main@bashbox%22756 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%3800 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%3800";
+    ___MAIN_FUNCNAME="main@bashbox%22756";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -319,7 +319,13 @@ main@bashbox%3800 ()
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
+                    if test -v TMUX; then
+                        { 
+                            return
+                        };
+                    fi;
                     local tmux_init_lock=/tmp/.tmux.init;
+                    local tmux tmux_default_shell;
                     function create_session () 
                     { 
                         tmux new-session -n home -ds main 2> /dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
@@ -342,46 +348,65 @@ main@bashbox%3800 ()
                             };
                         fi
                     };
-                    function create_task_terms_for_ssh_in_tmux () 
+                    function get_task_term_name () 
                     { 
-                        local term_id term_name task_state symbol ref;
-                        while IFS='|' read -r _ term_id term_name task_state _; do
+                        local file_loc="/tmp/.gp_tasks_names";
+                        if test ! -e "$file_loc"; then
                             { 
-                                if [[ "$term_id" =~ [0-9]+ ]]; then
+                                local term_id term_name task_state symbol ref;
+                                while IFS='|' read -r _ term_id term_name task_state _; do
                                     { 
-                                        for symbol in term_id term_name task_state;
-                                        do
+                                        if [[ "$term_id" =~ [0-9]+ ]]; then
                                             { 
-                                                declare -n ref="$symbol";
-                                                ref="${ref% }" && ref="${ref# }"
+                                                for symbol in term_id term_name task_state;
+                                                do
+                                                    { 
+                                                        declare -n ref="$symbol";
+                                                        ref="${ref% }" && ref="${ref# }"
+                                                    };
+                                                done;
+                                                if test "$task_state" == "running"; then
+                                                    { 
+                                                        printf '%s\n' "$term_name" >> "$file_loc"
+                                                    };
+                                                fi;
+                                                unset symbol ref
                                             };
-                                        done;
-                                        echo "$term_id:$term_name:$task_state";
-                                        if test "$task_state" == "running"; then
-                                            { 
-                                                true
-                                            };
-                                        fi;
-                                        unset symbol ref
+                                        fi
+                                    };
+                                done < <(gp tasks list --no-color)
+                            };
+                        fi;
+                        if test -e "$file_loc"; then
+                            { 
+                                awk '{$1=$1;print;exit}' "$file_loc";
+                                sed -i '1d' "$file_loc"
+                            };
+                        fi
+                    };
+                    if test ! -e "$tmux_init_lock"; then
+                        { 
+                            "$HOME/.dotfiles/src/utils/vimpod.py" & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external && { 
+                                if test "${NO_VSCODE:-false}" == "true"; then
+                                    { 
+                                        printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
+                                        pkill -9 -f 'sh /ide/bin/gitpod-code'
                                     };
                                 fi
-                            };
-                        done < <(gp tasks list --no-color)
-                    };
-                    if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
-                        { 
-                            printf '%s\n' '#!/usr/bin/env bash';
-                            '{' "exit 0";
-                            '}' > /ide/bin/gitpod-code
+                            } ) &
                         };
                     fi;
                     touch "$tmux_init_lock";
-                    if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
-                                    tmux set-window-option -t main -g aggressive-resize on;
-                                    exec tmux attach-session -t main
+                                    if test "${NO_VSCODE:-false}" == "true"; then
+                                        { 
+                                            pkill -9 vimpod || :
+                                        };
+                                    fi;
+                                    exec tmux set-window-option -g -t main window-size largest\; attach
                                 };
                             fi;
                             create_session;
@@ -403,7 +428,7 @@ main@bashbox%3800 ()
                                         };
                                     fi;
                                     stdin=$(printf '%q' "$stdin");
-                                    create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
+                                    WINDOW_NAME="$(get_task_term_name)" create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
                                 };
                             else
                                 { 
@@ -498,4 +523,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%3800 "$@";
+main@bashbox%22756 "$@";
