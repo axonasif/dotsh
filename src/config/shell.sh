@@ -96,18 +96,21 @@ function config::shell::hijack_gitpod_task_terminals() {
 			# 	# } fi
 			} fi
 
-			touch "$tmux_init_lock"; # This skips auto focus & attachment to the TERMINAL view on VSCode, helpful for SSH_CONNECTION
+			touch "$tmux_init_lock"; # This skips auto focus & attachment to the TERMINAL view on VSCode, helpful for SSH_CONNECTION if vscode was not loaded.
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
-					if test "${NO_VSCODE:-false}" == "true"; then {
+
+					if test "${NO_VSCODE:-false}" == "true" \
+						&& vscode_killed_state=/tmp/.vsk && test ! -e "$vscode_killed_state"; then {
 						printf '%s\n' '#!/usr/bin/env sh' \
 										'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
 						pkill -9 -f 'sh /ide/bin/gitpod-code';
 						pkill -9 vimpod;
+						touch "$vscode_killed_state";
 					} fi
 
 					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
