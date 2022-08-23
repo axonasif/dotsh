@@ -29,5 +29,6 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
 
 
-with HTTPServer(('', 29000), handler) as server:
+logfile.flush()
+with HTTPServer(('', 22000), handler) as server:
     server.serve_forever()

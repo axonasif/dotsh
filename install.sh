@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%12701 () 
+main@bashbox%29174 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%12701 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%12701";
+    ___MAIN_FUNCNAME="main@bashbox%29174";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -387,7 +387,7 @@ main@bashbox%12701 ()
                     if test ! -e "$tmux_init_lock"; then
                         { 
                             "$HOME/.dotfiles/src/utils/vimpod.py" & disown;
-                            ( gp ports await 23000 > /dev/null && gp ports await 29000 && gp preview "$(gp url 29000)" --external && { 
+                            ( gp ports await 23000 > /dev/null && gp ports await 22000 && gp preview "$(gp url 22000)" --external && { 
                                 if test "${NO_VSCODE:-false}" == "true"; then
                                     { 
                                         printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
@@ -524,4 +524,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%12701 "$@";
+main@bashbox%29174 "$@";
