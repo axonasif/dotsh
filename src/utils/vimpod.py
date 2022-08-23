@@ -15,7 +15,7 @@ CLUSTER_HOST = getenv('GITPOD_WORKSPACE_CLUSTER_HOST')
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        logfile.flush()
+        # logfile.flush()
         if "version" in self.path:
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
