@@ -4,8 +4,8 @@ from os import getenv
 from sys import stdout, stderr
 
 logfile = open('/tmp/.vimpod.log', 'w')
-sys.stdout = logfile
-sys.stderr = logfile
+stdout = logfile
+stderr = logfile
 
 WS_ID = getenv('GITPOD_WORKSPACE_ID')
 CLUSTER_HOST = getenv('GITPOD_WORKSPACE_CLUSTER_HOST')
