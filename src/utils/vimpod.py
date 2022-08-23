@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 from http.server import (HTTPServer, BaseHTTPRequestHandler)
 from os import getenv
-# import sys
+import sys
 
-# logfile = open('logfile.log', 'w')
-# sys.stdout = logfile
-# sys.stdin = logfile
-# sys.stderr = logfile
+logfile = open('/tmp/.vimpod.log', 'w')
+sys.stdout = logfile
+sys.stdin = logfile
+sys.stderr = logfile
 
 
 WS_ID = getenv('GITPOD_WORKSPACE_ID')
