@@ -93,7 +93,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			# By default it's off, to turn it on, set NO_VSCODE=true on https://gitpod.io/variables with */* as scope
 			if test ! -e "$tmux_init_lock"; then {
 				# local target="ssh://${GITPOD_WORKSPACE_ID}@${GITPOD_WORKSPACE_ID}.ssh.${GITPOD_WORKSPACE_CLUSTER_HOST}";
-				"$HOME/.dotfiles/src/utils/vimpod.py" &
+				"$HOME/.dotfiles/src/utils/vimpod.py" & disown
 					(
 						gp ports await 23000 1>/dev/null && gp ports await 29000 && gp preview "$(gp url 29000)" --external && {
 							if test "${NO_VSCODE:-false}" == "true"; then {
