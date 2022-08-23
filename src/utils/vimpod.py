@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 from http.server import (HTTPServer, BaseHTTPRequestHandler)
 from os import getenv
-from sys import stdout, stderr
+from sys import stdout, stderr, stdin
 
 logfile = open('/tmp/.vimpod.log', 'w')
 stdout = logfile
 stderr = logfile
+stdin = logfile
 
 WS_ID = getenv('GITPOD_WORKSPACE_ID')
 CLUSTER_HOST = getenv('GITPOD_WORKSPACE_CLUSTER_HOST')
@@ -28,5 +29,5 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
 
 
-with HTTPServer(('0.0.0.0', 29000), handler) as server:
+with HTTPServer(('', 29000), handler) as server:
     server.serve_forever()
