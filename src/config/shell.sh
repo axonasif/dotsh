@@ -32,6 +32,9 @@ function config::shell::hijack_gitpod_task_terminals() {
     if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
     log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		function inject_tmux() {
+			if test -v TMUX; then {
+				return;
+			} fi
 			local tmux_init_lock=/tmp/.tmux.init;
 			local tmux tmux_default_shell;
 			function create_session() {
@@ -85,18 +88,21 @@ function config::shell::hijack_gitpod_task_terminals() {
 				} fi
 			}
 
+
 			# For preventing the launch of VSCode process, we want to stay minimal and BLAZINGLY FAST LOL
 			# By default it's off, to turn it on, set NO_VSCODE=true on https://gitpod.io/variables with */* as scope
-			if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then {
+			if test ! -e "$tmux_init_lock"; then {
 				# local target="ssh://${GITPOD_WORKSPACE_ID}@${GITPOD_WORKSPACE_ID}.ssh.${GITPOD_WORKSPACE_CLUSTER_HOST}";
 				"$HOME/.dotfiles/src/utils/vimpod.py" &
-				(
-					gp ports await 23000 1>/dev/null && gp preview "$(gp url 29000)" --external && {
-						printf '%s\n' '#!/usr/bin/env sh' \
-										'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
-						pkill -9 -f 'sh /ide/bin/gitpod-code';
-					}
-				) &
+					(
+						gp ports await 23000 1>/dev/null && gp preview "$(gp url 29000)" --external && {
+							if test "${NO_VSCODE:-false}" == "true"; then {
+								printf '%s\n' '#!/usr/bin/env sh' \
+												'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
+								pkill -9 -f 'sh /ide/bin/gitpod-code';
+							} fi
+						}
+					) &
 				# printf '%s\n' '#!/usr/bin/env sh' \
 				# 				'vimpod 2>&1' >/ide/bin/gitpod-code
 						# "tmux_init_lock=$tmux_init_lock" \
@@ -112,11 +118,13 @@ function config::shell::hijack_gitpod_task_terminals() {
 			touch "$tmux_init_lock"; # This skips auto focus & attachment to the TERMINAL view on VSCode, helpful for SSH_CONNECTION if vscode was not loaded.
 
 			# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-			if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+			if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 				
 				# Switch to tmux on SSH.
 				if test -v SSH_CONNECTION; then {
-					pkill -9 vimpod || :;
+					if test "${NO_VSCODE:-false}" == "true"; then {
+						pkill -9 vimpod || :;
+					} fi
 					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
 					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.

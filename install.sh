@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5931 () 
+main@bashbox%30091 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%5931 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%5931";
+    ___MAIN_FUNCNAME="main@bashbox%30091";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -319,6 +319,11 @@ main@bashbox%5931 ()
                 log::info "Setting tmux as the interactive shell for Gitpod task terminals";
                 function inject_tmux () 
                 { 
+                    if test -v TMUX; then
+                        { 
+                            return
+                        };
+                    fi;
                     local tmux_init_lock=/tmp/.tmux.init;
                     local tmux tmux_default_shell;
                     function create_session () 
@@ -379,20 +384,28 @@ main@bashbox%5931 ()
                             };
                         fi
                     };
-                    if test "${NO_VSCODE:-false}" == "true" && test ! -e "$tmux_init_lock"; then
+                    if test ! -e "$tmux_init_lock"; then
                         { 
                             "$HOME/.dotfiles/src/utils/vimpod.py" & ( gp ports await 23000 > /dev/null && gp preview "$(gp url 29000)" --external && { 
-                                printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
-                                pkill -9 -f 'sh /ide/bin/gitpod-code'
+                                if test "${NO_VSCODE:-false}" == "true"; then
+                                    { 
+                                        printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
+                                        pkill -9 -f 'sh /ide/bin/gitpod-code'
+                                    };
+                                fi
                             } ) &
                         };
                     fi;
                     touch "$tmux_init_lock";
-                    if test ! -v TMUX && [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
                         { 
                             if test -v SSH_CONNECTION; then
                                 { 
-                                    pkill -9 vimpod || :;
+                                    if test "${NO_VSCODE:-false}" == "true"; then
+                                        { 
+                                            pkill -9 vimpod || :
+                                        };
+                                    fi;
                                     exec tmux set-window-option -g -t main window-size largest\; attach
                                 };
                             fi;
@@ -510,4 +523,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%5931 "$@";
+main@bashbox%30091 "$@";
