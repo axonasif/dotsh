@@ -95,7 +95,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 				# local target="ssh://${GITPOD_WORKSPACE_ID}@${GITPOD_WORKSPACE_ID}.ssh.${GITPOD_WORKSPACE_CLUSTER_HOST}";
 				"$HOME/.dotfiles/src/utils/vimpod.py" & disown
 					(
-						gp ports await 23000 1>/dev/null && gp ports await 22000 && gp preview "$(gp url 22000)" --external && {
+						{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
 							if test "${NO_VSCODE:-false}" == "true"; then {
 								printf '%s\n' '#!/usr/bin/env sh' \
 												'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code
