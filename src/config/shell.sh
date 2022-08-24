@@ -180,7 +180,11 @@ function config::shell::hijack_gitpod_task_terminals() {
 
 
 		}
-		printf '%s\n' "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+
+		# Entry point, very important!!!
+		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
+						"tmux_first_window_num=$tmux_first_window_num" \
+						"$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
 		# sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod # Sad noises :')
 		
     } fi
