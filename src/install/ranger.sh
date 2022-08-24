@@ -16,6 +16,4 @@ function install::ranger() {
     if test ! -e "$devicons_plugin_dir"; then { # If the devicons plugin doesn't exist 
         git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir" > /dev/null 2>&1;
     } fi
-
-    while sleep 1; do continue; done
 }

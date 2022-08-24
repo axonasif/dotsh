@@ -4,5 +4,13 @@ function install::userland_tools {
 	# Just put all sorts of commands one by one here.
 
 	# Install bashbox
-	curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall;
+	curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall &
+
+	# Install stuff with brew
+	local brew_pkgs=(
+		"bat"
+		"neovim"
+	)
+	log::info "Installing packages with brew";
+	brew install "${brew_pkgs[@]}" &
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15158 () 
+main@bashbox%9019 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%15158 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%15158";
+    ___MAIN_FUNCNAME="main@bashbox%9019";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -153,7 +153,7 @@ main@bashbox%15158 ()
         fi
     };
     levelone_syspkgs=(tmux fish jq);
-    leveltwo_syspkgs=(shellcheck rsync tree file mosh neovim);
+    leveltwo_syspkgs=(shellcheck rsync tree file mosh fzf);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -168,7 +168,9 @@ main@bashbox%15158 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & local brew_pkgs=("bat" "neovim");
+        log::info "Installing packages with brew";
+        brew install "${brew_pkgs[@]}" &
     };
     function install::tmux () 
     { 
@@ -201,10 +203,7 @@ main@bashbox%15158 ()
             { 
                 git clone --filter=tree:0 https://github.com/alexanderjeurissen/ranger_devicons "$devicons_plugin_dir" > /dev/null 2>&1
             };
-        fi;
-        while sleep 1; do
-            continue;
-        done
+        fi
     };
     function install::gh () 
     { 
@@ -530,4 +529,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%15158 "$@";
+main@bashbox%9019 "$@";

@@ -10,7 +10,7 @@ leveltwo_syspkgs=(
     tree
 	file
 	mosh
-	neovim
+	fzf
 )
 
 
