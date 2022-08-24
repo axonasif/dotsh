@@ -26,7 +26,7 @@ cgroup_dir="/sys/fs/cgroup";
 		# numfmt --to iec --format "%8.4f" < "$cgroup_dir/memory.current";
 		awk '{
 			if (NR==15) usr=$2; else if (NR==17) {sys=$2; print usr + sys; exit};
-		}' "$cgroup_dir/memory.stat" | numfmt --to iec --format "%8.4f"
+		}' "$cgroup_dir/memory.stat" | numfmt --to iec --format "%8.2f"
 	}
 
 	## Init status draw
