@@ -130,6 +130,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
 					# I'll go with the second option for now
 					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
+					create_session;
 					exec tmux set-window-option -g -t main window-size largest\; attach;
 				} fi
 

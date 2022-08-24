@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%8416 () 
+main@bashbox%9873 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%8416 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%8416";
+    ___MAIN_FUNCNAME="main@bashbox%9873";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -409,6 +409,7 @@ main@bashbox%8416 ()
                                             pkill -9 vimpod || :
                                         };
                                     fi;
+                                    create_session;
                                     exec tmux set-window-option -g -t main window-size largest\; attach
                                 };
                             fi;
@@ -526,4 +527,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%8416 "$@";
+main@bashbox%9873 "$@";
