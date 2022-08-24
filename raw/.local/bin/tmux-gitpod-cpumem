@@ -22,9 +22,11 @@ cgroup_dir="/sys/fs/cgroup";
 	}
 
 	function get_memory_reading() {
-			
-		# grep -m1 -oEh '[0-9]+' memory.stat user/memory.stat | numfmt --to iec --format "%8.4f"
-		numfmt --to iec --format "%8.4f" < "$cgroup_dir/memory.current";
+		# grep -Eo '[0-9]+' memory.stat | numfmt --to iec --format "%8.4f"  | nl | grep -E 'G|M' | column && gp top
+		# numfmt --to iec --format "%8.4f" < "$cgroup_dir/memory.current";
+		awk '{
+			if (NR==15) usr=$2; else if (NR==17) {sys=$2; print usr + sys; exit};
+		}' "$cgroup_dir/memory.stat" | numfmt --to iec --format "%8.4f"
 	}
 
 	## Init status draw
