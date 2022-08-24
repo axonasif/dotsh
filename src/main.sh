@@ -50,7 +50,7 @@ function main() {
 		config::shell::vscode::set_tmux_as_default_shell & disown;
 
         # Configure neovim
-        config::neovim & disown;
+        install::neovim & disown;
 		
 		# Install and login into gh
 		install::gh & disown;

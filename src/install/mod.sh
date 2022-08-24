@@ -4,3 +4,4 @@ use tmux;
 use ranger;
 use gh;
 use dotfiles;
+use neovim;

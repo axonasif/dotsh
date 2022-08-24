@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%19270 () 
+main@bashbox%29869 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%19270 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%19270";
+    ___MAIN_FUNCNAME="main@bashbox%29869";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -275,6 +275,25 @@ main@bashbox%19270 ()
             };
         fi
     };
+    function install::neovim () 
+    { 
+        log::info "Installing and setting up Neovim";
+        local nvim_conf_dir="$HOME/.config/nvim";
+        if test -e "$nvim_conf_dir" && nvim_conf_bak="${nvim_conf_dir}.bak"; then
+            { 
+                mv "$nvim_conf_dir" "$nvim_conf_bak"
+            };
+        fi;
+        curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
+        git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" > /dev/null 2>&1;
+        for _t in {1..2};
+        do
+            { 
+                nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+            };
+        done;
+        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
+    };
     function config::docker_auth () 
     { 
         local var_name=DOCKER_AUTH_TOKEN;
@@ -495,25 +514,6 @@ main@bashbox%19270 ()
 JSON
   sed "s|main|${tmux_first_session_name}|g"
     }
-    function config::neovim () 
-    { 
-        log::info "Installing and setting up Neovim";
-        local nvim_conf_dir="$HOME/.config/nvim";
-        if test -e "$nvim_conf_dir" && nvim_conf_bak="${nvim_conf_dir}.bak"; then
-            { 
-                mv "$nvim_conf_dir" "$nvim_conf_bak"
-            };
-        fi;
-        curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
-        git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" > /dev/null 2>&1;
-        for _t in {1..2};
-        do
-            { 
-                nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-            };
-        done;
-        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
-    };
     function main () 
     { 
         install::system_packages & disown;
@@ -536,7 +536,7 @@ JSON
                 config::docker_auth & disown;
                 config::shell::persist_history;
                 config::shell::fish::append_hist_from_gitpod_tasks & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
-                config::neovim & disown;
+                install::neovim & disown;
                 install::gh & disown
             };
         fi;
@@ -554,4 +554,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%19270 "$@";
+main@bashbox%29869 "$@";
