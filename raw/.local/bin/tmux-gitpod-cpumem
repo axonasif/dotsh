@@ -38,11 +38,11 @@ cgroup_dir="/sys/fs/cgroup";
 	end_cpu_read="$(get_cpu_reading)";
 	# echo "$end_time:$end_cpu_read"
 	percentage="$(bc -l <<<"( ($end_cpu_read - $start_cpu_read) / ($end_time - $start_time) ) * 1000")" && percentage="${percentage/./0.}";
-	status_string+=("CPU: ${percentage:0:4}%");
+	status_string+=("#[bg=#ffb86c,fg=#282a36,bold] CPU: ${percentage:0:4}%");
 
 	## Memory
 	sleep 2;
-	status_string+=("| MEM: $(get_memory_reading)");
+	status_string+=("#[bg=#8be9fd,fg=#282a36,bold] MEM:$(get_memory_reading) ");
 	printf '%s\n' "${status_string[*]}"
 
 # ) & disown
