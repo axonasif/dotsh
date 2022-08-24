@@ -8,9 +8,8 @@ function install::userland_tools {
 
 	# Install stuff with brew
 	local brew_pkgs=(
-		"bat"
 		"neovim"
-		"nushell"
+		"bat"
 		"exa"
 	)
 	log::info "Installing packages with brew";

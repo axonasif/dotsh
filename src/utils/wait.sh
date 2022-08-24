@@ -1,8 +1,13 @@
-function wait::for_file_existence() {
-	local file="$1";
-	until sleep 0.5 && test -e "$file"; do {
+function wait::until_true() {
+	local input=("$@");
+	until sleep 0.5 && "${input[@]}"; do {
 		continue;
 	} done
+}
+
+function wait::for_file_existence() {
+	local file="$1";
+	wait::until_true test -e "$file";
 }
 
 function wait::for_vscode_ide_start() {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16350 () 
+main@bashbox%16619 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%16350 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%16350";
+    ___MAIN_FUNCNAME="main@bashbox%16619";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -135,14 +135,19 @@ main@bashbox%16350 ()
             };
         fi
     };
-    function wait::for_file_existence () 
+    function wait::until_true () 
     { 
-        local file="$1";
-        until sleep 0.5 && test -e "$file"; do
+        local input=("$@");
+        until sleep 0.5 && "${input[@]}"; do
             { 
                 continue
             };
         done
+    };
+    function wait::for_file_existence () 
+    { 
+        local file="$1";
+        wait::until_true test -e "$file"
     };
     function wait::for_vscode_ide_start () 
     { 
@@ -168,7 +173,7 @@ main@bashbox%16350 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & local brew_pkgs=("bat" "neovim" "nushell" "exa");
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & local brew_pkgs=("neovim" "bat" "exa");
         log::info "Installing packages with brew";
         brew install "${brew_pkgs[@]}" & wait
     };
@@ -412,7 +417,7 @@ main@bashbox%16350 ()
                                         };
                                     fi;
                                     create_session;
-                                    exec tmux set-window-option -g -t main window-size largest\; send-keys -t :0 "nvim --version" Enter\; attach -t :0
+                                    exec tmux set-window-option -g -t main window-size largest\; attach -t :0
                                 };
                             fi;
                             create_session;
@@ -529,4 +534,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%16350 "$@";
+main@bashbox%16619 "$@";

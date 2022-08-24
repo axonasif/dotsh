@@ -131,7 +131,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# I'll go with the second option for now
 					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
 					create_session;
-					exec tmux set-window-option -g -t main window-size largest\; send-keys -t :0 "nvim --version" Enter\; attach -t :0;
+					exec tmux set-window-option -g -t main window-size largest\; attach -t :0;
 				} fi
 
 				create_session;
