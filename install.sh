@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%31312 () 
+main@bashbox%24850 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%31312 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%31312";
+    ___MAIN_FUNCNAME="main@bashbox%24850";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -514,6 +514,7 @@ JSON
             };
         fi;
         install::ranger & disown;
+        trap 'touch /tmp/.dotfiles.init' EXIT;
         log::info "Waiting for background jobs to complete" && jobs -l;
         while test -n "$(jobs -p)" && sleep 0.2; do
             { 
@@ -527,4 +528,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%31312 "$@";
+main@bashbox%24850 "$@";

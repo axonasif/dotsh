@@ -57,6 +57,7 @@ function main() {
     # Ranger + plugins
     install::ranger & disown;
 
+    trap 'touch /tmp/.dotfiles.init' EXIT;
     # Wait for "owned" background processess to exit
 	# it will ignore "disown"ed commands as you can see up there.
 	log::info "Waiting for background jobs to complete" && jobs -l;
