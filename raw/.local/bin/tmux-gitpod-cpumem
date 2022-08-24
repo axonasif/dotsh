@@ -36,7 +36,7 @@ cgroup_dir="/sys/fs/cgroup";
 		start_time="$(get_time)";
 		start_cpu_read="$(get_cpu_reading)";
 		# echo "$start_time:$start_cpu_read"
-		sleep 3;
+		sleep 1.5;
 		end_time="$(get_time)";
 		end_cpu_read="$(get_cpu_reading)";
 		# echo "$end_time:$end_cpu_read"
@@ -44,7 +44,7 @@ cgroup_dir="/sys/fs/cgroup";
 		status_string+=("#[bg=#ffb86c,fg=#282a36,bold] CPU: ${percentage:0:4}%");
 
 		## Memory
-		sleep 2;
+		sleep 1;
 		status_string+=("#[bg=#8be9fd,fg=#282a36,bold] MEM:$(get_memory_reading) ");
 		printf '%s\n' "${status_string[*]}"
 	} done
