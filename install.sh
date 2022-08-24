@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6311 () 
+main@bashbox%10474 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%6311 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%6311";
+    ___MAIN_FUNCNAME="main@bashbox%10474";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -84,7 +84,7 @@ main@bashbox%6311 ()
     declare -r workspace_dir="/workspace";
     declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
     local source_dir="$(readlink -f "$0")" && declare -r source_dir="${source_dir%/*}";
-    declare -f tmux_first_session_name="main";
+    declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     function is::gitpod () 
     { 
@@ -551,4 +551,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%6311 "$@";
+main@bashbox%10474 "$@";
