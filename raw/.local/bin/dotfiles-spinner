@@ -1,6 +1,6 @@
 #!/bin/sh
 
-until test -e /tmp/.dotfiles.init; do
+while pgrep -f "$HOME/.dotfiles/install.sh" 1>/dev/null; do
 	for s in / - \\ \|; do
 		sleep 0.1;
 		printf '%s \n' "#[bg=#ff5555,fg=#282a36,bold] $s Dotfiles";
