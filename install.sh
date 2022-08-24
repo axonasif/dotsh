@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%12110 () 
+main@bashbox%17628 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%12110 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%12110";
+    ___MAIN_FUNCNAME="main@bashbox%17628";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -293,7 +293,7 @@ main@bashbox%12110 ()
                 nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' > /dev/null
             };
         done;
-        wait::for_file_existence "$tmux_init_lock";
+        wait::for_file_existence "$tmux_init_lock" && wait::until_true tmux list-session > /dev/null 2>&1;
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
     };
     function config::docker_auth () 
@@ -555,4 +555,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%12110 "$@";
+main@bashbox%17628 "$@";
