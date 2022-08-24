@@ -4,8 +4,7 @@ levelone_syspkgs=(
 	jq
 )
 leveltwo_syspkgs=(
-	neovim
-    # shellcheck
+    shellcheck
     rsync
     tree
 	file
