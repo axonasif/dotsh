@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2805 () 
+main@bashbox%10185 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2805 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2805";
+    ___MAIN_FUNCNAME="main@bashbox%10185";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -495,6 +495,20 @@ main@bashbox%2805 ()
 JSON
 
     }
+    function config::neovim () 
+    { 
+        log::info "Configuring Neovim";
+        local nvim_conf_dir="$HOME/.config/nvim";
+        if test -e "$nvim_conf_dir" && nvim_conf_bak="${nvim_conf_dir}.bak"; then
+            { 
+                mv "$nvim_conf_dir" "$nvim_conf_bak"
+            };
+        fi;
+        git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir";
+        wait::until_true command -v nvim > /dev/null;
+        nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync';
+        tmux send-keys -t main:0 "nvim" Enter
+    };
     function main () 
     { 
         install::system_packages & disown;
@@ -517,6 +531,7 @@ JSON
                 config::docker_auth & disown;
                 config::shell::persist_history;
                 config::shell::fish::append_hist_from_gitpod_tasks & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
+                config::neovim & disown;
                 install::gh & disown
             };
         fi;
@@ -534,4 +549,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%2805 "$@";
+main@bashbox%10185 "$@";
