@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9019 () 
+main@bashbox%21715 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%9019 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%9019";
+    ___MAIN_FUNCNAME="main@bashbox%21715";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -168,9 +168,9 @@ main@bashbox%9019 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & local brew_pkgs=("bat" "neovim");
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & local brew_pkgs=("bat" "neovim" "qemu" "nushell" "exa");
         log::info "Installing packages with brew";
-        brew install "${brew_pkgs[@]}" &
+        brew install "${brew_pkgs[@]}" & wait
     };
     function install::tmux () 
     { 
@@ -529,4 +529,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%9019 "$@";
+main@bashbox%21715 "$@";

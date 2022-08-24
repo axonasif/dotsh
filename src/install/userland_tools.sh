@@ -10,7 +10,12 @@ function install::userland_tools {
 	local brew_pkgs=(
 		"bat"
 		"neovim"
+		"qemu"
+		"nushell"
+		"exa"
 	)
 	log::info "Installing packages with brew";
 	brew install "${brew_pkgs[@]}" &
+
+	wait;
 }
