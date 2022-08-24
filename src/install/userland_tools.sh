@@ -10,7 +10,6 @@ function install::userland_tools {
 	local brew_pkgs=(
 		"bat"
 		"neovim"
-		"qemu"
 		"nushell"
 		"exa"
 	)
