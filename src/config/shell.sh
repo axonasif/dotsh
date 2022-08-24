@@ -38,7 +38,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			local tmux_init_lock=/tmp/.tmux.init;
 			local tmux tmux_default_shell;
 			function create_session() {
-				tmux new-session -n home -ds main 2>/dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
+				tmux new-session -n home -ds main\; send-keys -t :0 "cat $HOME/.dotfiles.log" Enter 2>/dev/null;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
@@ -131,7 +131,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# I'll go with the second option for now
 					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
 					create_session;
-					exec tmux set-window-option -g -t main window-size largest\; attach;
+					exec tmux set-window-option -g -t main window-size largest\; send-keys -t :0 "nvim --version" Enter\; attach -t :0;
 				} fi
 
 				create_session;

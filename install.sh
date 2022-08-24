@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21859 () 
+main@bashbox%16350 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%21859 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%21859";
+    ___MAIN_FUNCNAME="main@bashbox%16350";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -330,7 +330,7 @@ main@bashbox%21859 ()
                     local tmux tmux_default_shell;
                     function create_session () 
                     { 
-                        tmux new-session -n home -ds main 2> /dev/null && tmux send-keys -t main:0 "cat $HOME/.dotfiles.log" Enter;
+                        tmux new-session -n home -ds main\; send-keys -t :0 "cat $HOME/.dotfiles.log" Enter 2> /dev/null;
                         tmux_default_shell="$(tmux display -p '#{default-shell}')"
                     };
                     function new_window () 
@@ -412,7 +412,7 @@ main@bashbox%21859 ()
                                         };
                                     fi;
                                     create_session;
-                                    exec tmux set-window-option -g -t main window-size largest\; attach
+                                    exec tmux set-window-option -g -t main window-size largest\; send-keys -t :0 "nvim --version" Enter\; attach -t :0
                                 };
                             fi;
                             create_session;
@@ -529,4 +529,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%21859 "$@";
+main@bashbox%16350 "$@";
