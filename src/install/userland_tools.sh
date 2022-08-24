@@ -13,7 +13,7 @@ function install::userland_tools {
 		"exa"
 	)
 	log::info "Installing packages with brew";
-	brew install "${brew_pkgs[@]}" &
+	brew install "${brew_pkgs[@]}" 1>/dev/null &
 
 	wait;
 }
