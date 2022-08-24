@@ -7,3 +7,4 @@ local source_dir="$(readlink -f "$0")" && declare -r source_dir="${source_dir%/*
 # Tmux specific
 declare -r tmux_first_session_name="main";
 declare -r tmux_first_window_num="1";
+declare -r tmux_init_lock="/tmp/.tmux.init";

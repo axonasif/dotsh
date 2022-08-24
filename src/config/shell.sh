@@ -35,7 +35,6 @@ function config::shell::hijack_gitpod_task_terminals() {
 			if test -v TMUX; then {
 				return;
 			} fi
-			local tmux_init_lock=/tmp/.tmux.init;
 			local tmux tmux_default_shell;
 			function create_session() {
 				tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2>/dev/null;
@@ -184,6 +183,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 		# Entry point, very important!!!
 		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
 						"tmux_first_window_num=$tmux_first_window_num" \
+						"tmux_init_lock=$tmux_init_lock" \
 						"$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
 		# sudo cp -a "$source_dir/src/utils/vimpod.py" /usr/bin/vimpod # Sad noises :')
 		

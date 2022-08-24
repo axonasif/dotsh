@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%17521 () 
+main@bashbox%12110 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%17521 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%17521";
+    ___MAIN_FUNCNAME="main@bashbox%12110";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,6 +86,7 @@ main@bashbox%17521 ()
     local source_dir="$(readlink -f "$0")" && declare -r source_dir="${source_dir%/*}";
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
+    declare -r tmux_init_lock="/tmp/.tmux.init";
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
@@ -292,7 +293,7 @@ main@bashbox%17521 ()
                 nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' > /dev/null
             };
         done;
-        wait::until_true command -v tmux > /dev/null;
+        wait::for_file_existence "$tmux_init_lock";
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
     };
     function config::docker_auth () 
@@ -351,7 +352,6 @@ main@bashbox%17521 ()
                             return
                         };
                     fi;
-                    local tmux_init_lock=/tmp/.tmux.init;
                     local tmux tmux_default_shell;
                     function create_session () 
                     { 
@@ -479,7 +479,7 @@ main@bashbox%17521 ()
                         };
                     fi
                 };
-                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "tmux_init_lock=$tmux_init_lock" "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -555,4 +555,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%17521 "$@";
+main@bashbox%12110 "$@";
