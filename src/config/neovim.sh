@@ -7,7 +7,9 @@ function config::neovim() {
 
 	git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir";
 	wait::until_true command -v nvim 1>/dev/null;
-	nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync';
+	for _t in {1..2}; do {
+		nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync';
+	} done
 	tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter;
 
 	# if test -e "$nvim_conf_bak"; then {
