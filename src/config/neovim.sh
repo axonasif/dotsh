@@ -8,7 +8,7 @@ function config::neovim() {
 	git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir";
 	wait::until_true command -v nvim 1>/dev/null;
 	nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync';
-	tmux send-keys -t main:0 "nvim" Enter;
+	tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter;
 
 	# if test -e "$nvim_conf_bak"; then {
 	# 	find "$nvim_conf_bak" -mindepth 1 -maxdepth 1

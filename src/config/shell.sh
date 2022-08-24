@@ -38,7 +38,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 			local tmux_init_lock=/tmp/.tmux.init;
 			local tmux tmux_default_shell;
 			function create_session() {
-				tmux new-session -n home -ds main\; send-keys -t :0 "cat $HOME/.dotfiles.log" Enter 2>/dev/null;
+				tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2>/dev/null;
 				tmux_default_shell="$(tmux display -p '#{default-shell}')";
 				# local tmux_default_shell;
 				# tmux_default_shell="$(tmux start-server\; display -p '#{default-shell}')";
@@ -47,7 +47,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 				exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@";
 			}
 			function create_window() {
-				if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then {
+				if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t "$tmux_first_session_name")"; then {
 					# create_window "$tmux_default_shell" -l;
 					touch "$tmux_init_lock";
 					# local tasks_count;
@@ -131,7 +131,7 @@ function config::shell::hijack_gitpod_task_terminals() {
 					# I'll go with the second option for now
 					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
 					create_session;
-					exec tmux set-window-option -g -t main window-size largest\; attach -t :0;
+					exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num};
 				} fi
 
 				create_session;
@@ -201,7 +201,7 @@ function config::shell::fish::append_hist_from_gitpod_tasks() {
 
 function config::shell::vscode::set_tmux_as_default_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	vscode::add_settings <<-'JSON'
+	vscode::add_settings <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
 		{
 			"terminal.integrated.profiles.linux": {
 				"tmuxshell": {

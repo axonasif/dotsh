@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%30761 () 
+main@bashbox%6311 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%30761 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%30761";
+    ___MAIN_FUNCNAME="main@bashbox%6311";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -84,6 +84,8 @@ main@bashbox%30761 ()
     declare -r workspace_dir="/workspace";
     declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
     local source_dir="$(readlink -f "$0")" && declare -r source_dir="${source_dir%/*}";
+    declare -f tmux_first_session_name="main";
+    declare -r tmux_first_window_num="1";
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
@@ -335,7 +337,7 @@ main@bashbox%30761 ()
                     local tmux tmux_default_shell;
                     function create_session () 
                     { 
-                        tmux new-session -n home -ds main\; send-keys -t :0 "cat $HOME/.dotfiles.log" Enter 2> /dev/null;
+                        tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null;
                         tmux_default_shell="$(tmux display -p '#{default-shell}')"
                     };
                     function new_window () 
@@ -344,7 +346,7 @@ main@bashbox%30761 ()
                     };
                     function create_window () 
                     { 
-                        if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t main)"; then
+                        if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t "$tmux_first_session_name")"; then
                             { 
                                 touch "$tmux_init_lock";
                                 new_window "$@" \; attach
@@ -417,7 +419,7 @@ main@bashbox%30761 ()
                                         };
                                     fi;
                                     create_session;
-                                    exec tmux set-window-option -g -t main window-size largest\; attach -t :0
+                                    exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num}
                                 };
                             fi;
                             create_session;
@@ -479,7 +481,7 @@ main@bashbox%30761 ()
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        vscode::add_settings <<-'JSON'
+        vscode::add_settings <<-'JSON' |
 {
 "terminal.integrated.profiles.linux": {
 "tmuxshell": {
@@ -493,7 +495,7 @@ main@bashbox%30761 ()
 "terminal.integrated.defaultProfile.linux": "tmuxshell"
 }
 JSON
-
+  sed "s|main|${tmux_first_session_name}|g"
     }
     function config::neovim () 
     { 
@@ -507,7 +509,7 @@ JSON
         git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir";
         wait::until_true command -v nvim > /dev/null;
         nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync';
-        tmux send-keys -t main:0 "nvim" Enter
+        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
     };
     function main () 
     { 
@@ -549,4 +551,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%30761 "$@";
+main@bashbox%6311 "$@";
