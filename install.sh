@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24696 () 
+main@bashbox%10925 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%24696 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%24696";
+    ___MAIN_FUNCNAME="main@bashbox%10925";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -160,7 +160,7 @@ main@bashbox%24696 ()
         fi
     };
     levelone_syspkgs=(tmux fish jq);
-    leveltwo_syspkgs=(shellcheck rsync tree file mosh fzf);
+    leveltwo_syspkgs=(neovim rsync tree file mosh fzf);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -175,9 +175,7 @@ main@bashbox%24696 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & local brew_pkgs=("neovim" "bat" "exa");
-        log::info "Installing packages with brew";
-        brew install "${brew_pkgs[@]}" > /dev/null & wait
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & wait
     };
     function install::tmux () 
     { 
@@ -556,4 +554,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%24696 "$@";
+main@bashbox%10925 "$@";

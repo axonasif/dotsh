@@ -6,14 +6,14 @@ function install::userland_tools {
 	# Install bashbox
 	curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall &
 
-	# Install stuff with brew
-	local brew_pkgs=(
-		"neovim"
-		"bat"
-		"exa"
-	)
-	log::info "Installing packages with brew";
-	brew install "${brew_pkgs[@]}" 1>/dev/null &
+	# # Install stuff with brew
+	# local brew_pkgs=(
+	# 	"neovim"
+	# 	"bat"
+	# 	"exa"
+	# )
+	# log::info "Installing packages with brew";
+	# brew install "${brew_pkgs[@]}" 1>/dev/null &
 
 	wait;
 }

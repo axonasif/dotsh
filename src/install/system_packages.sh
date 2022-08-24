@@ -2,10 +2,10 @@ levelone_syspkgs=(
     tmux
 	fish
 	jq
-
 )
 leveltwo_syspkgs=(
-    shellcheck
+	neovim
+    # shellcheck
     rsync
     tree
 	file
