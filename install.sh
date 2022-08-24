@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25550 () 
+main@bashbox%7824 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%25550 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%25550";
+    ___MAIN_FUNCNAME="main@bashbox%7824";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -287,12 +287,6 @@ main@bashbox%25550 ()
         fi;
         curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
         git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" > /dev/null 2>&1;
-        for _t in {1..2};
-        do
-            { 
-                nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' > /dev/null
-            };
-        done;
         wait::for_file_existence "$tmux_init_lock" && wait::until_true tmux list-session > /dev/null 2>&1;
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
     };
@@ -555,4 +549,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%25550 "$@";
+main@bashbox%7824 "$@";
