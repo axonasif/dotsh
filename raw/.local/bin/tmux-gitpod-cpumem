@@ -27,22 +27,26 @@ cgroup_dir="/sys/fs/cgroup";
 		numfmt --to iec --format "%8.4f" < "$cgroup_dir/memory.current";
 	}
 
-	status_string=();
+	## Init status draw
+	printf '\n';
 
-	## CPU
-	start_time="$(get_time)";
-	start_cpu_read="$(get_cpu_reading)";
-	# echo "$start_time:$start_cpu_read"
-	sleep 3;
-	end_time="$(get_time)";
-	end_cpu_read="$(get_cpu_reading)";
-	# echo "$end_time:$end_cpu_read"
-	percentage="$(bc -l <<<"( ($end_cpu_read - $start_cpu_read) / ($end_time - $start_time) ) * 1000")" && percentage="${percentage/./0.}";
-	status_string+=("#[bg=#ffb86c,fg=#282a36,bold] CPU: ${percentage:0:4}%");
+	while true; do {
+		status_string=();
+		## CPU
+		start_time="$(get_time)";
+		start_cpu_read="$(get_cpu_reading)";
+		# echo "$start_time:$start_cpu_read"
+		sleep 3;
+		end_time="$(get_time)";
+		end_cpu_read="$(get_cpu_reading)";
+		# echo "$end_time:$end_cpu_read"
+		percentage="$(bc -l <<<"( ($end_cpu_read - $start_cpu_read) / ($end_time - $start_time) ) * 1000")" && percentage="${percentage/./0.}";
+		status_string+=("#[bg=#ffb86c,fg=#282a36,bold] CPU: ${percentage:0:4}%");
 
-	## Memory
-	sleep 2;
-	status_string+=("#[bg=#8be9fd,fg=#282a36,bold] MEM:$(get_memory_reading) ");
-	printf '%s\n' "${status_string[*]}"
+		## Memory
+		sleep 2;
+		status_string+=("#[bg=#8be9fd,fg=#282a36,bold] MEM:$(get_memory_reading) ");
+		printf '%s\n' "${status_string[*]}"
+	} done
 
 # ) & disown
