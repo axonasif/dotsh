@@ -205,18 +205,21 @@ function config::shell::fish::append_hist_from_gitpod_tasks() {
 
 function config::shell::vscode::set_tmux_as_default_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	vscode::add_settings <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
-		{
-			"terminal.integrated.profiles.linux": {
-				"tmuxshell": {
-					"path": "bash",
-					"args": [
-						"-c",
-						"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
-					]
-				}
-			},
-			"terminal.integrated.defaultProfile.linux": "tmuxshell"
-		}
-	JSON
+	local file;
+	for file in "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json"; do {
+		SETTINGS_TARGET="$file" vscode::add_settings <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
+			{
+				"terminal.integrated.profiles.linux": {
+					"tmuxshell": {
+						"path": "bash",
+						"args": [
+							"-c",
+							"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ]] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+						]
+					}
+				},
+				"terminal.integrated.defaultProfile.linux": "tmuxshell"
+			}
+		JSON
+	} done
 }

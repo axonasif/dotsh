@@ -5,6 +5,7 @@ function is::gitpod() {
 
 function vscode::add_settings() {
 	local lockfile="/tmp/.vscs_add.lock";
+	local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";
 	trap "rm -f $lockfile" ERR SIGINT;
 	while test -e "$lockfile" && sleep 0.2; do {
 		continue;

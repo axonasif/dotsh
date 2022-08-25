@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7824 () 
+main@bashbox%23875 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%7824 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%7824";
+    ___MAIN_FUNCNAME="main@bashbox%23875";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -94,6 +94,7 @@ main@bashbox%7824 ()
     function vscode::add_settings () 
     { 
         local lockfile="/tmp/.vscs_add.lock";
+        local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";
         trap "rm -f $lockfile" ERR SIGINT;
         while test -e "$lockfile" && sleep 0.2; do
             { 
@@ -493,14 +494,18 @@ main@bashbox%7824 ()
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        vscode::add_settings <<-'JSON' |
+        local file;
+        for file in "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json";
+        do
+            { 
+                SETTINGS_TARGET="$file" vscode::add_settings <<-'JSON' |
 {
 "terminal.integrated.profiles.linux": {
 "tmuxshell": {
 "path": "bash",
 "args": [
 "-c",
-"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]] && attach=false && break; done; test \"$attach\" != false && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ]] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
 ]
 }
 },
@@ -508,6 +513,8 @@ main@bashbox%7824 ()
 }
 JSON
   sed "s|main|${tmux_first_session_name}|g"
+            };
+        done
     }
     function main () 
     { 
@@ -549,4 +556,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%7824 "$@";
+main@bashbox%23875 "$@";
