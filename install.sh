@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2060 () 
+main@bashbox%11444 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2060 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2060";
+    ___MAIN_FUNCNAME="main@bashbox%11444";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -95,7 +95,7 @@ main@bashbox%2060 ()
     { 
         local lockfile="/tmp/.vscs_add.lock";
         local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";
-        trap "rm -f $lockfile" ERR SIGINT;
+        trap "rm -f $lockfile" ERR SIGINT RETURN;
         while test -e "$lockfile" && sleep 0.2; do
             { 
                 continue
@@ -556,4 +556,4 @@ main@bashbox%2060 ()
     wait;
     exit
 }
-main@bashbox%2060 "$@";
+main@bashbox%11444 "$@";
