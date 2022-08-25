@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+## Init status draw
+printf '\n';
 set -eu
-
 cgroup_dir="/sys/fs/cgroup";
 # cache_result_file="/tmp/.wsload";
 # if test -e "$cache_result_file"; then {
@@ -28,9 +29,6 @@ cgroup_dir="/sys/fs/cgroup";
 			if (NR==15) usr=$2; else if (NR==17) {sys=$2; print usr + sys; exit};
 		}' "$cgroup_dir/memory.stat" | numfmt --to iec --format "%8.2f"
 	}
-
-	## Init status draw
-	printf '\n';
 
 	while true; do {
 		status_string=();
