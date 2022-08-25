@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16920 () 
+main@bashbox%2060 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%16920 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%16920";
+    ___MAIN_FUNCNAME="main@bashbox%2060";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -505,7 +505,7 @@ main@bashbox%16920 ()
 					"path": "bash",
 					"args": [
 						"-c",
-						"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do spid=$(ps -o ppid= -p $cpid); [ ${spid:-} == $PPID ] && attach=false && break; done; fi; [ ${attach:-} != false ] && exec tmux attach -t main; exec tmux new-window -n vs:${PWD##*/} -t main"
 					]
 				}
 			},
@@ -514,7 +514,6 @@ main@bashbox%16920 ()
 	JSON
 	)";
         printf '%s\n' "$json_data" | vscode::add_settings;
-        TIME=2 wait::for_file_existence "$ms_vscode_server_dir";
         printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
     };
     function main () 
@@ -557,4 +556,4 @@ main@bashbox%16920 ()
     wait;
     exit
 }
-main@bashbox%16920 "$@";
+main@bashbox%2060 "$@";
