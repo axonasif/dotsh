@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2060 () 
+main@bashbox%21002 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%2060 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2060";
+    ___MAIN_FUNCNAME="main@bashbox%21002";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -505,7 +505,7 @@ main@bashbox%2060 ()
 					"path": "bash",
 					"args": [
 						"-c",
-						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do spid=$(ps -o ppid= -p $cpid); [ ${spid:-} == $PPID ] && attach=false && break; done; fi; [ ${attach:-} != false ] && exec tmux attach -t main; exec tmux new-window -n vs:${PWD##*/} -t main"
+						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -556,4 +556,4 @@ main@bashbox%2060 ()
     wait;
     exit
 }
-main@bashbox%2060 "$@";
+main@bashbox%21002 "$@";
