@@ -200,26 +200,29 @@ function config::shell::fish::append_hist_from_gitpod_tasks() {
     } done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
 }
 
-
-
-
 function config::shell::vscode::set_tmux_as_default_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	local file;
-	for file in "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json"; do {
-		SETTINGS_TARGET="$file" vscode::add_settings <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
-			{
-				"terminal.integrated.profiles.linux": {
-					"tmuxshell": {
-						"path": "bash",
-						"args": [
-							"-c",
-							"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ]] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
-						]
-					}
-				},
-				"terminal.integrated.defaultProfile.linux": "tmuxshell"
-			}
-		JSON
-	} done
+	local file json_data;
+	local ms_vscode_server_dir="$HOME/.vscode-server";
+	local ms_vscode_server_settings="$ms_vscode_server_dir/data/Machine/settings.json";
+	json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
+		{
+			"terminal.integrated.profiles.linux": {
+				"tmuxshell": {
+					"path": "bash",
+					"args": [
+						"-c",
+						"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+					]
+				}
+			},
+			"terminal.integrated.defaultProfile.linux": "tmuxshell"
+		}
+	JSON
+	)"
+
+	printf '%s\n' "$json_data" | vscode::add_settings;
+	# For vscode desktop
+	TIME=2 wait::for_file_existence "$ms_vscode_server_dir";
+	printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings;
 }

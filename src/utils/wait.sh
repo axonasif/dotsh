@@ -1,6 +1,7 @@
 function wait::until_true() {
+	local time="${TIME:-0.5}";
 	local input=("$@");
-	until sleep 0.5 && "${input[@]}"; do {
+	until sleep "$time" && "${input[@]}"; do {
 		continue;
 	} done
 }

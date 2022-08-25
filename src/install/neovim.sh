@@ -13,7 +13,7 @@ function install::neovim() {
 	# 	nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' 1>/dev/null;
 	# } done
 	wait::for_file_existence "$tmux_init_lock" && wait::until_true tmux list-session >/dev/null 2>&1;
-	tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter;
+	tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter;
 
 	# if test -e "$nvim_conf_bak"; then {
 	# 	find "$nvim_conf_bak" -mindepth 1 -maxdepth 1

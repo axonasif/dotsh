@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23875 () 
+main@bashbox%16920 () 
 { 
     function process::self::exit () 
     { 
@@ -50,7 +50,7 @@ main@bashbox%23875 ()
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%23875";
+    ___MAIN_FUNCNAME="main@bashbox%16920";
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -141,8 +141,9 @@ main@bashbox%23875 ()
     };
     function wait::until_true () 
     { 
+        local time="${TIME:-0.5}";
         local input=("$@");
-        until sleep 0.5 && "${input[@]}"; do
+        until sleep "$time" && "${input[@]}"; do
             { 
                 continue
             };
@@ -289,7 +290,7 @@ main@bashbox%23875 ()
         curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
         git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" > /dev/null 2>&1;
         wait::for_file_existence "$tmux_init_lock" && wait::until_true tmux list-session > /dev/null 2>&1;
-        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim" Enter
+        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
     };
     function config::docker_auth () 
     { 
@@ -494,28 +495,28 @@ main@bashbox%23875 ()
     function config::shell::vscode::set_tmux_as_default_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        local file;
-        for file in "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json";
-        do
-            { 
-                SETTINGS_TARGET="$file" vscode::add_settings <<-'JSON' |
-{
-"terminal.integrated.profiles.linux": {
-"tmuxshell": {
-"path": "bash",
-"args": [
-"-c",
-"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ]] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
-]
-}
-},
-"terminal.integrated.defaultProfile.linux": "tmuxshell"
-}
-JSON
-  sed "s|main|${tmux_first_session_name}|g"
-            };
-        done
-    }
+        local file json_data;
+        local ms_vscode_server_dir="$HOME/.vscode-server";
+        local ms_vscode_server_settings="$ms_vscode_server_dir/data/Machine/settings.json";
+        json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
+		{
+			"terminal.integrated.profiles.linux": {
+				"tmuxshell": {
+					"path": "bash",
+					"args": [
+						"-c",
+						"tmux new-session -ds main 2>/dev/null || :; { [ -z \"$(tmux list-clients -t main)\" ] && attach=true || for cpid in $(tmux list-clients -t main -F '#{client_pid}'); do spid=$(ps -o ppid= -p $cpid);pcomm=\"$(ps -o comm= -p $spid)\"; if [[ \"$pcomm\" =~ (Code|vscode|node|supervisor) ]]; then [ -v SSH_CONNECTION ] && [ \"${BASH_REMATCH[0]}\" == node ] && tmux detach -as main || attach=false; break; fi; done; [ \"$attach\" != false ] && exec tmux attach -t main; }; exec tmux new-window -n \"vs:${PWD##*/}\" -t main"
+					]
+				}
+			},
+			"terminal.integrated.defaultProfile.linux": "tmuxshell"
+		}
+	JSON
+	)";
+        printf '%s\n' "$json_data" | vscode::add_settings;
+        TIME=2 wait::for_file_existence "$ms_vscode_server_dir";
+        printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
+    };
     function main () 
     { 
         install::system_packages & disown;
@@ -556,4 +557,4 @@ JSON
     wait;
     exit
 }
-main@bashbox%23875 "$@";
+main@bashbox%16920 "$@";
