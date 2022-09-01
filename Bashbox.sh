@@ -88,7 +88,7 @@ live() (
             -it gitpod/workspace-full:latest
 
             # Startup command
-            /bin/sh -lic "eval \$(gp env -e); $ide_cmd & disown; \$HOME/.dotfiles/install.sh; exec bash -l"
+            /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l"
         )
 
         docker "${docker_args[@]}";
