@@ -3,7 +3,7 @@ CODENAME="dotfiles"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
-    std::0.2.0
+    std::HEAD
 )
 REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"
@@ -16,23 +16,82 @@ bashbox::build::after() {
     #sed -i 's|#!/usr/bin/env bash|#!/usr/bin/bash -i|' "$root_script";
 }
 
-bashbox::run::before() {
-
-    rm -rf .private;
-#     local _fovfs=/tmp/fovfs;
-#     if test ! -e "$_fovfs"; then {
-#         curl -sL 'https://github.com/containers/fuse-overlayfs/releases/download/v1.8.2/fuse-overlayfs-x86_64' -o "$_fovfs";
-#         chmod +x "$_fovfs";
-#     } fixs
-#     rm -rf $HOME/.dotfiles;
-#     sudo umount -lf $HOME 2>/dev/null || :
-#     local _workdir=/tmp/workdir;
-#     local _upperdir=/tmp/upper;
-#     sudo rm -rf $_workdir $_upperdir;
-#     mkdir -p $_upperdir $_workdir;
-#     # sudo mount -t overlay overlay -olowerdir=$HOME,upperdir=${_upperdir},workdir=${_workdir} $HOME;
+bashbox::build::before() {
+    rm -rf "$_arg_path/.private";
 }
 
-# bashbox::run::after() {
-#     #sudo umount -f $HOME 2>/dev/null || { sudo umount -lf $HOME 2>/dev/null; true; }
-# }
+live() (
+
+    # if test "$1" == "r"; then {
+        cmd="bashbox build --release";
+        log::info "Running '$cmd";
+        $cmd;
+    # } fi
+
+    local duplicate_repo_root="/tmp/.mrroot";
+
+    log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_repo_root" && {
+        rm -rf "$duplicate_repo_root";
+        cp -ra "$GITPOD_REPO_ROOT" "$duplicate_repo_root";
+    }
+
+    local ide_mirror="/tmp/.idem";
+    if test ! -e "$ide_mirror"; then {
+        log::info "Creating /ide mirror";
+        cp -ra /ide "$ide_mirror";
+    } fi
+
+    log::info "Starting a fake Gitpod workspace with headless IDE" && {
+        local ide_cmd ide_port;
+        ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code --install-builtin-extension') -o args --no-headers)";
+        ide_port="33000";
+        ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
+
+        local docker_args=(
+            run
+            --net=host
+
+            # Shared mountpoints
+            -v "$duplicate_repo_root:/$GITPOD_REPO_ROOT"
+            -v "$duplicate_repo_root:$HOME/.dotfiles"
+            -v "$ide_mirror:/ide"
+            -v /usr/bin/gp:/usr/bin/gp:ro
+            
+            # Environment vars
+            -e GP_EXTERNAL_BROWSER
+            -e GP_OPEN_EDITOR
+            -e GP_PREVIEW_BROWSER
+            -e GITPOD_ANALYTICS_SEGMENT_KEY
+            -e GITPOD_ANALYTICS_WRITER
+            -e GITPOD_CLI_APITOKEN
+            -e GITPOD_GIT_USER_EMAIL
+            -e GITPOD_GIT_USER_NAME
+            -e GITPOD_HOST
+            -e GITPOD_IDE_ALIAS
+            -e GITPOD_INSTANCE_ID
+            -e GITPOD_INTERVAL
+            -e GITPOD_MEMORY
+            -e GITPOD_OWNER_ID
+            -e GITPOD_PREVENT_METADATA_ACCESS
+            -e GITPOD_REPO_ROOT
+            -e GITPOD_REPO_ROOTS
+            -e GITPOD_TASKS
+            -e GITPOD_THEIA_PORT
+            -e GITPOD_WORKSPACE_CLASS
+            -e GITPOD_WORKSPACE_CLUSTER_HOST
+            -e GITPOD_WORKSPACE_CONTEXT
+            -e GITPOD_WORKSPACE_CONTEXT_URL
+            -e GITPOD_WORKSPACE_ID
+            -e GITPOD_WORKSPACE_URL
+
+            # Container image
+            -it gitpod/workspace-full:latest
+
+            # Startup command
+            /bin/sh -lic "eval \$(gp env -e); $ide_cmd & disown; \$HOME/.dotfiles/install.sh; exec bash -l"
+        )
+
+        docker "${docker_args[@]}";
+    }
+
+)

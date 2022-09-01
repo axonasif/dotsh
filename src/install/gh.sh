@@ -11,7 +11,16 @@ function install::gh() {
 	wait::for_vscode_ide_start;
 	if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then {
 	# if [[ "$gp_credentials" =~ password=(.*) ]]; then {
-		printf '%s\n' "${token}" | gh auth login --with-token;
+		tries=1;
+		until printf '%s\n' "${token}" | gh auth login --with-token &>/dev/null; do {
+			if test $tries -gt 20; then {
+				log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials" 1 || exit;
+				break;
+			} fi
+			((tries++));
+			sleep 1;
+			continue;
+		} done
 	} else {
 		log::error "Failed to get auth token for gh" || exit 1;
 	} fi

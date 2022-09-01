@@ -1,25 +1,29 @@
 #!/usr/bin/env bash
-main@bashbox%2060 () 
+main@bashbox%9564 () 
 { 
+    if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
+        { 
+            printf 'error: %s\n' 'At least bash 4.3 is required to run this, please upgrade bash or use the correct interpreter' 1>&2;
+            exit 1
+        };
+    fi;
     function process::self::exit () 
     { 
         local _r=$?;
-        kill -USR1 "$___self_PID";
-        exit $_r
+        ( kill -USR1 "$___self_PID" 2> /dev/null ) & exit $_r
     };
     function process::self::forcekill () 
     { 
-        exec 2> /dev/null;
-        kill -9 "$___self_PID"
+        kill -9 "$___self_PID" 2> /dev/null
     };
     function log::error () 
     { 
         local _retcode="${2:-$?}";
         local _exception_line="$1";
         local _source="${BB_ERR_SOURCE:-"${BASH_SOURCE[-1]}"}";
-        if [[ ! "$_exception_line" == "("*")" ]]; then
+        if [[ ! "$_exception_line" == \(*\) ]]; then
             { 
-                echo -e "[!!!] \033[1;31merror\033[0m[$_retcode]: ${_source##*/}[$BASH_LINENO]: ${BB_ERR_MSG:-"$_exception_line"}" 1>&2;
+                printf '[!!!] \033[1;31m%s\033[0m[%s]: %s\n' error "$_retcode" "${_source##*/}[${BASH_LINENO[0]}]: ${BB_ERR_MSG:-"$_exception_line"}" 1>&2;
                 if test -v BB_ERR_MSG; then
                     { 
                         echo -e "STACK TRACE: (TOKEN: $_exception_line)" 1>&2;
@@ -28,7 +32,7 @@ main@bashbox%2060 ()
                         local _line _caller _source;
                         while read -r _line _caller _source < <(caller "$_frame"); do
                             { 
-                                echo "$_treestack ${_caller} >> ${_source##*/}::${_line}" 1>&2;
+                                printf '%s >> %s\n' "$_treestack ${_caller}" "${_source##*/}:${_line}" 1>&2;
                                 _frame+=1;
                                 _treestack+='--'
                             };
@@ -38,24 +42,25 @@ main@bashbox%2060 ()
             };
         else
             { 
-                echo -e "[!!!] \033[1;31merror\033[0m[$_retcode]: ${_source##*/}[$BASH_LINENO]: SUBSHELL EXITED WITH NON-ZERO STATUS" 1>&2
+                printf '[!!!] \033[1;31m%s\033[0m[%s]: %s\n' error "$_retcode" "${_source##*/}[${BASH_LINENO[0]}]: SUBSHELL EXITED WITH NON-ZERO STATUS" 1>&2
             };
         fi;
         return "$_retcode"
     };
-    \command \unalias -a || exit;
+    \command unalias -a || exit;
     set -eEuT -o pipefail;
     shopt -s inherit_errexit expand_aliases;
     trap 'exit' USR1;
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
-    ___MAIN_FUNCNAME="main@bashbox%2060";
+    ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
+    ___MAIN_FUNCNAME='main@bashbox%9564';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::0.2.0);
+    ___self_DEPENDENCIES=(std::HEAD);
     ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -65,9 +70,39 @@ main@bashbox%2060 ()
         cp "$_target_workfile" "$root_script";
         chmod 0755 "$root_script"
     };
-    function bashbox::run::before () 
+    function bashbox::build::before () 
     { 
-        rm -rf .private
+        rm -rf "$_arg_path/.private"
+    };
+    function live () 
+    { 
+        ( if test "$1" == "r"; then
+            { 
+                cmd="bashbox build --release";
+                log::info "Running '$cmd";
+                $cmd
+            };
+        fi;
+        local duplicate_repo_root="/tmp/.mrroot";
+        log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_repo_root" && { 
+            rm -rf "$duplicate_repo_root";
+            cp -ra "$GITPOD_REPO_ROOT" "$duplicate_repo_root"
+        };
+        local ide_mirror="/tmp/.idem";
+        if test ! -e "$ide_mirror"; then
+            { 
+                log::info "Creating /ide mirror";
+                cp -ra /ide "$ide_mirror"
+            };
+        fi;
+        log::info "Starting a fake Gitpod workspace with headless IDE" && { 
+            local ide_cmd ide_port;
+            ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code --install-builtin-extension') -o args --no-headers)";
+            ide_port="33000";
+            ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
+            local docker_args=(run --net=host -v "$duplicate_repo_root:/$GITPOD_REPO_ROOT" -v "$duplicate_repo_root:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_TASKS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -it gitpod/workspace-full:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & disown; \$HOME/.dotfiles/install.sh; exec bash -l");
+            docker "${docker_args[@]}"
+        } )
     };
     function log::info () 
     { 
@@ -196,6 +231,11 @@ main@bashbox%2060 ()
     };
     function install::ranger () 
     { 
+        if ! command -v pip > /dev/null; then
+            { 
+                log::error "Python not installed" 1 || exit
+            };
+        fi;
         bash -lic 'pip install --no-input ranger-fm' > /dev/null;
         local target=$HOME/.config/ranger/rc.conf;
         local target_dir="${target%/*}";
@@ -222,7 +262,20 @@ main@bashbox%2060 ()
         wait::for_vscode_ide_start;
         if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
             { 
-                printf '%s\n' "${token}" | gh auth login --with-token
+                tries=1;
+                until printf '%s\n' "${token}" | gh auth login --with-token &> /dev/null; do
+                    { 
+                        if test $tries -gt 20; then
+                            { 
+                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials" 1 || exit;
+                                break
+                            };
+                        fi;
+                        ((tries++));
+                        sleep 1;
+                        continue
+                    };
+                done
             };
         else
             { 
@@ -556,4 +609,4 @@ main@bashbox%2060 ()
     wait;
     exit
 }
-main@bashbox%2060 "$@";
+main@bashbox%9564 "$@";

@@ -1,5 +1,8 @@
 function install::ranger() {
 	# Install ranger-fm
+    if ! command -v pip 1>/dev/null; then {
+        log::error "Python not installed" 1 || exit;
+    } fi
 	bash -lic 'pip install --no-input ranger-fm' 1>/dev/null;
     local target=$HOME/.config/ranger/rc.conf;
     local target_dir="${target%/*}";

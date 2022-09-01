@@ -6,8 +6,23 @@ tasks:
       curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall; # Install bashbox
       bashbox build --release;
 
+  - name: Live test dotfiles
+    command: |
+      until test -e /workspace/.dinit; do {
+        sleep 0.5;
+        continue;
+      } done
+
+      bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
+
+  - name: Cache workspace images
+    init: docker pull gitpod/workspace-full:latest; touch /workspace/.dinit && exit;
 vscode:
   extensions:
     - mads-hartmann.bash-ide-vscode
     - evgeniypeshkov.syntax-highlighter
     - timonwong.shellcheck
+
+ports:
+  - port: 33000
+    onOpen: ignore
