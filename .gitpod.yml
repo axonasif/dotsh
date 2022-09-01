@@ -11,6 +11,7 @@ tasks:
 
   - name: Live test dotfiles
     command: |
+      printf "\033[3J\033c\033[3J";
       printf 'info: %s\n' "Waiting for the 'init' docker-pull to complete ...";
       until test -e /workspace/.dinit && test -e /workspace/.binit; do {
         sleep 0.5;
