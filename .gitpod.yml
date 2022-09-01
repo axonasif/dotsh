@@ -8,6 +8,7 @@ tasks:
 
   - name: Live test dotfiles
     command: |
+      printf 'info: %s\n' "Waiting for init command to complete ...";
       until test -e /workspace/.dinit; do {
         sleep 0.5;
         continue;
