@@ -1,4 +1,3 @@
----
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
   - name: Cache workspace images
@@ -8,14 +7,16 @@ tasks:
     command: |
       curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall; # Install bashbox
       bashbox build --release;
+      touch /workspace/.binit;
 
   - name: Live test dotfiles
     command: |
       printf 'info: %s\n' "Waiting for the 'init' docker-pull to complete ...";
-      until test -e /workspace/.dinit; do {
+      until test -e /workspace/.dinit && test -e /workspace/.binit; do {
         sleep 0.5;
         continue;
       } done
+      source "$HOME/.bashbox/env";
 
       bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
 vscode:
