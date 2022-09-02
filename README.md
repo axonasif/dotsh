@@ -1,3 +1,5 @@
+# README is outdated
+
 # Introduction
 
 This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
