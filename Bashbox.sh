@@ -85,7 +85,7 @@ live() (
             -e GITPOD_WORKSPACE_URL
 
             # Container image
-            -it gitpod/workspace-full:latest
+            -it gitpod/workspace-base:latest
 
             # Startup command
             /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l"
