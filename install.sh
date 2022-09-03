@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9181 () 
+main@bashbox%3327 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%9181 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%9181';
+    ___MAIN_FUNCNAME='main@bashbox%3327';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -157,7 +157,7 @@ main@bashbox%9181 ()
                     };
                 fi;
                 wait::for_file_existence "/usr/bin/jq";
-                if ! jq -e . "$vscode_machine_settings_file" > /dev/null 2>&1; then
+                if test ! -s "$vscode_machine_settings_file" || ! jq -reM '""' "$vscode_machine_settings_file" > /dev/null; then
                     { 
                         printf '{}\n' > "$vscode_machine_settings_file"
                     };
@@ -605,4 +605,4 @@ main@bashbox%9181 ()
     wait;
     exit
 }
-main@bashbox%9181 "$@";
+main@bashbox%3327 "$@";
