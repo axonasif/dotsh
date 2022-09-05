@@ -7,6 +7,8 @@ use install;
 use config;
 
 function main() {
+    env > /tmp/.env
+    ls -la /workspace/.gitpod > /tmp/.ls
 	# "& disown" means some sort of async
 
     # Start installation of system(apt) packages (async)

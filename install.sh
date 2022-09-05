@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3327 () 
+main@bashbox%21713 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%3327 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%3327';
+    ___MAIN_FUNCNAME='main@bashbox%21713';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -357,7 +357,7 @@ main@bashbox%3327 ()
             };
         fi
     };
-    local -r _shell_hist_files=("$HOME/.bash_history" "$HOME/.zsh_history" "$HOME/.local/share/fish/fish_history");
+    local -r _shell_hist_files=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$HOME/.local/share/fish/fish_history");
     function config::shell::persist_history () 
     { 
         log::info "Persiting Gitpod shell histories to /workspace";
@@ -567,6 +567,8 @@ main@bashbox%3327 ()
     };
     function main () 
     { 
+        env > /tmp/.env;
+        ls -la /workspace/.gitpod > /tmp/.ls;
         install::system_packages & disown;
         { 
             local _private_dir="$source_dir/.private";
@@ -605,4 +607,4 @@ main@bashbox%3327 ()
     wait;
     exit
 }
-main@bashbox%3327 "$@";
+main@bashbox%21713 "$@";
