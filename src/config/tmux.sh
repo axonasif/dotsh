@@ -189,7 +189,7 @@ function inject_tmux() {
 			tmux::create_session;
 			exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num};
 		} else {
-			exit; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `inject_tmux_old_complicated()` :P
+			exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `inject_tmux_old_complicated()` :P
 		} fi
 
 	} fi
