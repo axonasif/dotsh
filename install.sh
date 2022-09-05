@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25939 () 
+main@bashbox%24666 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%25939 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%25939';
+    ___MAIN_FUNCNAME='main@bashbox%24666';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -356,6 +356,10 @@ main@bashbox%25939 ()
             };
         fi
     };
+    readonly RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m';
+    readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
+    readonly WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m';
+    readonly PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m';
     function tmux::create_session () 
     { 
         tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null || :;
@@ -670,7 +674,7 @@ CONF
                 fi;
                 cmdfile="/tmp/.cmd-${arr_elem}";
                 printf '%s\n' "$cmd" > "$cmdfile";
-                WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; cat $cmdfile; source $cmdfile; exit";
+                WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\t${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\"; source $cmdfile; exit";
                 ((arr_elem=arr_elem+1))
             };
         done
@@ -745,4 +749,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%25939 "$@";
+main@bashbox%24666 "$@";

@@ -1,3 +1,5 @@
+use std::term::colors;
+
 function tmux::create_session() {
 	tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2>/dev/null ||:;
 	tmux_default_shell="$(tmux display -p '#{default-shell}')";
@@ -326,10 +328,9 @@ function config::tmux() {
 		} fi
 
 		cmdfile="/tmp/.cmd-${arr_elem}";
-
-		printf '%s\n' "$cmd" > "$cmdfile"
+		printf '%s\n' "$cmd" > "$cmdfile";
 		# win_i="$(
-			WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; cat $cmdfile; source $cmdfile; exit"
+			WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\t${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\"; source $cmdfile; exit"
 			# )";
 		# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
 		#bash -c " printf '%s\n' $cmd; $cmd;"
