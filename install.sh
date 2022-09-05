@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%29202 () 
+main@bashbox%11259 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%29202 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%29202';
+    ___MAIN_FUNCNAME='main@bashbox%11259';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -371,6 +371,7 @@ main@bashbox%29202 ()
         if test -e "$lockfile"; then
             return 0;
         fi;
+        touch "$lockfile";
         "$HOME/.dotfiles/src/utils/vimpod.py" & disown;
         ( { 
             gp ports await 23000 && gp ports await 22000
@@ -526,11 +527,6 @@ main@bashbox%29202 ()
                         return
                     };
                 fi;
-                if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
-                    { 
-                        tmux::start_vimpod & disown
-                    };
-                fi;
                 if test -v SSH_CONNECTION; then
                     { 
                         if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
@@ -610,6 +606,11 @@ SHELL
         config::tmux::set_tmux_as_default_vscode_shell & disown;
         config::tmux::hijack_gitpod_task_terminals & local tmux_exec_path="/usr/bin/tmux";
         tmux::create_awaiter "$tmux_exec_path" & disown;
+        if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+            { 
+                tmux::start_vimpod & disown
+            };
+        fi;
         log::info "Setting up tmux";
         local target="$HOME/.tmux/plugins/tpm";
         if test ! -e "$target"; then
@@ -744,4 +745,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%29202 "$@";
+main@bashbox%11259 "$@";

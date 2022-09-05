@@ -10,6 +10,7 @@ function tmux::create_window() {
 function tmux::start_vimpod() {
 	local lockfile=/tmp/.vimpod;
 	if test -e "$lockfile"; then return 0; fi
+	touch "$lockfile"
 	"$HOME/.dotfiles/src/utils/vimpod.py" & disown;
 	(
 		{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
@@ -176,11 +177,9 @@ function inject_tmux() {
 		if test -v TMUX; then {
 			return;
 		} fi
-
-		if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-			tmux::start_vimpod & disown;
-		} fi
-		
+		# if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+		# 	tmux::start_vimpod & disown
+		# } fi
 		# Switch to tmux on SSH.
 		if test -v SSH_CONNECTION; then {
 			if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
@@ -271,6 +270,10 @@ function config::tmux() {
 
 	local tmux_exec_path="/usr/bin/tmux";
 	tmux::create_awaiter "$tmux_exec_path" & disown;
+
+	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+		tmux::start_vimpod & disown;
+	} fi
 
 	log::info "Setting up tmux";
     local target="$HOME/.tmux/plugins/tpm";
