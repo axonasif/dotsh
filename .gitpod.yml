@@ -23,7 +23,6 @@ tasks:
 vscode:
   extensions:
     - mads-hartmann.bash-ide-vscode
-    - evgeniypeshkov.syntax-highlighter
     - timonwong.shellcheck
 
 ports:

@@ -8,7 +8,9 @@ function tmux::create_window() {
 }
 
 function tmux::start_vimpod() {
-	"$source_dir/src/utils/vimpod.py" & disown;
+	local lockfile=/tmp/.vimpod;
+	if test -e "$lockfile"; then return 0; fi
+	"$HOME/.dotfiles/src/utils/vimpod.py" & disown;
 	(
 		{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
 			if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
@@ -17,7 +19,7 @@ function tmux::start_vimpod() {
 				pkill -9 -f 'sh /ide/bin/gitpod-code';
 			} fi
 		}
-	) &
+	) & disown
 }
 
 function inject_tmux_old_complicated() {
@@ -173,6 +175,10 @@ function inject_tmux() {
 		return;
 	} fi
 
+	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+		tmux::start_vimpod & disown;
+	} fi
+
 	# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 	if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
 		
@@ -206,7 +212,7 @@ function config::tmux::hijack_gitpod_task_terminals {
 		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
 						"tmux_first_window_num=$tmux_first_window_num" \
 						"tmux_init_lock=$tmux_init_lock" \
-						"$(declare -f tmux::create_session inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+						"$(declare -f tmux::start_vimpod tmux::create_session inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
 	} fi
 }
 
@@ -263,9 +269,6 @@ function config::tmux() {
 	# Extra steps
 	config::tmux::set_tmux_as_default_vscode_shell & disown;
 	config::tmux::hijack_gitpod_task_terminals &
-	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-		tmux::start_vimpod & disown
-	} fi
 
 	local tmux_exec_path="/usr/bin/tmux";
 	tmux::create_awaiter "$tmux_exec_path" & disown;
