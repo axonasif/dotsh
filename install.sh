@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%27772 () 
+main@bashbox%7818 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%27772 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%27772';
+    ___MAIN_FUNCNAME='main@bashbox%7818';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -587,7 +587,11 @@ until test -e "$tmux_init_lock"; do {
 sleep 1;
 } done
 
+if test -z "${@}"; then {
 exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
+} else {
+exec "$tmux_exec_path" "$@";
+} fi
 }
 SHELL
  )
@@ -730,4 +734,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%27772 "$@";
+main@bashbox%7818 "$@";

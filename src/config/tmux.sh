@@ -250,7 +250,11 @@ function tmux::create_awaiter() (
 			sleep 1;
 		} done
 
-		exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
+		if test -z "${@}"; then {
+			exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
+		} else {
+			exec "$tmux_exec_path" "$@";
+		} fi
 	}
 	SHELL
 )
