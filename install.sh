@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24666 () 
+main@bashbox%7716 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%24666 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%24666';
+    ___MAIN_FUNCNAME='main@bashbox%7716';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -674,7 +674,7 @@ CONF
                 fi;
                 cmdfile="/tmp/.cmd-${arr_elem}";
                 printf '%s\n' "$cmd" > "$cmdfile";
-                WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\t${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\"; source $cmdfile; exit";
+                WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"\t\" $0}'; source $cmdfile; exit";
                 ((arr_elem=arr_elem+1))
             };
         done
@@ -749,4 +749,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%24666 "$@";
+main@bashbox%7716 "$@";
