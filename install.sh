@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7716 () 
+main@bashbox%24094 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%7716 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%7716';
+    ___MAIN_FUNCNAME='main@bashbox%24094';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -749,4 +749,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%7716 "$@";
+main@bashbox%24094 "$@";
