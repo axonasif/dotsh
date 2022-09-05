@@ -312,8 +312,9 @@ function config::tmux() {
 		} fi
 	}
 
-	local name cmd arr_elem=0 cmdfile;
+	wait::for_file_existence "/workspace/.gitpod/ready";
 	cd "$GITPOD_REPO_ROOT";
+	local name cmd arr_elem=0 cmdfile;
 	while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do {
 		if ! name="$(jqw ".[${arr_elem}].name")"; then {
 			name="AnonTask-${arr_elem}";

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7818 () 
+main@bashbox%791 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%7818 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%7818';
+    ___MAIN_FUNCNAME='main@bashbox%791';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -648,8 +648,9 @@ CONF
                 };
             fi
         };
-        local name cmd arr_elem=0 cmdfile;
+        wait::for_file_existence "/workspace/.gitpod/ready";
         cd "$GITPOD_REPO_ROOT";
+        local name cmd arr_elem=0 cmdfile;
         while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
             { 
                 if ! name="$(jqw ".[${arr_elem}].name")"; then
@@ -734,4 +735,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%7818 "$@";
+main@bashbox%791 "$@";
