@@ -1,5 +1,5 @@
 function tmux::create_session() {
-	tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2>/dev/null;
+	tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2>/dev/null ||:;
 	tmux_default_shell="$(tmux display -p '#{default-shell}')";
 }
 
@@ -237,34 +237,60 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 	printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings;
 }
 
+function tmux::create_awaiter() (
+	tmux_exec_path="$1";
+	: "${USER:="$(id -un)"}";
+	sudo bash -c "touch $tmux_exec_path && chown $USER:$USER $tmux_exec_path && chmod +x $tmux_exec_path";
+	cat <<-SHELL > "$tmux_exec_path"
+	#!/usr/bin/env bash
+	{
+		printf 'info: %s\n' "Tmux is being loaded... any moment now!";
+
+		until test -e "$tmux_init_lock"; do {
+			sleep 1;
+		} done
+
+		exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
+	}
+	SHELL
+)
+
 function config::tmux() {
 	# Extra steps
 	config::tmux::set_tmux_as_default_vscode_shell & disown;
 	config::tmux::hijack_gitpod_task_terminals &
-	tmux::start_vimpod & disown
+	# tmux::start_vimpod & disown
 
 	local tmux_exec_path="/usr/bin/tmux";
-	(
-		cat <<-SHELL | sudo tee "$tmux_exec_path" 1>/dev/null
-		#!/usr/bin/env bash
-		{
-			printf 'info: %s\n' "Tmux is being loaded... any moment now!";
-			while test -O "$tmux_exec_path"; do {
-				sleep 1;
-			} done
-			exec "$tmux_exec_path" "\$@"
-		}
-		SHELL
-		sudo chmod +x "$tmux_exec_path";
-	 ) & disown;
+	tmux::create_awaiter "$tmux_exec_path" & disown;
 
 	log::info "Setting up tmux";
     local target="$HOME/.tmux/plugins/tpm";
     if test ! -e "$target"; then {
         {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-			wait::until_true ! -O "$tmux_exec_path";
-			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+			# wait::until_true test ! -O "$tmux_exec_path";
+			local main_tmux_conf="$HOME/.tmux.conf";
+			local tmp_tmux_conf="$HOME/.tmux.tmp.conf";
+			if test -e "$main_tmux_conf" && test ! -e "$tmp_tmux_conf"; then {
+				mv "$main_tmux_conf" "$tmp_tmux_conf";
+			} fi
+			cat <<-CONF > "$main_tmux_conf"
+			set -g base-index 1
+			setw -g pane-base-index 1
+			source-file ~/.tmux_plugins.conf
+			set -g default-command "tmux rename-session $tmux_first_session_name; tmux rename-window home; printf '%s\n' 'Loading tmux ...'; until test -e $tmux_init_lock; do sleep 0.5; done; tmux source-file ~/.tmux.conf; exec bash -l"
+			CONF
+
+			wait::until_true test ! -O "$tmux_exec_path";
+			# sudo mv "$tmux_exec_path" "${tmux_exec_path}.orig" && tmux::create_awaiter "$tmux_exec_path";
+			bash "$HOME/.tmux/plugins/tpm/bin/install_plugins";
+			# sudo mv "${tmux_exec_path}.orig" "$tmux_exec_path";
+			if test -e "$tmp_tmux_conf"; then {
+				mv "$tmp_tmux_conf" "$main_tmux_conf";
+			} fi
+			touch "$tmux_init_lock";
+
 		} 1>/dev/null
     } fi
 
@@ -273,12 +299,30 @@ function config::tmux() {
 	local tmux_default_shell;
 	tmux::create_session;
 
-	local name cmd arr_elem=0;
-	while cmd="$(jq -r ".[${arr_elem}].command" <<<"$GITPOD_TASKS")" 2>/dev/null; do {
-		if ! name="$(jq -r ".[${arr_elem}].name" <<<"$GITPOD_TASKS")" 2>/dev/null; then {
+	function jqw() {
+		local cmd;
+		if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2>/dev/null; then {
+			printf '%s\n' "$cmd";
+		} else {
+			return 1;
+		} fi
+	}
+
+	local name cmd arr_elem=0 cmdfile;
+	cd "$GITPOD_REPO_ROOT";
+	while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do {
+		if ! name="$(jqw ".[${arr_elem}].name")"; then {
 			name="AnonTask-${arr_elem}";
 		} fi
-		WINDOW_NAME="$name" tmux::create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf '%s\n' $cmd; $cmd;"
+
+		cmdfile="/tmp/.cmd-${arr_elem}";
+
+		printf '%s\n' "$cmd" > "$cmdfile"
+		# win_i="$(
+			WINDOW_NAME="$name" tmux::create_window -PF '#{window_index}' bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; source $cmdfile; exit"
+			# )";
+		# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
+		#bash -c " printf '%s\n' $cmd; $cmd;"
 		((arr_elem=arr_elem+1));
 	} done
 }

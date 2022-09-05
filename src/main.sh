@@ -13,7 +13,7 @@ function main() {
     install::system_packages & disown;
 
     # Dotfiles installation, symlinking files bascially (blocking - sync)
-    install::dotfiles;
+    install::dotfiles &
 
     # Install userland tools
     install::userland_tools & disown;
@@ -36,7 +36,6 @@ function main() {
 		
 		# Install and login into gh
 		install::gh & disown;
-
     } fi
 
     # Ranger + plugins

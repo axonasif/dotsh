@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21713 () 
+main@bashbox%27772 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21713 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21713';
+    ___MAIN_FUNCNAME='main@bashbox%27772';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -114,7 +114,7 @@ main@bashbox%21713 ()
     };
     declare -r workspace_dir="/workspace";
     declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
-    local source_dir="$(readlink -f "$0")" && declare -r source_dir="${source_dir%/*}";
+    declare source_dir="$___self_DIR";
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     declare -r tmux_init_lock="/tmp/.tmux.init";
@@ -211,20 +211,6 @@ main@bashbox%21713 ()
         log::info "Installing userland tools";
         curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & wait
     };
-    function install::tmux () 
-    { 
-        log::info "Setting up tmux";
-        local target="$HOME/.tmux/plugins/tpm";
-        if test ! -e "$target"; then
-            { 
-                { 
-                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                    wait::for_file_existence "/usr/bin/tmux";
-                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh"
-                } > /dev/null
-            };
-        fi
-    };
     function install::ranger () 
     { 
         if ! command -v pip > /dev/null; then
@@ -281,49 +267,62 @@ main@bashbox%21713 ()
     };
     function install::dotfiles () 
     { 
-        local _dotfiles_repo="${1}";
-        local _dotfiles_dir="${2}";
-        local _target_file _target_dir;
-        local _git_output;
-        if test ! -e "$_dotfiles_dir"; then
+        function symlink_files () 
+        { 
+            local _dotfiles_repo="${1}";
+            local _dotfiles_dir="${2}";
+            local _target_file _target_dir;
+            local _git_output;
+            if test ! -e "$_dotfiles_dir"; then
+                { 
+                    git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :
+                };
+            fi;
+            if test -e "$_dotfiles_dir"; then
+                { 
+                    local _dotfiles_ignore="$_dotfiles_dir/.dotfilesignore";
+                    local _thing_path;
+                    local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'$_dotfiles_dir/src/*'" -not -path "'$_dotfiles_dir/target/*'" -not -path "'$_dotfiles_dir/Bashbox.meta'" -not -path "'$_dotfiles_dir/install.sh'");
+                    if test -e "$_dotfiles_ignore"; then
+                        { 
+                            while read -r _ignore_thing; do
+                                { 
+                                    if [[ ! "$_ignore_thing" =~ ^\# ]]; then
+                                        { 
+                                            _ignore_thing="$_dotfiles_dir/${_ignore_thing}";
+                                            _ignore_thing="${_ignore_thing//\/\//\/}";
+                                            _ignore_list+=(-not -path "$_ignore_thing")
+                                        };
+                                    fi;
+                                    unset _ignore_thing
+                                };
+                            done < "$_dotfiles_ignore"
+                        };
+                    fi;
+                    while read -r _file; do
+                        { 
+                            _target_file="$HOME/${_file#${_dotfiles_dir}/}";
+                            _target_dir="${_target_file%/*}";
+                            if test ! -d "$_target_dir"; then
+                                { 
+                                    mkdir -p "$_target_dir"
+                                };
+                            fi;
+                            ln -sf "$_file" "$_target_file";
+                            unset _target_file _target_dir
+                        };
+                    done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_dotfiles_dir" -type f)
+                };
+            fi
+        };
+        local _private_dir="$source_dir/.private";
+        local _private_dotfiles_repo="${PRIVATE_DOTFILES_REPO:-}";
+        log::info "Installing local dotfiles";
+        symlink_files "$___self_REPOSITORY" "$source_dir/raw";
+        if test -n "$_private_dotfiles_repo"; then
             { 
-                git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :
-            };
-        fi;
-        if test -e "$_dotfiles_dir"; then
-            { 
-                local _dotfiles_ignore="$_dotfiles_dir/.dotfilesignore";
-                local _thing_path;
-                local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'$_dotfiles_dir/src/*'" -not -path "'$_dotfiles_dir/target/*'" -not -path "'$_dotfiles_dir/Bashbox.meta'" -not -path "'$_dotfiles_dir/install.sh'");
-                if test -e "$_dotfiles_ignore"; then
-                    { 
-                        while read -r _ignore_thing; do
-                            { 
-                                if [[ ! "$_ignore_thing" =~ ^\# ]]; then
-                                    { 
-                                        _ignore_thing="$_dotfiles_dir/${_ignore_thing}";
-                                        _ignore_thing="${_ignore_thing//\/\//\/}";
-                                        _ignore_list+=(-not -path "$_ignore_thing")
-                                    };
-                                fi;
-                                unset _ignore_thing
-                            };
-                        done < "$_dotfiles_ignore"
-                    };
-                fi;
-                while read -r _file; do
-                    { 
-                        _target_file="$HOME/${_file#${_dotfiles_dir}/}";
-                        _target_dir="${_target_file%/*}";
-                        if test ! -d "$_target_dir"; then
-                            { 
-                                mkdir -p "$_target_dir"
-                            };
-                        fi;
-                        ln -sf "$_file" "$_target_file";
-                        unset _target_file _target_dir
-                    };
-                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_dotfiles_dir" -type f)
+                log::info "Installing private dotfiles";
+                symlink_files "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
             };
         fi
     };
@@ -357,6 +356,310 @@ main@bashbox%21713 ()
             };
         fi
     };
+    function tmux::create_session () 
+    { 
+        tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null || :;
+        tmux_default_shell="$(tmux display -p '#{default-shell}')"
+    };
+    function tmux::create_window () 
+    { 
+        tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t "$tmux_first_session_name" "$@"
+    };
+    function tmux::start_vimpod () 
+    { 
+        "$source_dir/src/utils/vimpod.py" & disown;
+        ( { 
+            gp ports await 23000 && gp ports await 22000
+        } > /dev/null && gp preview "$(gp url 22000)" --external && { 
+            if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
+                { 
+                    printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
+                    pkill -9 -f 'sh /ide/bin/gitpod-code'
+                };
+            fi
+        } ) &
+    };
+    function inject_tmux_old_complicated () 
+    { 
+        if test -v TMUX; then
+            { 
+                return
+            };
+        fi;
+        local tmux tmux_default_shell;
+        function create_session () 
+        { 
+            tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null;
+            tmux_default_shell="$(tmux display -p '#{default-shell}')"
+        };
+        function new_window () 
+        { 
+            exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@"
+        };
+        function create_window () 
+        { 
+            if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t "$tmux_first_session_name")"; then
+                { 
+                    touch "$tmux_init_lock";
+                    new_window "$@" \; attach
+                };
+            else
+                { 
+                    new_window "$@"
+                };
+            fi
+        };
+        function get_task_term_name () 
+        { 
+            local file_loc="/tmp/.gp_tasks_names";
+            if test ! -e "$file_loc"; then
+                { 
+                    local term_id term_name task_state symbol ref;
+                    while IFS='|' read -r _ term_id term_name task_state _; do
+                        { 
+                            if [[ "$term_id" =~ [0-9]+ ]]; then
+                                { 
+                                    for symbol in term_id term_name task_state;
+                                    do
+                                        { 
+                                            declare -n ref="$symbol";
+                                            ref="${ref% }" && ref="${ref# }"
+                                        };
+                                    done;
+                                    if test "$task_state" == "running"; then
+                                        { 
+                                            printf '%s\n' "$term_name" >> "$file_loc"
+                                        };
+                                    fi;
+                                    unset symbol ref
+                                };
+                            fi
+                        };
+                    done < <(gp tasks list --no-color)
+                };
+            fi;
+            if test -e "$file_loc"; then
+                { 
+                    awk '{$1=$1;print;exit}' "$file_loc";
+                    sed -i '1d' "$file_loc"
+                };
+            fi
+        };
+        if test ! -e "$tmux_init_lock"; then
+            { 
+                "$HOME/.dotfiles/src/utils/vimpod.py" & disown;
+                ( { 
+                    gp ports await 23000 && gp ports await 22000
+                } > /dev/null && gp preview "$(gp url 22000)" --external && { 
+                    if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
+                        { 
+                            printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
+                            pkill -9 -f 'sh /ide/bin/gitpod-code'
+                        };
+                    fi
+                } ) &
+            };
+        fi;
+        touch "$tmux_init_lock";
+        if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+            { 
+                if test -v SSH_CONNECTION; then
+                    { 
+                        if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
+                            { 
+                                pkill -9 vimpod || :
+                            };
+                        fi;
+                        create_session;
+                        exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num}
+                    };
+                fi;
+                create_session;
+                termout=/tmp/.termout.$$;
+                if test ! -v bash_ran_once; then
+                    { 
+                        exec > >(tee -a "$termout") 2>&1
+                    };
+                fi;
+                local stdin;
+                IFS= read -t0.01 -u0 -r -d '' stdin;
+                if test -n "$stdin"; then
+                    { 
+                        if test "${DEBUG_DOTFILES:-false}" == true; then
+                            { 
+                                declare -p stdin;
+                                read -rp running;
+                                set -x
+                            };
+                        fi;
+                        stdin=$(printf '%q' "$stdin");
+                        WINDOW_NAME="$(get_task_term_name)" create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
+                    };
+                else
+                    { 
+                        if test "${DEBUG_DOTFILES:-false}" == true; then
+                            { 
+                                read -rp exiting
+                            };
+                        fi;
+                        exit
+                    };
+                fi;
+                bash_ran_once=true
+            };
+        else
+            { 
+                unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}"
+            };
+        fi
+    };
+    function inject_tmux () 
+    { 
+        if test -v TMUX; then
+            { 
+                return
+            };
+        fi;
+        if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
+            { 
+                if test -v SSH_CONNECTION; then
+                    { 
+                        if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
+                            { 
+                                pkill -9 vimpod || :
+                            };
+                        fi;
+                        tmux::create_session;
+                        exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num}
+                    };
+                else
+                    { 
+                        exit
+                    };
+                fi
+            };
+        fi
+    };
+    function config::tmux::hijack_gitpod_task_terminals () 
+    { 
+        if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2> /dev/null; then
+            { 
+                log::info "Setting tmux as the interactive shell for Gitpod task terminals";
+                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "tmux_init_lock=$tmux_init_lock" "$(declare -f tmux::create_session inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
+            };
+        fi
+    };
+    function config::tmux::set_tmux_as_default_vscode_shell () 
+    { 
+        log::info "Setting the integrated tmux shell for VScode as default";
+        local file json_data;
+        local ms_vscode_server_dir="$HOME/.vscode-server";
+        local ms_vscode_server_settings="$ms_vscode_server_dir/data/Machine/settings.json";
+        json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
+		{
+			"terminal.integrated.profiles.linux": {
+				"tmuxshell": {
+					"path": "bash",
+					"args": [
+						"-c",
+						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+					]
+				}
+			},
+			"terminal.integrated.defaultProfile.linux": "tmuxshell"
+		}
+	JSON
+	)";
+        printf '%s\n' "$json_data" | vscode::add_settings;
+        printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
+    };
+    function tmux::create_awaiter () 
+    { 
+        ( tmux_exec_path="$1";
+        : "${USER:="$(id -un)"}";
+        sudo bash -c "touch $tmux_exec_path && chown $USER:$USER $tmux_exec_path && chmod +x $tmux_exec_path";
+        cat <<-SHELL > "$tmux_exec_path"
+#!/usr/bin/env bash
+{
+printf 'info: %s\n' "Tmux is being loaded... any moment now!";
+
+until test -e "$tmux_init_lock"; do {
+sleep 1;
+} done
+
+exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
+}
+SHELL
+ )
+    }
+    function config::tmux () 
+    { 
+        config::tmux::set_tmux_as_default_vscode_shell & disown;
+        config::tmux::hijack_gitpod_task_terminals & local tmux_exec_path="/usr/bin/tmux";
+        tmux::create_awaiter "$tmux_exec_path" & disown;
+        log::info "Setting up tmux";
+        local target="$HOME/.tmux/plugins/tpm";
+        if test ! -e "$target"; then
+            { 
+                { 
+                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
+                    local main_tmux_conf="$HOME/.tmux.conf";
+                    local tmp_tmux_conf="$HOME/.tmux.tmp.conf";
+                    if test -e "$main_tmux_conf" && test ! -e "$tmp_tmux_conf"; then
+                        { 
+                            mv "$main_tmux_conf" "$tmp_tmux_conf"
+                        };
+                    fi;
+                    cat <<-CONF > "$main_tmux_conf"
+set -g base-index 1
+setw -g pane-base-index 1
+source-file ~/.tmux_plugins.conf
+set -g default-command "tmux rename-session $tmux_first_session_name; tmux rename-window home; printf '%s\n' 'Loading tmux ...'; until test -e $tmux_init_lock; do sleep 0.5; done; tmux source-file ~/.tmux.conf; exec bash -l"
+CONF
+
+                    wait::until_true test ! -O "$tmux_exec_path";
+                    bash "$HOME/.tmux/plugins/tpm/bin/install_plugins";
+                    if test -e "$tmp_tmux_conf"; then
+                        { 
+                            mv "$tmp_tmux_conf" "$main_tmux_conf"
+                        };
+                    fi;
+                    touch "$tmux_init_lock"
+                } > /dev/null
+            };
+        fi;
+        log::info "Spawning Gitpod tasks in tmux";
+        local tmux_default_shell;
+        tmux::create_session;
+        function jqw () 
+        { 
+            local cmd;
+            if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2> /dev/null; then
+                { 
+                    printf '%s\n' "$cmd"
+                };
+            else
+                { 
+                    return 1
+                };
+            fi
+        };
+        local name cmd arr_elem=0 cmdfile;
+        cd "$GITPOD_REPO_ROOT";
+        while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
+            { 
+                if ! name="$(jqw ".[${arr_elem}].name")"; then
+                    { 
+                        name="AnonTask-${arr_elem}"
+                    };
+                fi;
+                cmdfile="/tmp/.cmd-${arr_elem}";
+                printf '%s\n' "$cmd" > "$cmdfile";
+                WINDOW_NAME="$name" tmux::create_window -PF '#{window_index}' bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; source $cmdfile; exit";
+                ((arr_elem=arr_elem+1))
+            };
+        done
+    };
     local -r _shell_hist_files=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$HOME/.local/share/fish/fish_history");
     function config::shell::persist_history () 
     { 
@@ -385,149 +688,6 @@ main@bashbox%21713 ()
             };
         done
     };
-    function config::shell::hijack_gitpod_task_terminals () 
-    { 
-        if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2> /dev/null; then
-            { 
-                log::info "Setting tmux as the interactive shell for Gitpod task terminals";
-                function inject_tmux () 
-                { 
-                    if test -v TMUX; then
-                        { 
-                            return
-                        };
-                    fi;
-                    local tmux tmux_default_shell;
-                    function create_session () 
-                    { 
-                        tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null;
-                        tmux_default_shell="$(tmux display -p '#{default-shell}')"
-                    };
-                    function new_window () 
-                    { 
-                        exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@"
-                    };
-                    function create_window () 
-                    { 
-                        if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t "$tmux_first_session_name")"; then
-                            { 
-                                touch "$tmux_init_lock";
-                                new_window "$@" \; attach
-                            };
-                        else
-                            { 
-                                new_window "$@"
-                            };
-                        fi
-                    };
-                    function get_task_term_name () 
-                    { 
-                        local file_loc="/tmp/.gp_tasks_names";
-                        if test ! -e "$file_loc"; then
-                            { 
-                                local term_id term_name task_state symbol ref;
-                                while IFS='|' read -r _ term_id term_name task_state _; do
-                                    { 
-                                        if [[ "$term_id" =~ [0-9]+ ]]; then
-                                            { 
-                                                for symbol in term_id term_name task_state;
-                                                do
-                                                    { 
-                                                        declare -n ref="$symbol";
-                                                        ref="${ref% }" && ref="${ref# }"
-                                                    };
-                                                done;
-                                                if test "$task_state" == "running"; then
-                                                    { 
-                                                        printf '%s\n' "$term_name" >> "$file_loc"
-                                                    };
-                                                fi;
-                                                unset symbol ref
-                                            };
-                                        fi
-                                    };
-                                done < <(gp tasks list --no-color)
-                            };
-                        fi;
-                        if test -e "$file_loc"; then
-                            { 
-                                awk '{$1=$1;print;exit}' "$file_loc";
-                                sed -i '1d' "$file_loc"
-                            };
-                        fi
-                    };
-                    if test ! -e "$tmux_init_lock"; then
-                        { 
-                            "$HOME/.dotfiles/src/utils/vimpod.py" & disown;
-                            ( { 
-                                gp ports await 23000 && gp ports await 22000
-                            } > /dev/null && gp preview "$(gp url 22000)" --external && { 
-                                if test "${NO_VSCODE:-false}" == "true"; then
-                                    { 
-                                        printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
-                                        pkill -9 -f 'sh /ide/bin/gitpod-code'
-                                    };
-                                fi
-                            } ) &
-                        };
-                    fi;
-                    touch "$tmux_init_lock";
-                    if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
-                        { 
-                            if test -v SSH_CONNECTION; then
-                                { 
-                                    if test "${NO_VSCODE:-false}" == "true"; then
-                                        { 
-                                            pkill -9 vimpod || :
-                                        };
-                                    fi;
-                                    create_session;
-                                    exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num}
-                                };
-                            fi;
-                            create_session;
-                            termout=/tmp/.termout.$$;
-                            if test ! -v bash_ran_once; then
-                                { 
-                                    exec > >(tee -a "$termout") 2>&1
-                                };
-                            fi;
-                            local stdin;
-                            IFS= read -t0.01 -u0 -r -d '' stdin;
-                            if test -n "$stdin"; then
-                                { 
-                                    if test "${DEBUG_DOTFILES:-false}" == true; then
-                                        { 
-                                            declare -p stdin;
-                                            read -rp running;
-                                            set -x
-                                        };
-                                    fi;
-                                    stdin=$(printf '%q' "$stdin");
-                                    WINDOW_NAME="$(get_task_term_name)" create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
-                                };
-                            else
-                                { 
-                                    if test "${DEBUG_DOTFILES:-false}" == true; then
-                                        { 
-                                            read -rp exiting
-                                        };
-                                    fi;
-                                    exit
-                                };
-                            fi;
-                            bash_ran_once=true
-                        };
-                    else
-                        { 
-                            unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}"
-                        };
-                    fi
-                };
-                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "tmux_init_lock=$tmux_init_lock" "$(declare -f inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc"
-            };
-        fi
-    };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
@@ -541,54 +701,17 @@ main@bashbox%21713 ()
             };
         done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
     };
-    function config::shell::vscode::set_tmux_as_default_shell () 
-    { 
-        log::info "Setting the integrated tmux shell for VScode as default";
-        local file json_data;
-        local ms_vscode_server_dir="$HOME/.vscode-server";
-        local ms_vscode_server_settings="$ms_vscode_server_dir/data/Machine/settings.json";
-        json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
-		{
-			"terminal.integrated.profiles.linux": {
-				"tmuxshell": {
-					"path": "bash",
-					"args": [
-						"-c",
-						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
-					]
-				}
-			},
-			"terminal.integrated.defaultProfile.linux": "tmuxshell"
-		}
-	JSON
-	)";
-        printf '%s\n' "$json_data" | vscode::add_settings;
-        printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
-    };
     function main () 
     { 
-        env > /tmp/.env;
-        ls -la /workspace/.gitpod > /tmp/.ls;
         install::system_packages & disown;
-        { 
-            local _private_dir="$source_dir/.private";
-            local _private_dotfiles_repo="${PRIVATE_DOTFILES_REPO:-}";
-            log::info "Installing local dotfiles";
-            install::dotfiles "$___self_REPOSITORY" "$source_dir/raw";
-            if test -n "$_private_dotfiles_repo"; then
-                { 
-                    log::info "Installing private dotfiles";
-                    install::dotfiles "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
-                };
-            fi
-        };
-        install::userland_tools & disown;
+        install::dotfiles & install::userland_tools & disown;
         if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
                 config::docker_auth & disown;
                 config::shell::persist_history;
-                config::shell::fish::append_hist_from_gitpod_tasks & config::shell::hijack_gitpod_task_terminals & install::tmux & config::shell::vscode::set_tmux_as_default_shell & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & disown;
+                config::tmux & disown;
                 install::neovim & disown;
                 install::gh & disown
             };
@@ -607,4 +730,4 @@ main@bashbox%21713 ()
     wait;
     exit
 }
-main@bashbox%21713 "$@";
+main@bashbox%27772 "$@";
