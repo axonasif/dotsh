@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21499 () 
+main@bashbox%5374 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21499 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21499';
+    ___MAIN_FUNCNAME='main@bashbox%5374';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -599,7 +599,12 @@ SHELL
     function config::tmux () 
     { 
         config::tmux::set_tmux_as_default_vscode_shell & disown;
-        config::tmux::hijack_gitpod_task_terminals & local tmux_exec_path="/usr/bin/tmux";
+        config::tmux::hijack_gitpod_task_terminals & if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+            { 
+                tmux::start_vimpod & disown
+            };
+        fi;
+        local tmux_exec_path="/usr/bin/tmux";
         tmux::create_awaiter "$tmux_exec_path" & disown;
         log::info "Setting up tmux";
         local target="$HOME/.tmux/plugins/tpm";
@@ -735,4 +740,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%21499 "$@";
+main@bashbox%5374 "$@";

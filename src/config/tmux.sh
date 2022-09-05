@@ -263,7 +263,9 @@ function config::tmux() {
 	# Extra steps
 	config::tmux::set_tmux_as_default_vscode_shell & disown;
 	config::tmux::hijack_gitpod_task_terminals &
-	# tmux::start_vimpod & disown
+	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+		tmux::start_vimpod & disown
+	} fi
 
 	local tmux_exec_path="/usr/bin/tmux";
 	tmux::create_awaiter "$tmux_exec_path" & disown;
