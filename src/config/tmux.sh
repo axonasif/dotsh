@@ -177,9 +177,7 @@ function inject_tmux() {
 		if test -v TMUX; then {
 			return;
 		} fi
-		# if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-		# 	tmux::start_vimpod & disown
-		# } fi
+
 		# Switch to tmux on SSH.
 		if test -v SSH_CONNECTION; then {
 			if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
@@ -331,7 +329,7 @@ function config::tmux() {
 
 		printf '%s\n' "$cmd" > "$cmdfile"
 		# win_i="$(
-			WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; source $cmdfile; exit"
+			WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; cat $cmdfile; source $cmdfile; exit"
 			# )";
 		# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
 		#bash -c " printf '%s\n' $cmd; $cmd;"
