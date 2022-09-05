@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25550 () 
+main@bashbox%29202 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%25550 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%25550';
+    ___MAIN_FUNCNAME='main@bashbox%29202';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -519,18 +519,18 @@ main@bashbox%25550 ()
     };
     function inject_tmux () 
     { 
-        if test -v TMUX; then
-            { 
-                return
-            };
-        fi;
-        if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
-            { 
-                tmux::start_vimpod & disown
-            };
-        fi;
         if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
             { 
+                if test -v TMUX; then
+                    { 
+                        return
+                    };
+                fi;
+                if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+                    { 
+                        tmux::start_vimpod & disown
+                    };
+                fi;
                 if test -v SSH_CONNECTION; then
                     { 
                         if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
@@ -744,4 +744,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%25550 "$@";
+main@bashbox%29202 "$@";

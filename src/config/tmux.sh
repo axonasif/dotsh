@@ -171,16 +171,15 @@ function inject_tmux_old_complicated() {
 	} fi
 }
 function inject_tmux() {
-	if test -v TMUX; then {
-		return;
-	} fi
-
-	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-		tmux::start_vimpod & disown;
-	} fi
-
 	# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
 	if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+		if test -v TMUX; then {
+			return;
+		} fi
+
+		if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+			tmux::start_vimpod & disown;
+		} fi
 		
 		# Switch to tmux on SSH.
 		if test -v SSH_CONNECTION; then {
