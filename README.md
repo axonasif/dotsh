@@ -5,7 +5,8 @@ This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
 Highlights:
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
-- This repo features **live testing of dotfiles** within your existing Gitpod workspace itself so that you can prototype quickly.
+  - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator).
+- This repo features **[live testing of dotfiles](#how-to-live-test-changes)** within your existing Gitpod workspace itself so that you can prototype quickly.
 - Works both locally and on Gitpod.
 
 
