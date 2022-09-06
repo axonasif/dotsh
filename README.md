@@ -23,12 +23,11 @@ You can learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/
 │   ├── Asynchronously executes instructions inside `install.sh`
 │   │   ├── Installs some system/userland packages
 │   │   ├── Creates symlinks from this repo to `$HOME/` while following `.dotfilesignore` via a helper function
-│   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins
+│   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins into them along several other tools
 │   │   ├── Process Gitpod workspace persisted shell histories
-|   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead.
+|   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead
 │   │   ├── Hacks `$HOME/.bashrc` to make Gitpod prebuild terminals fall back to fish shell after completion
-├── Gitpod starts the VSCODE IDE
-│   │   ├── Creates symlinks from $HOME/.dotfiles/.private to $HOME/ while following `.dotfilesignore` (If you provided PRIVATE_DOTFILES_REPO)
+├── Gitpod starts the IDE process
 └── Logs are saved to $HOME/.dotfiles.log
 ```
 
@@ -79,6 +78,9 @@ Currently there are a few variables which can alter the behavior of my dotfiles:
 ----
 - `DOTFILES_SPAWN_SSH_PROTO` - defaults to `true`
 > Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
+----
+- `DOTFILES_DEFAULT_SHELL` - defaults to `/usr/bin/fish` (this is planned, not implemented yet)
+> This is the shell that our `tmux` session will use.
 
 ## Helper functions
 
