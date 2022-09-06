@@ -15,7 +15,7 @@ Highlights:
 Feel free to create your `dotfiles` by forking this repo!
 You can then use it on https://gitpod.io/preferences for Gitpod.
 
-You can learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
+Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
 # How it works on Gitpod
 ```markdown
