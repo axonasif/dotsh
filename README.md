@@ -1,12 +1,10 @@
-# README is outdated
-
 # Introduction
 
 This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
 
 Highlights:
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
-- Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH+Neovim setup.
+- Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
 - This repo features **live testing of dotfiles** within your existing Gitpod workspace itself so that you can prototype quickly.
 - Works both locally and on Gitpod.
 
@@ -35,7 +33,7 @@ You can learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/
 
 # Customizing
 
-Ideally it should be easy to understand and customize this repo since I tried my best to make the code very modular and self-explanatory. You can take a look inside the entrypoint [`/src/main.sh`](./src/main.sh) to tweak stuff as per your needs.
+Ideally it should be easy to understand and customize this repo since I tried my best to make the code very modular and self-explanatory. Take a look inside the entrypoint [`/src/main.sh`](./src/main.sh) to tweak stuff as per your needs, such as commenting out any function on [`/src/main.sh`](./src/main.sh) to disable that particular thing.
 
 ## How to compile
 
@@ -60,7 +58,25 @@ There is a custom package script defined inside the [`Bashbox.sh`](./Bashbox.sh)
 bashbox live
 ```
 
-And it will test out your dotfiles inside the existing workspace without affecting it. Sounds fun, right!?
+And it will test out your new dotfiles changes inside the existing workspace without affecting it. Sounds fun, right!?
 
+## How to automatically launch Gitpod workspaces inside your local terminal emulator
 
+As you may already know, Gitpod will automatically launch your [Desktop-VSCode](https://www.gitpod.io/docs/ides-and-editors/vscode) for you if you selected to use it. However that's not the case for plain SSH based workflow yet (Related: https://github.com/gitpod-io/gitpod/issues/9323).
 
+Although, since Gitpod is pretty scriptable and modular, it's possible to deal with this ourselves until this has been polished out in the Gitpod side.
+
+TBD, more to write here....
+
+## Tweak behavior via environment variables
+
+For Gitpod, you can set these on https://gitpod.io/variables with `*/*` as the scope.
+
+Currently there are a few variables which can alter the behavior of my dotfiles:
+> - `DOTFILES_NO_VSCODE` - defaults to `false`
+>
+> Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
+
+> - `DOTFILES_SPAWN_SSH_PROTO` - defaults to `true`
+>
+> Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
