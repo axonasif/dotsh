@@ -4,37 +4,63 @@
 
 This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
 
-It does a few things to ease my life a bit:
+Highlights:
+- Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
+- Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH+Neovim setup.
+- This repo features **live testing of dotfiles** within your existing Gitpod workspace itself so that you can prototype quickly.
+- Works both locally and on Gitpod.
 
-- Works both locally and in the Cloud on Gitpod
-- Installs this repo dotfiles and also puts another private dotfiles repo on top of it
-    - Set `PRIVATE_DOTFILES_RPO` url on https://gitpod.io/variables with `*/*` scope to use it. Or if you're using locally, you can export the variable from your shell.
-- Installs a bunch of handy system tools I use often.
-- Persists Gitpod workspace shell(bash, fish, zsh etc) histories to the specific workspace on restart of a workspace.
-- Makes `.gitpod.yml` task terminals to use `fish` shell after the commands are processed in bash, we can not make `fish` execute those task commands since it's not POSIX compliant.
-- Makes `fish` shell properly inherit the `bash` specific environment variables and hooks, since almost all tools we install are injected by the bash profile, so any change to the bash profile is also reflected in your fish shell.
-- GPG signing (Planned)
-- You tell me!
 
-You can take a look inside the `/src` dir to tweak stuff as per your needs and run `bashbox build --release` or `bashbox run --release`.
+# How to use on Gitpod
+
+Feel free to create your `dotfiles` by forking this repo!
+You can then use it on https://gitpod.io/preferences for Gitpod.
+
+You can learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
 # How it works on Gitpod
 ```markdown
-├── Gitpod clones your dotfiles repo and executes `install.sh` from $HOME/.dotfiles
-│   ├── install.sh
-│   │   ├── Installs some system packages with `apt` in the background
-│   │   ├── Creates symlinks from this repo to $HOME/ while following `.dotfilesignore`
-│   │   ├── Installs userland tools
+├── Gitpod clones this dotfiles repo and executes `install.sh` from $HOME/.dotfiles
+│   ├── Asynchronously executes instructions inside `install.sh`
+│   │   ├── Installs some system/userland packages
+│   │   ├── Creates symlinks from this repo to `$HOME/` while following `.dotfilesignore` via a helper function
+│   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins
 │   │   ├── Process Gitpod workspace persisted shell histories
+|   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead.
 │   │   ├── Hacks `$HOME/.bashrc` to make Gitpod prebuild terminals fall back to fish shell after completion
 ├── Gitpod starts the VSCODE IDE
 │   │   ├── Creates symlinks from $HOME/.dotfiles/.private to $HOME/ while following `.dotfilesignore` (If you provided PRIVATE_DOTFILES_REPO)
 └── Logs are saved to $HOME/.dotfiles.log
 ```
 
-# How to use
+# Customizing
 
-Feel free to create your `dotfiles` by forking this repo!
-You can then use it on https://gitpod.io/preferences for Gitpod.
+Ideally it should be easy to understand and customize this repo since I tried my best to make the code very modular and self-explanatory. You can take a look inside the entrypoint [`/src/main.sh`](./src/main.sh) to tweak stuff as per your needs.
 
-You can learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
+## How to compile
+
+Run the following command:
+
+```bash
+bashbox build --release
+```
+
+## How to live test changes
+
+I'm mimicking a minimal a process of how Gitpod starts a workpsace and initalizes dotfiles in it. This way we can quickly test out our dotfiles without having to:
+
+1. commit+push the changes
+2. create new workspaces each time after that
+
+which was a very annoying and time consuming process.
+
+There is a custom package script defined inside the [`Bashbox.sh`](./Bashbox.sh) called [`live`](https://github.com/axonasif/dotfiles/blob/main/Bashbox.sh#L23). You can execute it like so:
+
+```bash
+bashbox live
+```
+
+And it will test out your dotfiles inside the existing workspace without affecting it. Sounds fun, right!?
+
+
+
