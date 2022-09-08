@@ -17,3 +17,4 @@ shopt -s nullglob
 for script in "$HOME/.bashrc.d"/*; do {
   source "$script";
 } done
+source "/Users/axon/.bashbox/env";

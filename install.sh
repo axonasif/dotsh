@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%17890 () 
+main@bashbox%23330 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%17890 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%17890';
+    ___MAIN_FUNCNAME='main@bashbox%23330';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -539,7 +539,7 @@ main@bashbox%17890 ()
                             };
                         fi;
                         tmux::create_session;
-                        exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num}
+                        exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num}
                     };
                 else
                     { 
@@ -749,4 +749,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%17890 "$@";
+main@bashbox%23330 "$@";

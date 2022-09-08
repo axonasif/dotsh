@@ -93,13 +93,13 @@ sketchybar  --add item space_separator left                                     
               
 ############## RIGHT ITEMS ############## 
 
-sketchybar  --add item clock right                                                                  \
-              --set clock         update_freq=10                                                      \
-                                  script="$_sketchybar_plugdir/clock.sh" --add item topmem left                                                           \
-              --set topmem           associated_space=1                                        \
-                                     icon.padding_left=10                                      \
-                                     update_freq=15                                            \
-                                     script="$_sketchybar_plugdir/topmem.sh"	
+ sketchybar  --add item clock right                                                                  \
+               --set clock         update_freq=10                                                      \
+                                   script="$_sketchybar_plugdir/clock.sh" --add item topmem left                                                           \
+               --set topmem           associated_space=1                                        \
+                                      icon.padding_left=10                                      \
+                                      update_freq=15                                            \
+                                      script="$_sketchybar_plugdir/topmem.sh"	
 
 ## MenuMeters
 _meters=();
