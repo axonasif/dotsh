@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23330 () 
+main@bashbox%1254 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -10,7 +10,7 @@ main@bashbox%23330 ()
     function process::self::exit () 
     { 
         local _r=$?;
-        ( kill -USR1 "$___self_PID" 2> /dev/null ) & exit $_r
+        ( kill -USR1 "$___self_PID" 2> /dev/null || : ) & exit $_r
     };
     function process::self::forcekill () 
     { 
@@ -55,7 +55,7 @@ main@bashbox%23330 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23330';
+    ___MAIN_FUNCNAME='main@bashbox%1254';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -194,7 +194,7 @@ main@bashbox%23330 ()
         fi
     };
     levelone_syspkgs=(tmux fish jq);
-    leveltwo_syspkgs=(shellcheck rsync tree file mosh fzf);
+    leveltwo_syspkgs=(hollywood shellcheck rsync tree file mosh fzf);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -749,4 +749,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%23330 "$@";
+main@bashbox%1254 "$@";
