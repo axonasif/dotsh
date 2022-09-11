@@ -305,6 +305,10 @@ function config::tmux() {
 		} 1>/dev/null
     } fi
 
+    	if test ! -v GITPOD_TASKS; then {
+		return;
+	} fi
+
 	log::info "Spawning Gitpod tasks in tmux"
 
 	local tmux_default_shell;
