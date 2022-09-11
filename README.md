@@ -8,6 +8,7 @@ Highlights:
   - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
 - This repo features **[live testing of dotfiles](#how-to-live-test-changes)** within your existing Gitpod workspace itself so that you can prototype quickly.
 - Works both locally and on Gitpod.
+- Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the task scripts.
 
 
 # How to use on Gitpod
@@ -18,6 +19,8 @@ You can then use it on https://gitpod.io/preferences for Gitpod.
 Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
 # How it works on Gitpod
+
+A brief overview:
 ```markdown
 ├── Gitpod clones this dotfiles repo and executes `install.sh` from $HOME/.dotfiles
 │   ├── Asynchronously executes instructions inside `install.sh`
@@ -26,7 +29,6 @@ Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-d
 │   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins into them along several other tools
 │   │   ├── Process Gitpod workspace persisted shell histories
 |   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead
-│   │   ├── Hacks `$HOME/.bashrc` to make Gitpod prebuild terminals fall back to fish shell after completion
 ├── Gitpod starts the IDE process
 └── Logs are saved to $HOME/.dotfiles.log
 ```
