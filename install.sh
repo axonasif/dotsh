@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%1254 () 
+main@bashbox%15850 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%1254 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%1254';
+    ___MAIN_FUNCNAME='main@bashbox%15850';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -110,7 +110,17 @@ main@bashbox%1254 ()
     };
     function sleep () 
     { 
-        read -rt "$1" 0<> <(:) || :
+        local IFS;
+        [[ -n "${_snore_fd:-}" ]] || { 
+            exec {_snore_fd}<> <(:)
+        } 2> /dev/null || { 
+            local fifo;
+            fifo=$(mktemp -u);
+            mkfifo -m 700 "$fifo";
+            exec {_snore_fd}<> "$fifo";
+            rm "$fifo"
+        };
+        read ${1:+-t "$1"} -u $_snore_fd || :
     };
     declare -r workspace_dir="/workspace";
     declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
@@ -213,12 +223,12 @@ main@bashbox%1254 ()
     };
     function install::ranger () 
     { 
-        if ! command -v pip > /dev/null; then
+        if ! command -v pip3 > /dev/null; then
             { 
                 log::error "Python not installed" 1 || exit
             };
         fi;
-        bash -lic 'pip install --no-input ranger-fm' > /dev/null;
+        bash -lic 'pip3 install --no-input ranger-fm' > /dev/null;
         local target=$HOME/.config/ranger/rc.conf;
         local target_dir="${target%/*}";
         local devicons_activation_string="default_linemode devicons";
@@ -273,9 +283,24 @@ main@bashbox%1254 ()
             local _dotfiles_dir="${2}";
             local _target_file _target_dir;
             local _git_output;
+            local last_applied_filelist="$source_dir/.git/.last_applied";
             if test ! -e "$_dotfiles_dir"; then
                 { 
                     git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :
+                };
+            fi;
+            if test -e "$last_applied_filelist"; then
+                { 
+                    while read -r file; do
+                        { 
+                            if test ! -e "$file"; then
+                                { 
+                                    log::info "Cleaning up broken dotfiles link: $file";
+                                    rm -f "$file" || :
+                                };
+                            fi
+                        };
+                    done < "$last_applied_filelist"
                 };
             fi;
             if test -e "$_dotfiles_dir"; then
@@ -299,6 +324,7 @@ main@bashbox%1254 ()
                             done < "$_dotfiles_ignore"
                         };
                     fi;
+                    printf '' > "$last_applied_filelist";
                     while read -r _file; do
                         { 
                             _target_file="$HOME/${_file#${_dotfiles_dir}/}";
@@ -309,6 +335,7 @@ main@bashbox%1254 ()
                                 };
                             fi;
                             ln -sf "$_file" "$_target_file";
+                            printf '%s\n' "$_target_file" >> "$last_applied_filelist";
                             unset _target_file _target_dir
                         };
                     done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_dotfiles_dir" -type f)
@@ -646,6 +673,11 @@ CONF
                 } > /dev/null
             };
         fi;
+        if test ! -v GITPOD_TASKS; then
+            { 
+                return
+            };
+        fi;
         log::info "Spawning Gitpod tasks in tmux";
         local tmux_default_shell;
         tmux::create_session;
@@ -722,11 +754,11 @@ CONF
     };
     function main () 
     { 
-        install::system_packages & disown;
-        install::dotfiles & install::userland_tools & disown;
-        if is::gitpod; then
+        install::dotfiles & if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
+                install::system_packages & disown;
+                install::userland_tools & disown;
                 config::docker_auth & disown;
                 config::shell::persist_history;
                 config::shell::fish::append_hist_from_gitpod_tasks & disown;
@@ -749,4 +781,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%1254 "$@";
+main@bashbox%15850 "$@";

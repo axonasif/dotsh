@@ -9,18 +9,17 @@ use config;
 function main() {
 	# "& disown" means some sort of async
 
-	# Start installation of system(apt) packages (async)
-	install::system_packages & disown;
-
 	# Dotfiles installation, symlinking files bascially (blocking - sync)
 	install::dotfiles &
-
-	# Install userland tools
-	install::userland_tools & disown;
-
 	if is::gitpod; then {
 		log::info "Gitpod environment detected!";
-		
+	
+		# Start installation of system(apt) packages (async)
+		install::system_packages & disown;
+
+		# Install userland tools
+		install::userland_tools & disown;
+
 		# Configure docker credentials
 		config::docker_auth & disown;
 

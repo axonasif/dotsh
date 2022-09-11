@@ -11,6 +11,9 @@ SETUVAR _fish_abbr_gcl:git\x20clone
 SETUVAR _fish_abbr_gd:git\x20diff
 SETUVAR _fish_abbr_gs:git\x20status
 SETUVAR _fish_abbr_k:kill
+SETUVAR _fish_abbr_la:exa\x20\x2dla
+SETUVAR _fish_abbr_ll:exa\x20\x2dlh
+SETUVAR _fish_abbr_ls:exa
 SETUVAR _fish_abbr_s:sleep
 SETUVAR fish_color_autosuggestion:586e75
 SETUVAR fish_color_cancel:\x2d\x2dreverse
