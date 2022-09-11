@@ -4,10 +4,21 @@ function install::dotfiles() {
         local _dotfiles_dir="${2}";
         local _target_file _target_dir;
         local _git_output;
+	local last_applied_filelist="$source_dir/.git/.last_applied";
         
         if test ! -e "$_dotfiles_dir"; then {
             git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :;
         } fi
+
+	# Clean out any broken symlinks
+	if test -e "$last_applied_filelist"; then {
+		while read -r file; do {
+			if test ! -e "$file"; then {
+				log::info "Cleaning up broken dotfiles link: $file";
+				rm -f "$file" || :;
+			} fi
+		} done < "$last_applied_filelist"
+	} fi
         
         if test -e "$_dotfiles_dir" ; then {
 
@@ -42,6 +53,9 @@ function install::dotfiles() {
             } fi
 
             # pushd "$_dotfiles_dir" 1>/dev/null;
+
+	    # Reset last_applied_filelist
+	    printf '' > "$last_applied_filelist";
             while read -r _file ; do {
                 _target_file="$HOME/${_file#${_dotfiles_dir}/}";
                 _target_dir="${_target_file%/*}";
@@ -51,6 +65,7 @@ function install::dotfiles() {
                 # echo "s: $_file"
                 # echo "t: $_target_file"
                 ln -sf "$_file" "$_target_file";
+		printf '%s\n' "$_target_file" >> "$last_applied_filelist";
                 unset _target_file _target_dir;
             }  done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_dotfiles_dir" -type f);
             # popd 1>/dev/null;
