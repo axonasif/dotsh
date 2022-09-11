@@ -9,7 +9,7 @@ SETUVAR _fish_abbr_ga:git\x20add
 SETUVAR _fish_abbr_gc:git\x20commit\x20\x2dm
 SETUVAR _fish_abbr_gcl:git\x20clone
 SETUVAR _fish_abbr_gd:git\x20diff
-SETUVAR _fish_abbr_gp:git\x20pull\x20\x26\x26\x20git\x20push
+SETUVAR _fish_abbr_gpp:git\x20pull\x20\x26\x26\x20git\x20push
 SETUVAR _fish_abbr_gs:git\x20status
 SETUVAR _fish_abbr_k:kill
 SETUVAR _fish_abbr_la:exa\x20\x2dla
