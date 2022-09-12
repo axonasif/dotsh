@@ -70,20 +70,58 @@ Although, since Gitpod is pretty scriptable and modular, it's possible to handle
 
 TBD, more to write here....
 
+## How to handle automatic port forwarding in on your SSH tmux session
+
+TBD...
+
 ## Tweak behavior via environment variables
 
 For Gitpod, you can set these on https://gitpod.io/variables with `*/*` as the scope.
 
 Currently there are a few variables which can alter the behavior of my dotfiles:
-### `DOTFILES_NO_VSCODE` - defaults to `false`
+### `DOTFILES_NO_VSCODE`
+> Defaults to `false`.
 > Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
 ----
-### `DOTFILES_SPAWN_SSH_PROTO` - defaults to `true`
+### `DOTFILES_SPAWN_SSH_PROTO`
+> Defaults to `true`.
 > Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
 ----
-### `DOTFILES_DEFAULT_SHELL` - defaults to `/usr/bin/fish` (this is planned, not implemented yet)
+### `DOTFILES_DEFAULT_SHELL`
+> Defaults to `/usr/bin/fish` (this is planned, not implemented yet).
 > This is the shell that our `tmux` session will use.
 
 ## Helper functions
 
-TBD
+### [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/d86ce10be9cd08ff2911f09e7eff71449bdd2090/src/utils/common.sh#L6)
+
+This let's you easily add settings to the Gitpod workspace VSCode instance.
+
+Usage example:
+
+- Via stdin:
+
+```bash
+vscode::add_settings <<-'JSON'
+{
+	"terminal.integrated.profiles.linux": {
+		"tmuxshell": {
+			"path": "bash",
+			"args": [
+				"-c",
+				"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main"
+			]
+		}
+	},
+	"terminal.integrated.defaultProfile.linux": "tmuxshell"
+}
+JSON
+```
+
+- Via file:
+
+```bash
+vscode::add_settings /path/to/file.json
+```
+
+### `install::dotfiles`
