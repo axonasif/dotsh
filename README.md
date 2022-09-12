@@ -13,8 +13,11 @@ Highlights:
 
 # How to use on Gitpod
 
-Feel free to create your `dotfiles` by forking this repo!
-You can then use it on https://gitpod.io/preferences for Gitpod.
+Feel free to create your `dotfiles` by forking this repo! You can then use it on https://gitpod.io/preferences for Gitpod.
+
+By default it will apply my raw dotfiles tree from https://github.com/axonasif/dotfiles.public
+
+If you wish to use your own raw dotfiles tree, you can either set [DOTFILES_PRIMARY_REPO](https://github.com/axonasif/dotfiles-sh#dotfiles_primary_repo) or modify it [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh).
 
 Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
@@ -95,12 +98,21 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 ---
 
+### `DOTFILES_PRIMARY_REPO`
+
+> Defaults to https://github.com/axonasif/dotfiles.public
+> Setting this will change the primary dotfiles tree that `dotfiles-sh` will apply on `$HOME`.
+
+---
+
 ### `DOTFILES_DEFAULT_SHELL`
 
 > Defaults to `/usr/bin/fish` (this is planned, not implemented yet).
 > This is the shell that our `tmux` session will use.
 
 ## Helper functions
+
+These are some functions that you can use if you wish to do some advanced customization on your own.
 
 ### [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/d86ce10be9cd08ff2911f09e7eff71449bdd2090/src/utils/common.sh#L6)
 
