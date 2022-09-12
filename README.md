@@ -120,6 +120,8 @@ JSON
 
 - Via file:
 
-> ```bash
-> vscode::add_settings /path/to/file.json
-> ```
+```bash
+vscode::add_settings /path/to/file.json
+```
+
+### `install::dotfiles`
