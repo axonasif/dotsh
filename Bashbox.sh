@@ -77,7 +77,6 @@ live() (
 			-e GITPOD_PREVENT_METADATA_ACCESS
 			-e GITPOD_REPO_ROOT
 			-e GITPOD_REPO_ROOTS
-			-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
 			-e GITPOD_THEIA_PORT
 			-e GITPOD_WORKSPACE_CLASS
 			-e GITPOD_WORKSPACE_CLUSTER_HOST
@@ -85,6 +84,11 @@ live() (
 			-e GITPOD_WORKSPACE_CONTEXT_URL
 			-e GITPOD_WORKSPACE_ID
 			-e GITPOD_WORKSPACE_URL
+			
+			# Fake gitpod tasks for testing
+			-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
+			# Disable ssh:// protocol launch
+			-e DOTFILES_SPAWN_SSH_PROTO=false
 
 			# Container image
 			-it gitpod/workspace-base:latest
