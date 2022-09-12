@@ -148,7 +148,7 @@ REPO="your-repo-link-here" dotfiles::initialize [source-dir] [target-dir]
 
 `target-dir` is the directory/folder where symlinks will be applied from the cloned repo. (Defaults to `$HOME`)
 
-If you wish to apply the symlinks to a different for example:
+If you wish to apply the symlinks to a different directory for example:
 
 ```js
 REPO="your-repo-link-here" dotfiles::initialize "" "/root/.local/very/deep/location";
