@@ -3,13 +3,13 @@
 This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
 
 Highlights:
+
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
   - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
 - This repo features **[live testing of dotfiles](#how-to-live-test-changes)** within your existing Gitpod workspace itself so that you can prototype quickly.
 - Works both locally and on Gitpod.
 - Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the task scripts.
-
 
 # How to use on Gitpod
 
@@ -21,14 +21,12 @@ Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-d
 # How it works on Gitpod
 
 A brief overview:
+
 ```markdown
 ├── Gitpod clones this dotfiles repo and executes `install.sh` from $HOME/.dotfiles
 │   ├── Asynchronously executes instructions inside `install.sh`
 │   │   ├── Installs some system/userland packages
-│   │   ├── Creates symlinks from this repo to `$HOME/` while following `.dotfilesignore` via a helper function
-│   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins into them along several other tools
-│   │   ├── Process Gitpod workspace persisted shell histories
-|   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead
+│   │   ├── Creates symlinks from this repo to `$HOME/`while following`.dotfilesignore`via a helper function │ │ ├── Installs CLIs such as`gh`, `gcloud`and auto-logins into them along several other tools │ │ ├── Process Gitpod workspace persisted shell histories | | ├── Takes over how Gitpod starts the task-terminals and replaces them with`tmux` windows instead
 ├── Gitpod starts the IDE process
 └── Logs are saved to $HOME/.dotfiles.log
 ```
@@ -79,15 +77,23 @@ TBD...
 For Gitpod, you can set these on https://gitpod.io/variables with `*/*` as the scope.
 
 Currently there are a few variables which can alter the behavior of `dotfiles-sh` on the fly:
+
 ### `DOTFILES_NO_VSCODE`
+
 > Defaults to `false`.
 > Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
-----
+
+---
+
 ### `DOTFILES_SPAWN_SSH_PROTO`
+
 > Defaults to `true`.
 > Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
-----
+
+---
+
 ### `DOTFILES_DEFAULT_SHELL`
+
 > Defaults to `/usr/bin/fish` (this is planned, not implemented yet).
 > This is the shell that our `tmux` session will use.
 
@@ -140,7 +146,7 @@ REPO="your-repo-link-here" dotfiles::initialize [source-dir] [target-dir]
 
 `source-dir` is where the repo will be cloned. (Defaults to `/tmp/.dotfiles_repo.${RANDOM}`)
 
-`target-dir` is the directory/folder where the cloned repo will be symlinked agaist. (Defaults to `$HOME`)
+`target-dir` is the directory/folder where symlinks will be applied from the cloned repo. (Defaults to `$HOME`)
 
 If you wish to apply the symlinks to a different for example:
 
@@ -179,6 +185,5 @@ wait::for_vscode_ide_start;
 Await for the Gitpod VSCode window to appear.
 
 Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/install/gh.sh#L11).
-
 
 More to write here...
