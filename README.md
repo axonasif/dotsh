@@ -75,13 +75,13 @@ TBD, more to write here....
 For Gitpod, you can set these on https://gitpod.io/variables with `*/*` as the scope.
 
 Currently there are a few variables which can alter the behavior of my dotfiles:
-- `DOTFILES_NO_VSCODE` - defaults to `false`
+### `DOTFILES_NO_VSCODE` - defaults to `false`
 > Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
 ----
-- `DOTFILES_SPAWN_SSH_PROTO` - defaults to `true`
+### `DOTFILES_SPAWN_SSH_PROTO` - defaults to `true`
 > Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
 ----
-- `DOTFILES_DEFAULT_SHELL` - defaults to `/usr/bin/fish` (this is planned, not implemented yet)
+### `DOTFILES_DEFAULT_SHELL` - defaults to `/usr/bin/fish` (this is planned, not implemented yet)
 > This is the shell that our `tmux` session will use.
 
 ## Helper functions
