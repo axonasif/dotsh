@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24510 () 
+main@bashbox%28203 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%24510 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%24510';
+    ___MAIN_FUNCNAME='main@bashbox%28203';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -182,7 +182,16 @@ main@bashbox%24510 ()
     function dotfiles::initialize () 
     { 
         local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
-        local _generated_source_dir="/tmp/.dotfiles_repo.${RANDOM}";
+        if is::gitpod; then
+            { 
+                : "/tmp/.dotfiles_repo.${RANDOM}"
+            };
+        else
+            { 
+                : "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}"
+            };
+        fi;
+        local _generated_source_dir="";
         local _source_dir="${1:-"$_generated_source_dir"}";
         local _installation_target="${2:-"$HOME"}";
         local last_applied_filelist="$___self_DIR/.git/.last_applied";
@@ -241,12 +250,7 @@ main@bashbox%24510 ()
                         printf '%s\n' "$_target_file" >> "$last_applied_filelist";
                         unset _target_file _target_dir
                     };
-                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f);
-                if test "$_source_dir" == "$_generated_source_dir"; then
-                    { 
-                        ( rm -rf "$_generated_source_dir" 2> /dev/null ) & disown
-                    };
-                fi
+                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f)
             };
         fi
     };
@@ -778,4 +782,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%24510 "$@";
+main@bashbox%28203 "$@";
