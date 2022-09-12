@@ -26,7 +26,10 @@ A brief overview:
 ├── Gitpod clones this dotfiles repo and executes `install.sh` from $HOME/.dotfiles
 │   ├── Asynchronously executes instructions inside `install.sh`
 │   │   ├── Installs some system/userland packages
-│   │   ├── Creates symlinks from this repo to `$HOME/`while following`.dotfilesignore`via a helper function │ │ ├── Installs CLIs such as`gh`, `gcloud`and auto-logins into them along several other tools │ │ ├── Process Gitpod workspace persisted shell histories | | ├── Takes over how Gitpod starts the task-terminals and replaces them with`tmux` windows instead
+│   │   ├── Creates symlinks from this repo to `$HOME/` while following `.dotfilesignore` via a helper function
+│   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins into them along several other tools
+│   │   ├── Process Gitpod workspace persisted shell histories
+|   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead
 ├── Gitpod starts the IDE process
 └── Logs are saved to $HOME/.dotfiles.log
 ```
