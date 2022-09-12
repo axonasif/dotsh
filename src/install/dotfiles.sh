@@ -2,8 +2,7 @@ function install::dotfiles() {
     function symlink_files() {
         local _dotfiles_repo="${1}";
         local _dotfiles_dir="${2}";
-        local _target_file _target_dir;
-        local _git_output;
+	local _installation_target="${3:-"$HOME"}"
 	local last_applied_filelist="$source_dir/.git/.last_applied";
         
         if test ! -e "$_dotfiles_dir"; then {
@@ -56,8 +55,9 @@ function install::dotfiles() {
 
 	    # Reset last_applied_filelist
 	    printf '' > "$last_applied_filelist";
+        	local _target_file _target_dir;
             while read -r _file ; do {
-                _target_file="$HOME/${_file#${_dotfiles_dir}/}";
+                _target_file="$_installation_target/${_file#${_dotfiles_dir}/}";
                 _target_dir="${_target_file%/*}";
                 if test ! -d "$_target_dir"; then {
                     mkdir -p "$_target_dir";

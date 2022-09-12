@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15850 () 
+main@bashbox%14209 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%15850 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%15850';
+    ___MAIN_FUNCNAME='main@bashbox%14209';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -281,8 +281,7 @@ main@bashbox%15850 ()
         { 
             local _dotfiles_repo="${1}";
             local _dotfiles_dir="${2}";
-            local _target_file _target_dir;
-            local _git_output;
+            local _installation_target="${3:-"$HOME"}";
             local last_applied_filelist="$source_dir/.git/.last_applied";
             if test ! -e "$_dotfiles_dir"; then
                 { 
@@ -325,9 +324,10 @@ main@bashbox%15850 ()
                         };
                     fi;
                     printf '' > "$last_applied_filelist";
+                    local _target_file _target_dir;
                     while read -r _file; do
                         { 
-                            _target_file="$HOME/${_file#${_dotfiles_dir}/}";
+                            _target_file="$_installation_target/${_file#${_dotfiles_dir}/}";
                             _target_dir="${_target_file%/*}";
                             if test ! -d "$_target_dir"; then
                                 { 
@@ -403,7 +403,7 @@ main@bashbox%15850 ()
             return 0;
         fi;
         touch "$lockfile";
-        "$HOME/.dotfiles/src/utils/vimpod.py" & disown;
+        "$source_dir/src/utils/vimpod.py" & disown;
         ( { 
             gp ports await 23000 && gp ports await 22000
         } > /dev/null && gp preview "$(gp url 22000)" --external && { 
@@ -483,7 +483,7 @@ main@bashbox%15850 ()
         };
         if test ! -e "$tmux_init_lock"; then
             { 
-                "$HOME/.dotfiles/src/utils/vimpod.py" & disown;
+                "$source_dir/src/utils/vimpod.py" & disown;
                 ( { 
                     gp ports await 23000 && gp ports await 22000
                 } > /dev/null && gp preview "$(gp url 22000)" --external && { 
@@ -781,4 +781,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%15850 "$@";
+main@bashbox%14209 "$@";
