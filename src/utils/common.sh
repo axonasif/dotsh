@@ -51,7 +51,8 @@ function vscode::add_settings() {
 
 function dotfiles::initialize() {
 	local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
-	local _source_dir="${1:-"/tmp/.dotfiles_repo.${RANDOM}"}";
+	local _generated_source_dir="/tmp/.dotfiles_repo.${RANDOM}";
+	local _source_dir="${1:-"$_generated_source_dir"}";
 	local _installation_target="${2:-"$HOME"}";
 	local last_applied_filelist="$___self_DIR/.git/.last_applied";
 	
@@ -118,5 +119,10 @@ function dotfiles::initialize() {
 			unset _target_file _target_dir;
 		}  done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f);
 		# popd 1>/dev/null;
+
+		# Remove the cloned dotfiles dir
+		if test "$_source_dir" == "$_generated_source_dir"; then {
+			(rm -rf "$_generated_source_dir" 2>/dev/null) & disown;
+		} fi
 	} fi
 }

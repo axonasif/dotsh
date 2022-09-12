@@ -78,7 +78,7 @@ TBD...
 
 For Gitpod, you can set these on https://gitpod.io/variables with `*/*` as the scope.
 
-Currently there are a few variables which can alter the behavior of my dotfiles:
+Currently there are a few variables which can alter the behavior of `dotfiles-sh` on the fly:
 ### `DOTFILES_NO_VSCODE`
 > Defaults to `false`.
 > Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
@@ -95,7 +95,7 @@ Currently there are a few variables which can alter the behavior of my dotfiles:
 
 ### [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/d86ce10be9cd08ff2911f09e7eff71449bdd2090/src/utils/common.sh#L6)
 
-This let's you easily add settings to the Gitpod workspace VSCode instance.
+This let's you easily add settings to the Gitpod workspace VSCode instance. Settings added via this function will not be synced and is scoped to the applied workspaces only.
 
 Usage example:
 
@@ -118,10 +118,67 @@ vscode::add_settings <<-'JSON'
 JSON
 ```
 
+Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/config/tmux.sh#L238).
+
 - Via file:
 
 ```bash
 vscode::add_settings /path/to/file.json
 ```
 
-### `install::dotfiles`
+### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/common.sh#L52)
+
+Automatically clone and symlink from a remote `dotfiles` repository tree. It also cleans up broken symlinks from previous apply (useful when used on local PC)
+
+Usage:
+
+```js
+REPO="your-repo-link-here" dotfiles::initialize [source-dir] [target-dir]
+```
+
+`source-dir` and `target-dir` is optional.
+
+`source-dir` is where the repo will be cloned. (Defaults to `/tmp/.dotfiles_repo.${RANDOM}`)
+
+`target-dir` is the directory/folder where the cloned repo will be symlinked agaist. (Defaults to `$HOME`)
+
+If you wish to apply the symlinks to a different for example:
+
+```js
+REPO="your-repo-link-here" dotfiles::initialize "" "/root/.local/very/deep/location";
+```
+
+Live examples can be found on this [file](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh)
+
+### [wait::until_true](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/wait.sh#L1)
+
+```js
+wait::until_true <cmd>;
+```
+
+Simple wrapper for awaiting a command to return `true`
+
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/config/tmux.sh#L296).
+
+### [wait::for_file_existence](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/wait.sh#L9)
+
+```js
+wait::for_file_existence <file_path>;
+```
+
+Await for a file to appear in the filesystem.
+
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/common.sh#L36).
+
+### [wait::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/wait.sh#L14)
+
+```js
+wait::for_vscode_ide_start;
+```
+
+Await for the Gitpod VSCode window to appear.
+
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/install/gh.sh#L11).
+
+
+More to write here...
