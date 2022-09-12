@@ -49,4 +49,74 @@ function vscode::add_settings() {
 	} fi
 }
 
-# Detect OS function
+function dotfiles::initialize() {
+	local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
+	local _source_dir="${1:-"/tmp/.dotfiles_repo.${RANDOM}"}";
+	local _installation_target="${2:-"$HOME"}";
+	local last_applied_filelist="$___self_DIR/.git/.last_applied";
+	
+	if test ! -e "$_source_dir"; then {
+		git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :;
+	} fi
+
+	# Clean out any broken symlinks
+	if test -e "$last_applied_filelist"; then {
+		while read -r file; do {
+			if test ! -e "$file"; then {
+				log::info "Cleaning up broken dotfiles link: $file";
+				rm -f "$file" || :;
+			} fi
+		} done < "$last_applied_filelist"
+	} fi
+	
+	if test -e "$_source_dir" ; then {
+		# Process .dotfiles ignore
+		local _dotfiles_ignore="$_source_dir/.dotfilesignore";
+		local _thing_path;
+		local _ignore_list=(
+			-not -path "'*/.git/*'"
+			-not -path "'*/.dotfilesignore'"
+			# -not -path "'*/.gitpod.yml'"
+			-not -path "'$_source_dir/src/*'"
+			-not -path "'$_source_dir/target/*'"
+			-not -path "'$_source_dir/Bashbox.meta'"
+			-not -path "'$_source_dir/install.sh'"
+		);
+
+		if test -e "$_dotfiles_ignore"; then {
+			while read -r _ignore_thing; do {
+				if [[ ! "$_ignore_thing" =~ ^\# ]]; then {
+					_ignore_thing="$_source_dir/${_ignore_thing}";
+					_ignore_thing="${_ignore_thing//\/\//\/}";
+					_ignore_list+=(-not -path "$_ignore_thing");
+				} fi
+				unset _ignore_thing;
+				# _thing_path="$(readlink -f "$_source_dir/$_ignore_thing")";
+				# if test -f "$_thing_path"; then {
+				#     _ignore_list+=("-not -path '$_thing_path'");
+				# } elif test -d "$_thing_path"; then {
+				#     _ignore_list+=("-not -path '/$_thing_path/*'");
+				# } fi
+			} done < "$_dotfiles_ignore"
+		} fi
+
+		# pushd "$_source_dir" 1>/dev/null;
+
+	# Reset last_applied_filelist
+		printf '' > "$last_applied_filelist";
+		local _target_file _target_dir;
+		while read -r _file ; do {
+			_target_file="$_installation_target/${_file#${_source_dir}/}";
+			_target_dir="${_target_file%/*}";
+			if test ! -d "$_target_dir"; then {
+				mkdir -p "$_target_dir";
+			} fi
+			# echo "s: $_file"
+			# echo "t: $_target_file"
+			ln -sf "$_file" "$_target_file";
+			printf '%s\n' "$_target_file" >> "$last_applied_filelist";
+			unset _target_file _target_dir;
+		}  done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f);
+		# popd 1>/dev/null;
+	} fi
+}

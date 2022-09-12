@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14209 () 
+main@bashbox%20517 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%14209 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%14209';
+    ___MAIN_FUNCNAME='main@bashbox%20517';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -124,7 +124,6 @@ main@bashbox%14209 ()
     };
     declare -r workspace_dir="/workspace";
     declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
-    declare source_dir="$___self_DIR";
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     declare -r tmux_init_lock="/tmp/.tmux.init";
@@ -177,6 +176,71 @@ main@bashbox%14209 ()
                 cp -a "$vscode_machine_settings_file" "$tmp_file";
                 jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$vscode_machine_settings_file";
                 rm "$tmp_file"
+            };
+        fi
+    };
+    function dotfiles::initialize () 
+    { 
+        local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
+        local _source_dir="${1:-"/tmp/.dotfiles_repo.${RANDOM}"}";
+        local _installation_target="${2:-"$HOME"}";
+        local last_applied_filelist="$___self_DIR/.git/.last_applied";
+        if test ! -e "$_source_dir"; then
+            { 
+                git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :
+            };
+        fi;
+        if test -e "$last_applied_filelist"; then
+            { 
+                while read -r file; do
+                    { 
+                        if test ! -e "$file"; then
+                            { 
+                                log::info "Cleaning up broken dotfiles link: $file";
+                                rm -f "$file" || :
+                            };
+                        fi
+                    };
+                done < "$last_applied_filelist"
+            };
+        fi;
+        if test -e "$_source_dir"; then
+            { 
+                local _dotfiles_ignore="$_source_dir/.dotfilesignore";
+                local _thing_path;
+                local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'$_source_dir/src/*'" -not -path "'$_source_dir/target/*'" -not -path "'$_source_dir/Bashbox.meta'" -not -path "'$_source_dir/install.sh'");
+                if test -e "$_dotfiles_ignore"; then
+                    { 
+                        while read -r _ignore_thing; do
+                            { 
+                                if [[ ! "$_ignore_thing" =~ ^\# ]]; then
+                                    { 
+                                        _ignore_thing="$_source_dir/${_ignore_thing}";
+                                        _ignore_thing="${_ignore_thing//\/\//\/}";
+                                        _ignore_list+=(-not -path "$_ignore_thing")
+                                    };
+                                fi;
+                                unset _ignore_thing
+                            };
+                        done < "$_dotfiles_ignore"
+                    };
+                fi;
+                printf '' > "$last_applied_filelist";
+                local _target_file _target_dir;
+                while read -r _file; do
+                    { 
+                        _target_file="$_installation_target/${_file#${_source_dir}/}";
+                        _target_dir="${_target_file%/*}";
+                        if test ! -d "$_target_dir"; then
+                            { 
+                                mkdir -p "$_target_dir"
+                            };
+                        fi;
+                        ln -sf "$_file" "$_target_file";
+                        printf '%s\n' "$_target_file" >> "$last_applied_filelist";
+                        unset _target_file _target_dir
+                    };
+                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f)
             };
         fi
     };
@@ -277,81 +341,8 @@ main@bashbox%14209 ()
     };
     function install::dotfiles () 
     { 
-        function symlink_files () 
-        { 
-            local _dotfiles_repo="${1}";
-            local _dotfiles_dir="${2}";
-            local _installation_target="${3:-"$HOME"}";
-            local last_applied_filelist="$source_dir/.git/.last_applied";
-            if test ! -e "$_dotfiles_dir"; then
-                { 
-                    git clone --filter=tree:0 "$_dotfiles_repo" "$_dotfiles_dir" > /dev/null 2>&1 || :
-                };
-            fi;
-            if test -e "$last_applied_filelist"; then
-                { 
-                    while read -r file; do
-                        { 
-                            if test ! -e "$file"; then
-                                { 
-                                    log::info "Cleaning up broken dotfiles link: $file";
-                                    rm -f "$file" || :
-                                };
-                            fi
-                        };
-                    done < "$last_applied_filelist"
-                };
-            fi;
-            if test -e "$_dotfiles_dir"; then
-                { 
-                    local _dotfiles_ignore="$_dotfiles_dir/.dotfilesignore";
-                    local _thing_path;
-                    local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'$_dotfiles_dir/src/*'" -not -path "'$_dotfiles_dir/target/*'" -not -path "'$_dotfiles_dir/Bashbox.meta'" -not -path "'$_dotfiles_dir/install.sh'");
-                    if test -e "$_dotfiles_ignore"; then
-                        { 
-                            while read -r _ignore_thing; do
-                                { 
-                                    if [[ ! "$_ignore_thing" =~ ^\# ]]; then
-                                        { 
-                                            _ignore_thing="$_dotfiles_dir/${_ignore_thing}";
-                                            _ignore_thing="${_ignore_thing//\/\//\/}";
-                                            _ignore_list+=(-not -path "$_ignore_thing")
-                                        };
-                                    fi;
-                                    unset _ignore_thing
-                                };
-                            done < "$_dotfiles_ignore"
-                        };
-                    fi;
-                    printf '' > "$last_applied_filelist";
-                    local _target_file _target_dir;
-                    while read -r _file; do
-                        { 
-                            _target_file="$_installation_target/${_file#${_dotfiles_dir}/}";
-                            _target_dir="${_target_file%/*}";
-                            if test ! -d "$_target_dir"; then
-                                { 
-                                    mkdir -p "$_target_dir"
-                                };
-                            fi;
-                            ln -sf "$_file" "$_target_file";
-                            printf '%s\n' "$_target_file" >> "$last_applied_filelist";
-                            unset _target_file _target_dir
-                        };
-                    done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_dotfiles_dir" -type f)
-                };
-            fi
-        };
-        local _private_dir="$source_dir/.private";
-        local _private_dotfiles_repo="${PRIVATE_DOTFILES_REPO:-}";
-        log::info "Installing local dotfiles";
-        symlink_files "$___self_REPOSITORY" "$source_dir/raw";
-        if test -n "$_private_dotfiles_repo"; then
-            { 
-                log::info "Installing private dotfiles";
-                symlink_files "${PRIVATE_DOTFILES_REPO:-"$_private_dotfiles_repo"}" "$_private_dir" || :
-            };
-        fi
+        log::info "Installing public dotfiles";
+        REPO="https://github.com/axonasif/dotfiles.public" dotfiles::initialize
     };
     function install::neovim () 
     { 
@@ -403,7 +394,7 @@ main@bashbox%14209 ()
             return 0;
         fi;
         touch "$lockfile";
-        "$source_dir/src/utils/vimpod.py" & disown;
+        "$___self_DIR/src/utils/vimpod.py" & disown;
         ( { 
             gp ports await 23000 && gp ports await 22000
         } > /dev/null && gp preview "$(gp url 22000)" --external && { 
@@ -483,7 +474,7 @@ main@bashbox%14209 ()
         };
         if test ! -e "$tmux_init_lock"; then
             { 
-                "$source_dir/src/utils/vimpod.py" & disown;
+                "$___self_DIR/src/utils/vimpod.py" & disown;
                 ( { 
                     gp ports await 23000 && gp ports await 22000
                 } > /dev/null && gp preview "$(gp url 22000)" --external && { 
@@ -781,4 +772,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%14209 "$@";
+main@bashbox%20517 "$@";

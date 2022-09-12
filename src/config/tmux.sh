@@ -13,7 +13,7 @@ function tmux::start_vimpod() {
 	local lockfile=/tmp/.vimpod;
 	if test -e "$lockfile"; then return 0; fi
 	touch "$lockfile"
-	"$source_dir/src/utils/vimpod.py" & disown;
+	"$___self_DIR/src/utils/vimpod.py" & disown;
 	(
 		{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
 			if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
@@ -86,7 +86,7 @@ function inject_tmux_old_complicated() {
 	# By default it's off, to turn it on, set DOTFILES_NO_VSCODE=true on https://gitpod.io/variables with */* as scope
 	if test ! -e "$tmux_init_lock"; then {
 		# local target="ssh://${GITPOD_WORKSPACE_ID}@${GITPOD_WORKSPACE_ID}.ssh.${GITPOD_WORKSPACE_CLUSTER_HOST}";
-		"$source_dir/src/utils/vimpod.py" & disown
+		"$___self_DIR/src/utils/vimpod.py" & disown
 			(
 				{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
 					if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
