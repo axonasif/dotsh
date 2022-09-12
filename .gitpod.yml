@@ -8,7 +8,16 @@ tasks:
       curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall; # Install bashbox
       bashbox build --release;
       touch /workspace/.binit;
+      gp sync-done compile;
 
+  - name: Open all src/ *.sh files
+    command: |
+      gp sync-await compile;
+      gp ports await 23000 1>/dev/null;
+      code install.sh;
+      find src -type f -name '*.sh' | xargs gp open;
+      gp open src/main.sh;
+      
   - name: Live test dotfiles
     command: |
       printf "\033[3J\033c\033[3J";
@@ -20,6 +29,7 @@ tasks:
       source "$HOME/.bashbox/env";
 
       bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
+
 vscode:
   extensions:
     - mads-hartmann.bash-ide-vscode

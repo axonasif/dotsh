@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%13127 () 
+main@bashbox%24510 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%13127 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%13127';
+    ___MAIN_FUNCNAME='main@bashbox%24510';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -348,7 +348,7 @@ main@bashbox%13127 ()
     function install::dotfiles () 
     { 
         log::info "Installing public dotfiles";
-        REPO="https://github.com/axonasif/dotfiles.public" dotfiles::initialize
+        REPO="${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" dotfiles::initialize
     };
     function install::neovim () 
     { 
@@ -778,4 +778,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%13127 "$@";
+main@bashbox%24510 "$@";
