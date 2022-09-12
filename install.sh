@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%28203 () 
+main@bashbox%5275 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%28203 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%28203';
+    ___MAIN_FUNCNAME='main@bashbox%5275';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -191,7 +191,7 @@ main@bashbox%28203 ()
                 : "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}"
             };
         fi;
-        local _generated_source_dir="";
+        local _generated_source_dir="$_";
         local _source_dir="${1:-"$_generated_source_dir"}";
         local _installation_target="${2:-"$HOME"}";
         local last_applied_filelist="$___self_DIR/.git/.last_applied";
@@ -782,4 +782,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%28203 "$@";
+main@bashbox%5275 "$@";

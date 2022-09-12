@@ -54,9 +54,10 @@ function dotfiles::initialize() {
 	if is::gitpod; then {
 		: "/tmp/.dotfiles_repo.${RANDOM}";
 	} else {
+		# TODO: Use repo username as well
 		: "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}";
 	} fi
-	local _generated_source_dir="";
+	local _generated_source_dir="$_";
 	local _source_dir="${1:-"$_generated_source_dir"}";
 	local _installation_target="${2:-"$HOME"}";
 	local last_applied_filelist="$___self_DIR/.git/.last_applied";
