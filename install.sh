@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5275 () 
+main@bashbox%24404 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%5275 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%5275';
+    ___MAIN_FUNCNAME='main@bashbox%24404';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -79,10 +79,12 @@ main@bashbox%5275 ()
         ( cmd="bashbox build --release";
         log::info "Running '$cmd";
         $cmd;
-        local duplicate_repo_root="/tmp/.mrroot";
-        log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_repo_root" && { 
-            rm -rf "$duplicate_repo_root";
-            cp -ra "$GITPOD_REPO_ROOT" "$duplicate_repo_root"
+        local duplicate_workspace_root="/tmp/.mrroot";
+        local duplicate_repo_root="$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}";
+        log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_workspace_root" && { 
+            rm -rf "$duplicate_workspace_root";
+            mkdir -p "$duplicate_workspace_root";
+            cp -ra "$GITPOD_REPO_ROOT" /workspace/.gitpod "$duplicate_workspace_root"
         };
         local ide_mirror="/tmp/.idem";
         if test ! -e "$ide_mirror"; then
@@ -96,7 +98,7 @@ main@bashbox%5275 ()
             ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code --install-builtin-extension') -o args --no-headers)";
             ide_port="33000";
             ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
-            local docker_args=(run --net=host -v "$duplicate_repo_root:/$GITPOD_REPO_ROOT" -v "$duplicate_repo_root:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_TASKS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l");
+            local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l");
             docker "${docker_args[@]}"
         } )
     };
@@ -707,7 +709,7 @@ CONF
                 fi;
                 cmdfile="/tmp/.cmd-${arr_elem}";
                 printf '%s\n' "$cmd" > "$cmdfile";
-                WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"\\t\" \$0}'; source $cmdfile; exit";
+                WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; source $cmdfile; exit";
                 ((arr_elem=arr_elem+1))
             };
         done
@@ -782,4 +784,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%5275 "$@";
+main@bashbox%24404 "$@";
