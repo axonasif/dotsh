@@ -87,6 +87,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 ### `DOTFILES_NO_VSCODE`
 
 > Defaults to `false`.
+
 > Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
 
 ---
@@ -94,6 +95,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 ### `DOTFILES_SPAWN_SSH_PROTO`
 
 > Defaults to `true`.
+
 > Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
 
 ---
@@ -101,6 +103,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 ### `DOTFILES_PRIMARY_REPO`
 
 > Defaults to https://github.com/axonasif/dotfiles.public
+
 > Setting this will change the primary dotfiles tree that `dotfiles-sh` will apply on `$HOME`.
 
 ---
@@ -108,6 +111,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 ### `DOTFILES_DEFAULT_SHELL`
 
 > Defaults to `/usr/bin/fish` (this is planned, not implemented yet).
+
 > This is the shell that our `tmux` session will use.
 
 ## Helper functions
