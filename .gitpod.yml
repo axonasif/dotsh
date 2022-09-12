@@ -17,6 +17,7 @@ tasks:
       code install.sh;
       find src -type f -name '*.sh' | xargs gp open;
       gp open src/main.sh;
+      exit;
       
   - name: Live test dotfiles
     command: |
