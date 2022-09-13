@@ -10,7 +10,7 @@ function main() {
 	# "& disown" means some sort of async
 
 	# Dotfiles installation, symlinking files bascially (blocking - sync)
-	install::dotfiles &
+	install::dotfiles & disown;
 	if is::gitpod; then {
 		log::info "Gitpod environment detected!";
 	

@@ -237,7 +237,7 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 
 	printf '%s\n' "$json_data" | vscode::add_settings;
 	# For vscode desktop
-	# TIME=2 wait::for_file_existence "$ms_vscode_server_dir";
+	# TIME=2 await::for_file_existence "$ms_vscode_server_dir";
 	printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings;
 }
 
@@ -269,40 +269,48 @@ function config::tmux() {
 	config::tmux::hijack_gitpod_task_terminals &
 
 	local tmux_exec_path="/usr/bin/tmux";
-	tmux::create_awaiter "$tmux_exec_path" & disown;
+	KEEP="true" await::create_shim "$tmux_exec_path";
+	# tmux::create_awaiter "$tmux_exec_path" & disown;
 
 	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 		tmux::start_vimpod & disown;
 	} fi
 
 	log::info "Setting up tmux";
+	# set -x
     local target="$HOME/.tmux/plugins/tpm";
     if test ! -e "$target"; then {
-        {
-			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-			# wait::until_true test ! -O "$tmux_exec_path";
-			local main_tmux_conf="$HOME/.tmux.conf";
-			local tmp_tmux_conf="$HOME/.tmux.tmp.conf";
-			if test -e "$main_tmux_conf" && test ! -e "$tmp_tmux_conf"; then {
-				mv "$main_tmux_conf" "$tmp_tmux_conf";
-			} fi
-			cat <<-CONF > "$main_tmux_conf"
-			set -g base-index 1
-			setw -g pane-base-index 1
-			source-file ~/.tmux_plugins.conf
-			set -g default-command "tmux rename-session $tmux_first_session_name; tmux rename-window home; printf '%s\n' 'Loading tmux ...'; until test -e $tmux_init_lock; do sleep 0.5; done; tmux source-file ~/.tmux.conf; exec bash -l"
-			CONF
+		git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
+		# await::until_true test ! -O "$tmux_exec_path";
+		# local main_tmux_conf="$HOME/.tmux.conf";
+		# local tmp_tmux_conf="$HOME/.tmux.tmp.conf";
+		# if test -e "$main_tmux_conf" && test ! -e "$tmp_tmux_conf"; then {
+		# 	mv "$main_tmux_conf" "$tmp_tmux_conf";
+		# } fi
+		# cat <<-CONF > "$main_tmux_conf"
+		# set -g base-index 1
+		# setw -g pane-base-index 1
+		# source-file ~/.tmux_plugins.conf
+		# set -g default-command "tmux rename-session $tmux_first_session_name; tmux rename-window home; printf '%s\n' 'Loading tmux ...'; until test -e $tmux_init_lock; do sleep 0.5; done; tmux source-file ~/.tmux.conf; exec bash -l"
+		# CONF
 
-			wait::until_true test ! -O "$tmux_exec_path";
-			# sudo mv "$tmux_exec_path" "${tmux_exec_path}.orig" && tmux::create_awaiter "$tmux_exec_path";
-			bash "$HOME/.tmux/plugins/tpm/bin/install_plugins";
-			# sudo mv "${tmux_exec_path}.orig" "$tmux_exec_path";
-			if test -e "$tmp_tmux_conf"; then {
-				mv "$tmp_tmux_conf" "$main_tmux_conf";
-			} fi
-			touch "$tmux_init_lock";
+		# await::until_true test ! -O "$tmux_exec_path";
+		# sudo mv "$tmux_exec_path" "${tmux_exec_path}.orig" && tmux::create_awaiter "$tmux_exec_path";
+		printf '\t %s\n' '============= hey HEY HEY ====='
+		await::signal get install_dotfiles;
+		printf '\t %s\n ' "+++++++++++++++ HEY HEY HEY"
+		ls -lh /usr/bin/tmux*
+		tmux -V;
+		# printf '%s\n' '#!/usr/bin/bash' 'exec /'
+		bash -x "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+		CLOSE=true await::create_shim "$tmux_exec_path";
+		# sudo mv "${tmux_exec_path}.orig" "$tmux_exec_path";
+		# if test -e "$tmp_tmux_conf"; then {
+		# 	mv "$tmp_tmux_conf" "$main_tmux_conf";
+		# } fi
+		# touch "$tmux_init_lock";
+		await::signal send config_tmux;
 
-		} 1>/dev/null
     } fi
 
     	if test ! -v GITPOD_TASKS; then {
@@ -323,7 +331,7 @@ function config::tmux() {
 		} fi
 	}
 
-	wait::for_file_existence "/workspace/.gitpod/ready";
+	await::for_file_existence "/workspace/.gitpod/ready";
 	cd "$GITPOD_REPO_ROOT";
 	local name cmd arr_elem=0 cmdfile;
 	while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do {

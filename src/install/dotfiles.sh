@@ -4,4 +4,6 @@ function install::dotfiles() {
 
     # log::info "Installing private dotfiles";
     # REPO="https://github.com/axonasif/dotfiles.private" dotfiles::initialize & disown;
+
+    await::signal send install_dotfiles;
 }

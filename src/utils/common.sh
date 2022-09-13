@@ -33,7 +33,7 @@ function vscode::add_settings() {
 		} fi
 		
 		# Check json syntax
-		wait::for_file_existence "/usr/bin/jq";
+		await::for_file_existence "/usr/bin/jq";
 		if test ! -s "$vscode_machine_settings_file"  || ! jq -reM '""' "$vscode_machine_settings_file" 1>/dev/null; then {
 			printf '{}\n' > "$vscode_machine_settings_file";
 		} fi
