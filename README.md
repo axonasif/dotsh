@@ -218,7 +218,7 @@ Let's say we're intalling a tool called `tmux` but since it's asynchronously ins
 Now, there is another problem, let's say you used `await::create_shim /usr/bin/tmux` while `tmux` is being installed in the background asynchronously. What if you also need to install/configure additional `tmux` plguins/customizations from your dotfiles installation script but the _user_ tried to run `tmux` before you installed the additional customization. In this case, `tmux` would start up without your customization during the process you may perform the customizations in the background. There is a solution to that. Here's an example below:
 
 ```bash
-# Where we install tmux
+# Install tmux asynchronously in the background
 sudo apt install tmux & disown;
 
 # Create the awaiting shim for any user execution before apt fully installs tmux, notice the extra `KEEP=true`
