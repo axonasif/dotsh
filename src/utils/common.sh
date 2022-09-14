@@ -30,22 +30,23 @@ function vscode::add_settings() {
 		# Create the vscode machine settings file if it doesnt exist
 		if test ! -e "$vscode_machine_settings_file"; then {
 			mkdir -p "${vscode_machine_settings_file%/*}";
+			touch "$vscode_machine_settings_file";
 		} fi
 		
 		# Check json syntax
 		await::for_file_existence "/usr/bin/jq";
 		if test ! -s "$vscode_machine_settings_file"  || ! jq -reM '""' "$vscode_machine_settings_file" 1>/dev/null; then {
-			printf '{}\n' > "$vscode_machine_settings_file";
+			printf '%s\n' "$input" > "$vscode_machine_settings_file";
+		} else {
+			# Remove any trailing commas
+			sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
+
+			# Merge the input settings with machine settings.json
+			local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
+			cp -a "$vscode_machine_settings_file" "$tmp_file";
+			jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" > "$vscode_machine_settings_file";
 		} fi
 
-		# Remove any trailing commas
-		sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
-
-		# Merge the input settings with machine settings.json
-		local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
-		cp -a "$vscode_machine_settings_file" "$tmp_file";
-		jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" > "$vscode_machine_settings_file";
-		rm "$tmp_file";
 	} fi
 }
 

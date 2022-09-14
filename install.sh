@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15788 () 
+main@bashbox%12270 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%15788 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%15788';
+    ___MAIN_FUNCNAME='main@bashbox%12270';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -167,20 +167,23 @@ main@bashbox%15788 ()
             { 
                 if test ! -e "$vscode_machine_settings_file"; then
                     { 
-                        mkdir -p "${vscode_machine_settings_file%/*}"
+                        mkdir -p "${vscode_machine_settings_file%/*}";
+                        touch "$vscode_machine_settings_file"
                     };
                 fi;
                 await::for_file_existence "/usr/bin/jq";
                 if test ! -s "$vscode_machine_settings_file" || ! jq -reM '""' "$vscode_machine_settings_file" > /dev/null; then
                     { 
-                        printf '{}\n' > "$vscode_machine_settings_file"
+                        printf '%s\n' "$input" > "$vscode_machine_settings_file"
                     };
-                fi;
-                sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
-                local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
-                cp -a "$vscode_machine_settings_file" "$tmp_file";
-                jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$vscode_machine_settings_file";
-                rm "$tmp_file"
+                else
+                    { 
+                        sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
+                        local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
+                        cp -a "$vscode_machine_settings_file" "$tmp_file";
+                        jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$vscode_machine_settings_file"
+                    };
+                fi
             };
         fi
     };
@@ -885,4 +888,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%15788 "$@";
+main@bashbox%12270 "$@";
