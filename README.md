@@ -120,7 +120,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 These are some functions that you can use if you wish to do some advanced customization on your own.
 
-### [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/d86ce10be9cd08ff2911f09e7eff71449bdd2090/src/utils/common.sh#L6)
+### [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/main/src/utils/common.sh#L6)
 
 This let's you easily add settings to the Gitpod workspace VSCode instance. Settings added via this function will not be synced and is scoped to the applied workspaces only.
 
@@ -145,7 +145,7 @@ vscode::add_settings <<-'JSON'
 JSON
 ```
 
-Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/config/tmux.sh#L238).
+Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L238).
 
 - Via file:
 
@@ -153,7 +153,7 @@ Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/bl
 vscode::add_settings /path/to/file.json
 ```
 
-### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/tree/src/utils/common.sh#L52)
+### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L52)
 
 Automatically clone and symlink from a remote `dotfiles` repository tree. It also cleans up broken symlinks from previous apply (useful when used on local PC)
 
@@ -177,7 +177,7 @@ REPO="your-repo-link/path-here" dotfiles::initialize "/root/.local/very/deep/loc
 
 Live examples of it's usage can be found on this [file](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh)
 
-### [await::until_true](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L1)
+### [await::until_true](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L1)
 
 ```js
 await::until_true <cmd>;
@@ -185,9 +185,9 @@ await::until_true <cmd>;
 
 Simple wrapper for awaiting a command to return `true`
 
-Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/tree/src/config/tmux.sh#L296).
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L296).
 
-### [await::for_file_existence](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L9)
+### [await::for_file_existence](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L9)
 
 ```js
 await::for_file_existence <file_path>;
@@ -195,9 +195,9 @@ await::for_file_existence <file_path>;
 
 Await for a file to appear in the filesystem.
 
-Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/tree/src/utils/common.sh#L36).
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L36).
 
-### [await::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L14)
+### [await::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L14)
 
 ```js
 await::for_vscode_ide_start;
@@ -205,9 +205,9 @@ await::for_vscode_ide_start;
 
 Await for the Gitpod VSCode window to appear.
 
-Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/tree/src/install/gh.sh#L11).
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/gh.sh#L11).
 
-### [await::create_shim](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L37)
+### [await::create_shim](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L37)
 
 ```js
 await::create_shim /usr/bin/something_fancy
@@ -239,7 +239,7 @@ CLOSE=true await::create_shim "$tmux_exec_path";
 
 A live usage of `KEEP=true await::create_shim` can be seen [here]().
 
-### [await::signal]()
+### [await::signal](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L20)
 
 Let's you await between multiple async commands.
 
