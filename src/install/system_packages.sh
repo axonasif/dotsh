@@ -1,16 +1,8 @@
 levelone_syspkgs=(
-  tmux
+	tmux
 	fish
 	jq
-)
-leveltwo_syspkgs=(
-  hollywood
-    shellcheck
-    rsync
-    tree
-	file
-	mosh
-	fzf
+	lsof
 )
 
 

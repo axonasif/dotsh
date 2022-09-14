@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%30941 () 
+main@bashbox%29412 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%30941 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%30941';
+    ___MAIN_FUNCNAME='main@bashbox%29412';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -68,7 +68,7 @@ main@bashbox%30941 ()
         local _script_name='install.sh';
         local root_script="$_arg_path/$_script_name";
         cp "$_target_workfile" "$root_script";
-        chmod 0755 "$root_script"
+        chmod +x "$root_script"
     };
     function bashbox::build::before () 
     { 
@@ -76,7 +76,9 @@ main@bashbox%30941 ()
     };
     function live () 
     { 
-        ( cmd="bashbox build --release";
+        ( local offline_dotfiles_repo="${DOTFILES_PRIMARY_REPO:-/workspace/dotfiles.public}";
+        log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
+        cmd="bashbox build --release";
         log::info "Running '$cmd";
         $cmd;
         local duplicate_workspace_root="/tmp/.mrroot";
@@ -95,10 +97,10 @@ main@bashbox%30941 ()
         fi;
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
             local ide_cmd ide_port;
-            ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code --install-builtin-extension') -o args --no-headers)";
+            ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code' | head -n1) -o args --no-headers)";
             ide_port="33000";
             ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
-            local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l");
+            local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo" -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l");
             docker "${docker_args[@]}"
         } )
     };
@@ -129,6 +131,7 @@ main@bashbox%30941 ()
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     declare -r tmux_init_lock="/tmp/.tmux.init";
+    declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
@@ -167,7 +170,7 @@ main@bashbox%30941 ()
                         mkdir -p "${vscode_machine_settings_file%/*}"
                     };
                 fi;
-                wait::for_file_existence "/usr/bin/jq";
+                await::for_file_existence "/usr/bin/jq";
                 if test ! -s "$vscode_machine_settings_file" || ! jq -reM '""' "$vscode_machine_settings_file" > /dev/null; then
                     { 
                         printf '{}\n' > "$vscode_machine_settings_file"
@@ -184,14 +187,20 @@ main@bashbox%30941 ()
     function dotfiles::initialize () 
     { 
         local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
-        if is::gitpod; then
+        if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then
             { 
-                : "/tmp/.dotfiles_repo.${RANDOM}"
+                : "$_dotfiles_repo"
             };
         else
-            { 
-                : "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}"
-            };
+            if is::gitpod; then
+                { 
+                    : "/tmp/.dotfiles_repo.${RANDOM}"
+                };
+            else
+                { 
+                    : "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}"
+                };
+            fi;
         fi;
         local _generated_source_dir="$_";
         local _source_dir="${1:-"$_generated_source_dir"}";
@@ -256,7 +265,7 @@ main@bashbox%30941 ()
             };
         fi
     };
-    function wait::until_true () 
+    function await::until_true () 
     { 
         local time="${TIME:-0.5}";
         local input=("$@");
@@ -266,12 +275,12 @@ main@bashbox%30941 ()
             };
         done
     };
-    function wait::for_file_existence () 
+    function await::for_file_existence () 
     { 
         local file="$1";
-        wait::until_true test -e "$file"
+        await::until_true test -e "$file"
     };
-    function wait::for_vscode_ide_start () 
+    function await::for_vscode_ide_start () 
     { 
         if grep -q 'supervisor' /proc/1/cmdline; then
             { 
@@ -279,8 +288,118 @@ main@bashbox%30941 ()
             };
         fi
     };
-    levelone_syspkgs=(tmux fish jq);
-    leveltwo_syspkgs=(hollywood shellcheck rsync tree file mosh fzf);
+    function await::signal () 
+    { 
+        local kind="$1";
+        local target="$2";
+        local status_file="/tmp/.asignal_${target}";
+        case "$kind" in 
+            "get")
+                until test -s "$status_file"; do
+                    { 
+                        sleep 0.2
+                    };
+                done
+            ;;
+            send)
+                printf 'done\n' >> "$status_file"
+            ;;
+        esac
+    };
+    function await::create_shim () 
+    { 
+        local target shim_source;
+        local internal_var_name="DOTFILES_INTERNAL_SHIM_CALL";
+        for target in "$@";
+        do
+            { 
+                shim_source="${target}.shim_source";
+                if test -v CLOSE; then
+                    { 
+                        unset "$internal_var_name";
+                        if test -e "$shim_source"; then
+                            { 
+                                sudo mv "$shim_source" "$target"
+                            };
+                        fi;
+                        return
+                    };
+                fi;
+                if test -e "$target"; then
+                    { 
+                        log::warn "${FUNCNAME[0]}: $target already exists";
+                        return
+                    };
+                fi;
+                if ! touch "$target" 2> /dev/null; then
+                    { 
+                        local USER && USER="$(id -u -n)";
+                        sudo bash -c "touch \"$target\" && chown -h $USER:$USER \"$target\""
+                    };
+                fi;
+                cat > "$target" <<'SCRIPT'
+#!/usr/bin/env bash
+set -eu;
+self="$(<"$0")"
+function main() {
+	if test -v "$internal_var_name" && test -e "$shim_source"; then {
+		exec "$shim_source" "$@";
+	} fi
+
+	diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+	if test ! -e "$diff_target"; then {
+		cp "$target" "$diff_target";
+	} fi
+
+	# if test ! -v $internal_var_name; then {
+	# 	printf 'info[shim]: Loading %s\n' "$target";
+	# } fi
+
+	function await() {
+		while cmp --silent -- "$target" "$diff_target"; do {
+			sleep 0.2;
+		} done
+
+		while lsof -F 'f' -- "$target" 2>/dev/null | grep -q '^f.*w$'; do {
+			sleep 0.2;
+		} done
+	}
+
+	await;
+SCRIPT
+
+                if test -v KEEP; then
+                    { 
+                        eval "export $internal_var_name=ture";
+                        cat >> "$target" <<'SCRIPT'
+	# For internal calls
+	if test -v $internal_var_name; then {
+		if test ! -e "$shim_source"; then {
+			sudo mv "$target" "$shim_source";
+			sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+		} fi
+		exec "$shim_source" "$@";
+	} fi
+
+	# For external calls
+	while test -e "$shim_source"; do {
+		sleep 0.2;
+	} done
+SCRIPT
+
+                    };
+                fi
+                { 
+                    printf '\texec %s "$@"\n\n}\n\n' "$target";
+                    printf '%s="%s"\n' target "$target" shim_source "$shim_source" internal_var_name "$internal_var_name";
+                    printf '%s\n' "$(declare -f sleep)";
+                    printf 'main "$@"\n'
+                } >> "$target";
+                chmod +x "$target"
+            };
+        done
+    };
+    levelone_syspkgs=(tmux fish jq lsof);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -295,7 +414,17 @@ main@bashbox%30941 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & disown
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall > /dev/null 2>&1 & disown;
+        USER="$(id -u -n)" && export USER;
+        if test ! -e /nix; then
+            { 
+                log::info "Installing nix";
+                curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon > /dev/null 2>&1
+            };
+        fi;
+        source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
+        local pkgs=(nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.neofetch nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.zoxide);
+        nix-env -iA "${pkgs[@]}" > /dev/null 2>&1
     };
     function install::ranger () 
     { 
@@ -327,7 +456,7 @@ main@bashbox%30941 ()
         log::info "Installing gh CLI and logging in";
         tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
         curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
-        wait::for_vscode_ide_start;
+        await::for_vscode_ide_start;
         if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
             { 
                 tries=1;
@@ -354,7 +483,8 @@ main@bashbox%30941 ()
     function install::dotfiles () 
     { 
         log::info "Installing public dotfiles";
-        REPO="${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" dotfiles::initialize
+        REPO="${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" dotfiles::initialize;
+        await::signal send install_dotfiles
     };
     function install::neovim () 
     { 
@@ -366,8 +496,9 @@ main@bashbox%30941 ()
             };
         fi;
         curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
-        git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" > /dev/null 2>&1;
-        wait::for_file_existence "$tmux_init_lock" && wait::until_true tmux list-session > /dev/null 2>&1;
+        curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null 2>&1;
+        await::signal get config_tmux;
+        await::until_true tmux list-session > /dev/null 2>&1;
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
     };
     function config::docker_auth () 
@@ -612,34 +743,11 @@ main@bashbox%30941 ()
         printf '%s\n' "$json_data" | vscode::add_settings;
         printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
     };
-    function tmux::create_awaiter () 
-    { 
-        ( tmux_exec_path="$1";
-        : "${USER:="$(id -un)"}";
-        sudo bash -c "touch $tmux_exec_path && chown $USER:$USER $tmux_exec_path && chmod +x $tmux_exec_path";
-        cat <<-SHELL > "$tmux_exec_path"
-#!/usr/bin/env bash
-{
-printf 'info: %s\n' "Tmux is being loaded... any moment now!";
-
-until test -e "$tmux_init_lock"; do {
-sleep 1;
-} done
-
-if test -z "${@}"; then {
-exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
-} else {
-exec "$tmux_exec_path" "$@";
-} fi
-}
-SHELL
- )
-    }
     function config::tmux () 
     { 
         config::tmux::set_tmux_as_default_vscode_shell & disown;
         config::tmux::hijack_gitpod_task_terminals & local tmux_exec_path="/usr/bin/tmux";
-        tmux::create_awaiter "$tmux_exec_path" & disown;
+        KEEP="true" await::create_shim "$tmux_exec_path";
         if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
             { 
                 tmux::start_vimpod & disown
@@ -649,31 +757,11 @@ SHELL
         local target="$HOME/.tmux/plugins/tpm";
         if test ! -e "$target"; then
             { 
-                { 
-                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                    local main_tmux_conf="$HOME/.tmux.conf";
-                    local tmp_tmux_conf="$HOME/.tmux.tmp.conf";
-                    if test -e "$main_tmux_conf" && test ! -e "$tmp_tmux_conf"; then
-                        { 
-                            mv "$main_tmux_conf" "$tmp_tmux_conf"
-                        };
-                    fi;
-                    cat <<-CONF > "$main_tmux_conf"
-set -g base-index 1
-setw -g pane-base-index 1
-source-file ~/.tmux_plugins.conf
-set -g default-command "tmux rename-session $tmux_first_session_name; tmux rename-window home; printf '%s\n' 'Loading tmux ...'; until test -e $tmux_init_lock; do sleep 0.5; done; tmux source-file ~/.tmux.conf; exec bash -l"
-CONF
-
-                    wait::until_true test ! -O "$tmux_exec_path";
-                    bash "$HOME/.tmux/plugins/tpm/bin/install_plugins";
-                    if test -e "$tmp_tmux_conf"; then
-                        { 
-                            mv "$tmp_tmux_conf" "$main_tmux_conf"
-                        };
-                    fi;
-                    touch "$tmux_init_lock"
-                } > /dev/null
+                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
+                await::signal get install_dotfiles;
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
+                CLOSE=true await::create_shim "$tmux_exec_path";
+                await::signal send config_tmux
             };
         fi;
         if test ! -v GITPOD_TASKS; then
@@ -697,7 +785,7 @@ CONF
                 };
             fi
         };
-        wait::for_file_existence "/workspace/.gitpod/ready";
+        await::for_file_existence "/workspace/.gitpod/ready";
         cd "$GITPOD_REPO_ROOT";
         local name cmd arr_elem=0 cmdfile;
         while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
@@ -755,9 +843,18 @@ CONF
             };
         done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
     };
+    function config::fish () 
+    { 
+        log::info "Installing fisher and some plugins for fish-shell";
+        await::until_true command -v fish > /dev/null;
+        { 
+            fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
+        } > /dev/null
+    };
     function main () 
     { 
-        install::dotfiles & if is::gitpod; then
+        install::dotfiles & disown;
+        if is::gitpod; then
             { 
                 log::info "Gitpod environment detected!";
                 install::system_packages & disown;
@@ -765,6 +862,7 @@ CONF
                 config::docker_auth & disown;
                 config::shell::persist_history;
                 config::shell::fish::append_hist_from_gitpod_tasks & disown;
+                config::fish & disown;
                 config::tmux & disown;
                 install::neovim & disown;
                 install::gh & disown
@@ -784,4 +882,4 @@ CONF
     wait;
     exit
 }
-main@bashbox%30941 "$@";
+main@bashbox%29412 "$@";

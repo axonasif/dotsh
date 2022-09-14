@@ -1,3 +1,7 @@
+additionalRepositories:
+  - url: https://github.com/axonasif/dotfiles.public.git
+workspaceLocation: dotfiles-sh/dotfiles-sh.code-workspace
+
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
   # - name: Cache workspace images
@@ -14,14 +18,13 @@ tasks:
     command: |
       gp sync-await compile;
       gp ports await 23000 1>/dev/null;
-      code install.sh;
-      find src -type f -name '*.sh' | xargs gp open;
-      gp open src/main.sh;
+      for file in install.sh src/utils/* src/variables.sh src/main.sh; do {
+        gp open "$file";
+      } done
       exit;
       
   - name: Live test dotfiles
     command: |
-      printf "\033[3J\033c\033[3J";
       printf 'info: %s\n' "Waiting for the 'init' docker-pull to complete ...";
       until test -e /workspace/.binit; do {
         sleep 0.5;

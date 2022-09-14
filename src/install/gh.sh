@@ -8,7 +8,7 @@ function install::gh() {
 	curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
 
 	# Login into gh
-	wait::for_vscode_ide_start;
+	await::for_vscode_ide_start;
 	if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then {
 	# if [[ "$gp_credentials" =~ password=(.*) ]]; then {
 		tries=1;

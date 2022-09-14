@@ -33,7 +33,7 @@ function vscode::add_settings() {
 		} fi
 		
 		# Check json syntax
-		wait::for_file_existence "/usr/bin/jq";
+		await::for_file_existence "/usr/bin/jq";
 		if test ! -s "$vscode_machine_settings_file"  || ! jq -reM '""' "$vscode_machine_settings_file" 1>/dev/null; then {
 			printf '{}\n' > "$vscode_machine_settings_file";
 		} fi
@@ -51,7 +51,11 @@ function vscode::add_settings() {
 
 function dotfiles::initialize() {
 	local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
-	if is::gitpod; then {
+
+	if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then {
+		# Local dotfiles repo
+		: "$_dotfiles_repo";
+	} elif is::gitpod; then {
 		: "/tmp/.dotfiles_repo.${RANDOM}";
 	} else {
 		# TODO: Use repo username as well

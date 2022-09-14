@@ -9,8 +9,9 @@ use config;
 function main() {
 	# "& disown" means some sort of async
 
-	# Dotfiles installation, symlinking files bascially (blocking - sync)
-	install::dotfiles &
+	# Dotfiles installation, symlinking files bascially
+	install::dotfiles & disown;
+	
 	if is::gitpod; then {
 		log::info "Gitpod environment detected!";
 	
@@ -26,6 +27,8 @@ function main() {
 		# Shell + Fish hacks (specific to Gitpod)
 		config::shell::persist_history;
 		config::shell::fish::append_hist_from_gitpod_tasks & disown;
+
+		config::fish & disown;
 		
 		# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
 		config::tmux & disown;

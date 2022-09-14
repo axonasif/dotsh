@@ -1,2 +1,2 @@
 use common;
-use wait;
+use await;
