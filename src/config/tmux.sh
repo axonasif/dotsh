@@ -296,7 +296,7 @@ function config::tmux() {
 		# await::until_true test ! -O "$tmux_exec_path";
 		# sudo mv "$tmux_exec_path" "${tmux_exec_path}.orig" && tmux::create_awaiter "$tmux_exec_path";
 		await::signal get install_dotfiles;
-		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" 1>/dev/null;
+		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" >/dev/null 2>&1;
 		CLOSE=true await::create_shim "$tmux_exec_path";
 		# sudo mv "${tmux_exec_path}.orig" "$tmux_exec_path";
 		# if test -e "$tmp_tmux_conf"; then {

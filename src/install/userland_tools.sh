@@ -4,7 +4,7 @@ function install::userland_tools {
 	# Just put all sorts of commands one by one here.
 
 	# Install bashbox
-	curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & disown;
+	curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall >/dev/null 2>&1 & disown;
 
 	# Install tools with nix
 	USER="$(id -u -n)" && export USER;
@@ -17,7 +17,7 @@ function install::userland_tools {
 	local pkgs=(
 		nixpkgs.hollywood
 		nixpkgs.shellcheck
-		nixpkgs.rsync
+		# nixpkgs.rsync
 		nixpkgs.tree
 		nixpkgs.file
 		nixpkgs.fzf
@@ -47,6 +47,5 @@ function install::userland_tools {
 		nixpkgs.zoxide
 		# nixpkgs.zsh
 	)
-	nix-env -iA "${pkgs[@]}" 1>/dev/null;
-
+	nix-env -iA "${pkgs[@]}" >/dev/null 2>&1;
 }

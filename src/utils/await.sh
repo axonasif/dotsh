@@ -105,7 +105,6 @@ SCRIPT
 
 	# For external calls
 	while test -e "$shim_source"; do {
-		echo waiting on shim
 		sleep 0.2;
 	} done
 SCRIPT
@@ -118,7 +117,9 @@ SCRIPT
 								target "$target" \
 								shim_source "$shim_source" \
 								internal_var_name "$internal_var_name";
-			printf 'main "$@"\n'
+
+			printf '%s\n' "$(declare -f sleep)";
+			printf 'main "$@"\n';
 		} >> "$target";
 		chmod +x "$target";
 	} done
