@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11628 () 
+main@bashbox%2454 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%11628 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%11628';
+    ___MAIN_FUNCNAME='main@bashbox%2454';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -129,6 +129,7 @@ main@bashbox%11628 ()
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     declare -r tmux_init_lock="/tmp/.tmux.init";
+    declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
@@ -415,7 +416,7 @@ SCRIPT
         fi;
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
         local pkgs=(nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.rsync nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.neofetch nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.zoxide);
-        nix-env -iA "${pkgs[@]}" & disown
+        nix-env -iA "${pkgs[@]}" > /dev/null
     };
     function install::ranger () 
     { 
@@ -864,4 +865,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%11628 "$@";
+main@bashbox%2454 "$@";
