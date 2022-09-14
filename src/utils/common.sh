@@ -51,7 +51,11 @@ function vscode::add_settings() {
 
 function dotfiles::initialize() {
 	local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
-	if is::gitpod; then {
+
+	if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then {
+		# Local dotfiles repo
+		: "$_dotfiles_repo";
+	} elif is::gitpod; then {
 		: "/tmp/.dotfiles_repo.${RANDOM}";
 	} else {
 		# TODO: Use repo username as well
