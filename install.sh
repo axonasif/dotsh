@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4132 () 
+main@bashbox%11628 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%4132 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%4132';
+    ___MAIN_FUNCNAME='main@bashbox%11628';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -95,7 +95,7 @@ main@bashbox%4132 ()
         fi;
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
             local ide_cmd ide_port;
-            ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code --install-builtin-extension') -o args --no-headers)";
+            ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code' | head -n1) -o args --no-headers)";
             ide_port="33000";
             ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
             local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l");
@@ -391,7 +391,6 @@ SCRIPT
         done
     };
     levelone_syspkgs=(tmux fish jq lsof);
-    leveltwo_syspkgs=(hollywood shellcheck rsync tree file mosh fzf);
     function install::system_packages () 
     { 
         log::info "Installing system packages";
@@ -406,7 +405,17 @@ SCRIPT
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & disown
+        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall & disown;
+        USER="$(id -u -n)" && export USER;
+        if test ! -e /nix; then
+            { 
+                log::info "Installing nix";
+                curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon > /dev/null 2>&1
+            };
+        fi;
+        source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
+        local pkgs=(nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.rsync nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.neofetch nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.zoxide);
+        nix-env -iA "${pkgs[@]}" & disown
     };
     function install::ranger () 
     { 
@@ -855,4 +864,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%4132 "$@";
+main@bashbox%11628 "$@";

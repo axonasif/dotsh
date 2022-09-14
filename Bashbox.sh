@@ -45,7 +45,7 @@ live() (
 
 	log::info "Starting a fake Gitpod workspace with headless IDE" && {
 		local ide_cmd ide_port;
-		ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code --install-builtin-extension') -o args --no-headers)";
+		ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code' | head -n1) -o args --no-headers)";
 		ide_port="33000";
 		ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
 

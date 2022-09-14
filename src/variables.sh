@@ -7,3 +7,7 @@ declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/
 declare -r tmux_first_session_name="main";
 declare -r tmux_first_window_num="1";
 declare -r tmux_init_lock="/tmp/.tmux.init";
+
+
+# Fish specific
+declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
