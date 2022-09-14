@@ -241,28 +241,6 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 	printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings;
 }
 
-# function tmux::create_awaiter() (
-# 	tmux_exec_path="$1";
-# 	: "${USER:="$(id -un)"}";
-# 	sudo bash -c "touch $tmux_exec_path && chown $USER:$USER $tmux_exec_path && chmod +x $tmux_exec_path";
-# 	cat <<-SHELL > "$tmux_exec_path"
-# 	#!/usr/bin/env bash
-# 	{
-# 		printf 'info: %s\n' "Tmux is being loaded... any moment now!";
-
-# 		until test -e "$tmux_init_lock"; do {
-# 			sleep 1;
-# 		} done
-
-# 		if test -z "${@}"; then {
-# 			exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
-# 		} else {
-# 			exec "$tmux_exec_path" "$@";
-# 		} fi
-# 	}
-# 	SHELL
-# )
-
 function config::tmux() {
 	# Extra steps
 	config::tmux::set_tmux_as_default_vscode_shell & disown;
@@ -270,7 +248,6 @@ function config::tmux() {
 
 	local tmux_exec_path="/usr/bin/tmux";
 	KEEP="true" await::create_shim "$tmux_exec_path";
-	# tmux::create_awaiter "$tmux_exec_path" & disown;
 
 	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 		tmux::start_vimpod & disown;
@@ -280,38 +257,17 @@ function config::tmux() {
     local target="$HOME/.tmux/plugins/tpm";
     if test ! -e "$target"; then {
 		git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-		# await::until_true test ! -O "$tmux_exec_path";
-		# local main_tmux_conf="$HOME/.tmux.conf";
-		# local tmp_tmux_conf="$HOME/.tmux.tmp.conf";
-		# if test -e "$main_tmux_conf" && test ! -e "$tmp_tmux_conf"; then {
-		# 	mv "$main_tmux_conf" "$tmp_tmux_conf";
-		# } fi
-		# cat <<-CONF > "$main_tmux_conf"
-		# set -g base-index 1
-		# setw -g pane-base-index 1
-		# source-file ~/.tmux_plugins.conf
-		# set -g default-command "tmux rename-session $tmux_first_session_name; tmux rename-window home; printf '%s\n' 'Loading tmux ...'; until test -e $tmux_init_lock; do sleep 0.5; done; tmux source-file ~/.tmux.conf; exec bash -l"
-		# CONF
-
-		# await::until_true test ! -O "$tmux_exec_path";
-		# sudo mv "$tmux_exec_path" "${tmux_exec_path}.orig" && tmux::create_awaiter "$tmux_exec_path";
 		await::signal get install_dotfiles;
-		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" >/dev/null 2>&1;
+		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
 		CLOSE=true await::create_shim "$tmux_exec_path";
-		# sudo mv "${tmux_exec_path}.orig" "$tmux_exec_path";
-		# if test -e "$tmp_tmux_conf"; then {
-		# 	mv "$tmp_tmux_conf" "$main_tmux_conf";
-		# } fi
-		# touch "$tmux_init_lock";
 		await::signal send config_tmux;
-
     } fi
 
-    	if test ! -v GITPOD_TASKS; then {
+	if test ! -v GITPOD_TASKS; then {
 		return;
+	} else {
+		log::info "Spawning Gitpod tasks in tmux"
 	} fi
-
-	log::info "Spawning Gitpod tasks in tmux"
 
 	local tmux_default_shell;
 	tmux::create_session;

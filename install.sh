@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%29412 () 
+main@bashbox%15788 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%29412 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%29412';
+    ___MAIN_FUNCNAME='main@bashbox%15788';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -186,7 +186,7 @@ main@bashbox%29412 ()
     };
     function dotfiles::initialize () 
     { 
-        local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
+        local _dotfiles_repo="${REPO:-"https://github.com/axonasif/dotfiles.public"}";
         if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then
             { 
                 : "$_dotfiles_repo"
@@ -203,7 +203,7 @@ main@bashbox%29412 ()
             fi;
         fi;
         local _generated_source_dir="$_";
-        local _source_dir="${1:-"$_generated_source_dir"}";
+        local _source_dir="$_generated_source_dir";
         local _installation_target="${2:-"$HOME"}";
         local last_applied_filelist="$___self_DIR/.git/.last_applied";
         if test ! -e "$_source_dir"; then
@@ -483,7 +483,7 @@ SCRIPT
     function install::dotfiles () 
     { 
         log::info "Installing public dotfiles";
-        REPO="${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" dotfiles::initialize;
+        REPO="${DOTFILES_PRIMARY_REPO:-}" dotfiles::initialize;
         await::signal send install_dotfiles
     };
     function install::neovim () 
@@ -759,7 +759,7 @@ SCRIPT
             { 
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
-                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
                 CLOSE=true await::create_shim "$tmux_exec_path";
                 await::signal send config_tmux
             };
@@ -768,8 +768,11 @@ SCRIPT
             { 
                 return
             };
+        else
+            { 
+                log::info "Spawning Gitpod tasks in tmux"
+            };
         fi;
-        log::info "Spawning Gitpod tasks in tmux";
         local tmux_default_shell;
         tmux::create_session;
         function jqw () 
@@ -882,4 +885,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%29412 "$@";
+main@bashbox%15788 "$@";

@@ -50,7 +50,7 @@ function vscode::add_settings() {
 }
 
 function dotfiles::initialize() {
-	local _dotfiles_repo="${REPO:-"$___self_REPOSITORY"}";
+	local _dotfiles_repo="${REPO:-"https://github.com/axonasif/dotfiles.public"}";
 
 	if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then {
 		# Local dotfiles repo
@@ -62,7 +62,7 @@ function dotfiles::initialize() {
 		: "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}";
 	} fi
 	local _generated_source_dir="$_";
-	local _source_dir="${1:-"$_generated_source_dir"}";
+	local _source_dir="$_generated_source_dir";
 	local _installation_target="${2:-"$HOME"}";
 	local last_applied_filelist="$___self_DIR/.git/.last_applied";
 	

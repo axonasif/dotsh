@@ -106,6 +106,8 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 > Setting this will change the primary dotfiles tree that `dotfiles-sh` will apply on `$HOME`.
 
+> You can also define a local path instead of a URL. (i.e `DOTFILES_PRIMARY_REPO=/some/filesystem/dir`)
+
 ---
 
 ### `DOTFILES_DEFAULT_SHELL`
@@ -151,58 +153,115 @@ Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/bl
 vscode::add_settings /path/to/file.json
 ```
 
-### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/common.sh#L52)
+### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/tree/src/utils/common.sh#L52)
 
 Automatically clone and symlink from a remote `dotfiles` repository tree. It also cleans up broken symlinks from previous apply (useful when used on local PC)
 
 Usage:
 
 ```js
-REPO="your-repo-link-here" dotfiles::initialize [source-dir] [target-dir]
+REPO="your-repo-link/path-here" dotfiles::initialize [target-dir]
 ```
 
-`source-dir` and `target-dir` is optional.
+`REPO=` accepts URL or local path. (Defaults to https://github.com/axonasif/dotfiles.public)
 
-`source-dir` is where the repo will be cloned. (Defaults to `/tmp/.dotfiles_repo.${RANDOM}`)
+`REPO=` and `target-dir` is optional.
 
 `target-dir` is the directory/folder where symlinks will be applied from the cloned repo. (Defaults to `$HOME`)
 
 If you wish to apply the symlinks to a different directory for example:
 
 ```js
-REPO="your-repo-link-here" dotfiles::initialize "" "/root/.local/very/deep/location";
+REPO="your-repo-link/path-here" dotfiles::initialize "/root/.local/very/deep/location";
 ```
 
-Live examples can be found on this [file](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh)
+Live examples of it's usage can be found on this [file](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh)
 
-### [wait::until_true](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/wait.sh#L1)
+### [await::until_true](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L1)
 
 ```js
-wait::until_true <cmd>;
+await::until_true <cmd>;
 ```
 
 Simple wrapper for awaiting a command to return `true`
 
-Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/config/tmux.sh#L296).
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/tree/src/config/tmux.sh#L296).
 
-### [wait::for_file_existence](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/wait.sh#L9)
+### [await::for_file_existence](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L9)
 
 ```js
-wait::for_file_existence <file_path>;
+await::for_file_existence <file_path>;
 ```
 
 Await for a file to appear in the filesystem.
 
-Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/common.sh#L36).
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/tree/src/utils/common.sh#L36).
 
-### [wait::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/utils/wait.sh#L14)
+### [await::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L14)
 
 ```js
-wait::for_vscode_ide_start;
+await::for_vscode_ide_start;
 ```
 
 Await for the Gitpod VSCode window to appear.
 
-Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/c998729e2a1adae908e897e503ebc3b4430e46b0/src/install/gh.sh#L11).
+Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/tree/src/install/gh.sh#L11).
 
-More to write here...
+### [await::create_shim](https://github.com/axonasif/dotfiles-sh/tree/src/utils/await.sh#L37)
+
+```js
+await::create_shim /usr/bin/something_fancy
+```
+
+Let's say we're intalling a tool called `tmux` but since it's asynchronously installed so if an user tries to execute it before it exists, they'll get an error. In order to avoid such a problem we can place an wrapper script at `tmux`'s absolute path using `await::create_shim`, that way the wrapper script as `tmux` will await for the actual command to appear in the filesystem and switch(`exec`) to it if someone executes `tmux` on their terminal before the actual `tmux` binary/program gets fully installed. In other words, if you invoke `tmux` on your terminal, the wrapper script at `/usr/bin/tmux` will `sleep()` until it finds that it itself was overwritten and the actual `tmux` binary was installed at `/usr/bin/tmux`.
+
+Now, there is another problem, let's say you used `await::create_shim /usr/bin/tmux` while `tmux` is being installed in the background asynchronously. What if you also need to install/configure additional `tmux` plguins/customizations from your dotfiles installation script but the _user_ tried to run `tmux` before you installed the additional customization. In this case, `tmux` would start up without your customization during the process you may perform the customizations in the background. There is a solution to that. Here's an example below:
+
+```bash
+# Where we install tmux
+sudo apt install tmux & disown;
+
+# Create the awaiting shim for any user execution before apt fully installs tmux, notice the extra `KEEP=true`
+KEEP=true await::create_shim /usr/bin/tmux;
+
+## Extra tmux customization/configuration part
+git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm";
+# This script has to execute `tmux` internally multiple times
+# But we need it to hit the actual tmux binary but not the wrapper shim script,
+# however the wrapper shim script will recognize that it's being called from inside the dotfiles installation script
+# and thus it will let us to execute the actual binary of `tmux`
+bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+
+# After we're done customizing internally, get rid of the wrapper shim script
+# and let everyone directly hit the actual `tmux` binary.
+CLOSE=true await::create_shim "$tmux_exec_path";
+```
+
+A live usage of `KEEP=true await::create_shim` can be seen [here]().
+
+### [await::signal]()
+
+Let's you await between multiple async commands.
+
+Example:
+
+In function `foo` we have:
+```bash
+function foo() {
+	await::signal get boo_is_cool; # Blocks execution until signal is received
+
+	echo "Now we can proceeed!";
+
+	# More commands below...
+}
+```
+
+In function `boo` we have:
+```bash
+function boo() {
+	# Let's run some random commands
+	sudo apt install shellcheck;
+
+	await::signal send boo_is_cool; # Sends the singal to any awaiting client so that they can continue execution
+}
+```
