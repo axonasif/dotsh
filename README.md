@@ -234,7 +234,7 @@ bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
 
 # After we're done customizing internally, get rid of the wrapper shim script
 # and let everyone directly hit the actual `tmux` binary.
-CLOSE=true await::create_shim "$tmux_exec_path";
+CLOSE=true await::create_shim /usr/bin/tmux;
 ```
 
 A live usage of `KEEP=true await::create_shim` can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L250).
