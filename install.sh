@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%10980 () 
+main@bashbox%4132 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%10980 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%10980';
+    ___MAIN_FUNCNAME='main@bashbox%4132';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -307,6 +307,7 @@ main@bashbox%10980 ()
                 shim_source="${target}.shim_source";
                 if test -v CLOSE; then
                     { 
+                        unset "$internal_var_name";
                         if test -e "$shim_source"; then
                             { 
                                 sudo mv "$shim_source" "$target"
@@ -327,62 +328,64 @@ main@bashbox%10980 ()
                         sudo bash -c "touch \"$target\" && chown -h $USER:$USER \"$target\""
                     };
                 fi;
-                cat > "$target" <<-SCRIPT
+                cat > "$target" <<'SCRIPT'
 #!/usr/bin/env bash
-{
-
 set -eu;
+self="$(<"$0")"
+function main() {
+	if test -v "$internal_var_name" && test -e "$shim_source"; then {
+		exec "$shim_source" "$@";
+	} fi
 
-set -x
-exec 2>>/tmp/lol
+	diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+	if test ! -e "$diff_target"; then {
+		cp "$target" "$diff_target";
+	} fi
 
-shim_source="$shim_source";
-self="\$(<"$target")";
+	# if test ! -v $internal_var_name; then {
+	# 	printf 'info[shim]: Loading %s\n' "$target";
+	# } fi
 
-$(declare -f sleep)
+	function await() {
+		while cmp --silent -- "$target" "$diff_target"; do {
+			sleep 0.2;
+		} done
 
-if test ! -v $internal_var_name; then {
-printf 'info[shim]: Loading %s\n' "$target";
-} fi
+		while lsof -F 'f' -- "$target" 2>/dev/null | grep -q '^f.*w$'; do {
+			sleep 0.2;
+		} done
+	}
 
-function await() {
-while printf '%s' "\$self" | cmp --silent -- - "$target"; do {
-sleep 0.2;
-} done
-
-while PID="\$(lsof -t "$target" 2>/dev/null)" || break; do {
-if test "\$PID" == \$\$; then {
-break;
-} fi
-sleep 0.2;
-} done
-}
-
-await;
+	await;
 SCRIPT
 
                 if test -v KEEP; then
                     { 
                         eval "export $internal_var_name=ture";
-                        cat >> "$target" <<-SCRIPT
-# For internal calls
-if test -v $internal_var_name; then {
-if test ! -e "\$shim_source"; then {
-sudo mv "$target" "\$shim_source";
-sudo env self="\$self" bash -c 'printf "%s\n" "\$self" > "$target" && chmod +x $target';
-} fi
-exec "\$shim_source" "\$@";
-} fi
+                        cat >> "$target" <<'SCRIPT'
+	# For internal calls
+	if test -v $internal_var_name; then {
+		if test ! -e "$shim_source"; then {
+			sudo mv "$target" "$shim_source";
+			sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+		} fi
+		exec "$shim_source" "$@";
+	} fi
 
-# For external calls
-while test -e "\$shim_source"; do {
-sleep 0.2;
-} done
+	# For external calls
+	while test -e "$shim_source"; do {
+		echo waiting on shim
+		sleep 0.2;
+	} done
 SCRIPT
 
                     };
                 fi
-                printf 'exec %s "$@"\n\n}' "$target" >> "$target";
+                { 
+                    printf '\texec %s "$@"\n\n}\n\n' "$target";
+                    printf '%s="%s"\n' target "$target" shim_source "$shim_source" internal_var_name "$internal_var_name";
+                    printf 'main "$@"\n'
+                } >> "$target";
                 chmod +x "$target"
             };
         done
@@ -396,7 +399,6 @@ SCRIPT
             sudo apt-get update;
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
             sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
-            log::error "+++++++++++++ was installed" 0;
             sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
         } > /dev/null
@@ -723,29 +725,6 @@ SCRIPT
         printf '%s\n' "$json_data" | vscode::add_settings;
         printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
     };
-    function tmux::create_awaiter () 
-    { 
-        ( tmux_exec_path="$1";
-        : "${USER:="$(id -un)"}";
-        sudo bash -c "touch $tmux_exec_path && chown $USER:$USER $tmux_exec_path && chmod +x $tmux_exec_path";
-        cat <<-SHELL > "$tmux_exec_path"
-#!/usr/bin/env bash
-{
-printf 'info: %s\n' "Tmux is being loaded... any moment now!";
-
-until test -e "$tmux_init_lock"; do {
-sleep 1;
-} done
-
-if test -z "${@}"; then {
-exec "$tmux_exec_path" new-session -As "$tmux_first_session_name";
-} else {
-exec "$tmux_exec_path" "$@";
-} fi
-}
-SHELL
- )
-    }
     function config::tmux () 
     { 
         config::tmux::set_tmux_as_default_vscode_shell & disown;
@@ -761,12 +740,8 @@ SHELL
         if test ! -e "$target"; then
             { 
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                printf '\t %s\n' '============= hey HEY HEY =====';
                 await::signal get install_dotfiles;
-                printf '\t %s\n ' "+++++++++++++++ HEY HEY HEY";
-                ls -lh /usr/bin/tmux*;
-                tmux -V;
-                bash -x "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null;
                 CLOSE=true await::create_shim "$tmux_exec_path";
                 await::signal send config_tmux
             };
@@ -880,4 +855,4 @@ SHELL
     wait;
     exit
 }
-main@bashbox%10980 "$@";
+main@bashbox%4132 "$@";
