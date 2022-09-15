@@ -1,6 +1,6 @@
 # Introduction
 
-This is a wannabe dotfiles _framework_ intended for use on Gitpod and locally.
+This is a wannabe asynchronous dotfiles _framework_ intended for use on Gitpod and locally. Batteries included!
 
 Highlights:
 
@@ -159,7 +159,7 @@ vscode::add_settings /path/to/file.json
 
 ### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L52)
 
-Automatically clone and symlink from a remote `dotfiles` repository tree. It also cleans up broken symlinks from previous apply (useful when used on local PC)
+Automatically clone and symlink from a remote `dotfiles` repository tree. It also cleans up broken symlinks from previous apply (useful when used on local PC). You can ignore symlinking files by specifying their paths on a [`.dotfilesignore`](https://github.com/axonasif/dotfiles.public/blob/main/.dotfilesignore) on the repo root of your dotfiles raw tree.
 
 Usage:
 
