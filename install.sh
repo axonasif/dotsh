@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%1692 () 
+main@bashbox%7400 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%1692 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%1692';
+    ___MAIN_FUNCNAME='main@bashbox%7400';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -126,7 +126,7 @@ main@bashbox%1692 ()
     };
     function is::codespaces () 
     { 
-        test -v CODESPACES || test -e /workspaces && test -e /home/codespaces
+        test -v CODESPACES || test -e /home/codespaces
     };
     function vscode::add_settings () 
     { 
@@ -921,4 +921,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%1692 "$@";
+main@bashbox%7400 "$@";

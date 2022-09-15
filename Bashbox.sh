@@ -36,7 +36,7 @@ live() (
 	# } fi
 
 	local duplicate_workspace_root="/tmp/.mrroot";
-	local duplicate_repo_root="$duplicate_workspace_root/${arg_path##*/}";
+	local duplicate_repo_root="$duplicate_workspace_root/${_arg_path##*/}";
 
 	log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_workspace_root" && {
 		rm -rf "$duplicate_workspace_root";
