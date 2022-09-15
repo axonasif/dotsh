@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%12654 () 
+main@bashbox%1184 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%12654 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%12654';
+    ___MAIN_FUNCNAME='main@bashbox%1184';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -120,35 +120,13 @@ main@bashbox%12654 ()
         };
         read ${1:+-t "$1"} -u $_snore_fd || :
     };
-    function variables::init () 
-    { 
-        declare -r workspace_dir="$(
-		if is::gitpod; then {
-			printf '%s\n' "/workspace";
-		} elif is::codespaces; then {
-			printf '%s\n' "/workspaces";
-		} fi
-	)";
-        declare -r vscode_machine_settings_file="$(
-		if is::gitpod; then {
-			: "$workspace_dir";
-		} else {
-			: "$HOME";
-		} fi
-		printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
-	)";
-        declare -r tmux_first_session_name="main";
-        declare -r tmux_first_window_num="1";
-        declare -r tmux_init_lock="/tmp/.tmux.init";
-        declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir"
-    };
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
     };
     function is::codespaces () 
     { 
-        test -v CODESPACES
+        test -v CODESPACES || test -e /workspaces && test -e /home/codespaces
     };
     function vscode::add_settings () 
     { 
@@ -894,9 +872,29 @@ SCRIPT
             fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
         } > /dev/null
     };
+    declare -r workspace_dir="$(
+	if is::gitpod; then {
+		printf '%s\n' "/workspace";
+	} elif is::codespaces; then {
+		printf '%s\n' "/workspaces";
+	} fi
+)";
+    declare -r vscode_machine_settings_file="$(
+	if is::gitpod; then {
+		: "$workspace_dir";
+	} else {
+		: "$HOME";
+	} fi
+	printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
+)";
+    declare -r tmux_first_session_name="main";
+    declare -r tmux_first_window_num="1";
+    declare -r tmux_init_lock="/tmp/.tmux.init";
+    declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
     function main () 
     { 
-        variables::init;
+        echo "$workspace_dir";
+        exit;
         install::dotfiles & disown;
         if is::gitpod || is::codespaces; then
             { 
@@ -925,4 +923,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%12654 "$@";
+main@bashbox%1184 "$@";

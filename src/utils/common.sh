@@ -4,7 +4,7 @@ function is::gitpod() {
 }
 
 function is::codespaces() {
-	test -v CODESPACES;
+	test -v CODESPACES || test -e /workspaces && test -e /home/codespaces;
 }
 
 function vscode::add_settings() {
