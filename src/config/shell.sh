@@ -6,8 +6,8 @@ local -r _shell_hist_files=(
 
 function config::shell::persist_history() {
 	# Use workspace persisted history
-	log::info "Persiting Gitpod shell histories to /workspace";
-	local _workspace_persist_dir="/workspace/.persist";
+	log::info "Persiting Gitpod shell histories to $workspace_dir";
+	local _workspace_persist_dir="$workspace_dir/.persist";
 	mkdir -p "$_workspace_persist_dir";
 	local _hist;
 	for _hist in "${_shell_hist_files[@]}"; do {
@@ -25,7 +25,10 @@ function config::shell::persist_history() {
 	} done
 }
 
-function config::shell::fish::append_hist_from_gitpod_tasks() { 
+function config::shell::fish::append_hist_from_gitpod_tasks() {
+	if ! is::gitpod; then {
+		return;
+	} fi
 	# Append .gitpod.yml:tasks hist to fish_hist
 	log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
 	while read -r _command; do {

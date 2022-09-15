@@ -3,6 +3,10 @@ function is::gitpod() {
       test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT;
 }
 
+function is::codespaces() {
+	test -v CODESPACES;
+}
+
 function vscode::add_settings() {
 	local lockfile="/tmp/.vscs_add.lock";
 	local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";

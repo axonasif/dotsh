@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%12270 () 
+main@bashbox%12535 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%12270 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%12270';
+    ___MAIN_FUNCNAME='main@bashbox%12535';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -76,31 +76,25 @@ main@bashbox%12270 ()
     };
     function live () 
     { 
-        ( local offline_dotfiles_repo="${DOTFILES_PRIMARY_REPO:-/workspace/dotfiles.public}";
+        ( local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
+        if test -v DOTFILES_PRIMARY_REPO; then
+            { 
+                git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo"
+            };
+        fi;
         log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
         cmd="bashbox build --release";
         log::info "Running '$cmd";
         $cmd;
         local duplicate_workspace_root="/tmp/.mrroot";
-        local duplicate_repo_root="$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}";
+        local duplicate_repo_root="$duplicate_workspace_root/${arg_path##*/}";
         log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_workspace_root" && { 
             rm -rf "$duplicate_workspace_root";
             mkdir -p "$duplicate_workspace_root";
             cp -ra "$GITPOD_REPO_ROOT" /workspace/.gitpod "$duplicate_workspace_root"
         };
-        local ide_mirror="/tmp/.idem";
-        if test ! -e "$ide_mirror"; then
-            { 
-                log::info "Creating /ide mirror";
-                cp -ra /ide "$ide_mirror"
-            };
-        fi;
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
-            local ide_cmd ide_port;
-            ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code' | head -n1) -o args --no-headers)";
-            ide_port="33000";
-            ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
-            local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo" -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l");
+            local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo" -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); \$HOME/.dotfiles/install.sh; exec bash -l");
             docker "${docker_args[@]}"
         } )
     };
@@ -126,8 +120,21 @@ main@bashbox%12270 ()
         };
         read ${1:+-t "$1"} -u $_snore_fd || :
     };
-    declare -r workspace_dir="/workspace";
-    declare -r vscode_machine_settings_file="/workspace/.vscode-remote/data/Machine/settings.json";
+    declare -r workspace_dir="$(
+	if is::gitpod; then {
+		printf '%s\n' "/workspace";
+	} elif is::codespaces; then {
+		printf '%s\n' "/workspaces";
+	} fi
+)";
+    declare -r vscode_machine_settings_file="$(
+	if is::gitpod; then {
+		: "$workspace_dir";
+	} else {
+		: "$HOME";
+	} fi
+	printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
+)";
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     declare -r tmux_init_lock="/tmp/.tmux.init";
@@ -135,6 +142,10 @@ main@bashbox%12270 ()
     function is::gitpod () 
     { 
         test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
+    };
+    function is::codespaces () 
+    { 
+        test -v CODESPACES
     };
     function vscode::add_settings () 
     { 
@@ -456,30 +467,38 @@ SCRIPT
     function install::gh () 
     { 
         local tarball_url gp_credentials;
-        log::info "Installing gh CLI and logging in";
-        tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 		| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
-        curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -;
-        await::for_vscode_ide_start;
-        if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
+        if ! command -v gh > /dev/null; then
             { 
-                tries=1;
-                until printf '%s\n' "${token}" | gh auth login --with-token &> /dev/null; do
-                    { 
-                        if test $tries -gt 20; then
-                            { 
-                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials" 1 || exit;
-                                break
-                            };
-                        fi;
-                        ((tries++));
-                        sleep 1;
-                        continue
-                    };
-                done
+                log::info "Installing gh CLI and logging in";
+                tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 			| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
+                curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -
             };
-        else
+        fi;
+        if is::gitpod; then
             { 
-                log::error "Failed to get auth token for gh" || exit 1
+                await::for_vscode_ide_start;
+                if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
+                    { 
+                        tries=1;
+                        until printf '%s\n' "${token}" | gh auth login --with-token &> /dev/null; do
+                            { 
+                                if test $tries -gt 20; then
+                                    { 
+                                        log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials" 1 || exit;
+                                        break
+                                    };
+                                fi;
+                                ((tries++));
+                                sleep 1;
+                                continue
+                            };
+                        done
+                    };
+                else
+                    { 
+                        log::error "Failed to get auth token for gh" || exit 1
+                    };
+                fi
             };
         fi
     };
@@ -767,52 +786,62 @@ SCRIPT
                 await::signal send config_tmux
             };
         fi;
-        if test ! -v GITPOD_TASKS; then
-            { 
-                return
-            };
-        else
-            { 
-                log::info "Spawning Gitpod tasks in tmux"
-            };
-        fi;
         local tmux_default_shell;
         tmux::create_session;
-        function jqw () 
-        { 
-            local cmd;
-            if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2> /dev/null; then
-                { 
-                    printf '%s\n' "$cmd"
-                };
-            else
-                { 
-                    return 1
-                };
-            fi
-        };
-        await::for_file_existence "/workspace/.gitpod/ready";
-        cd "$GITPOD_REPO_ROOT";
-        local name cmd arr_elem=0 cmdfile;
-        while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
+        if is::gitpod; then
             { 
-                if ! name="$(jqw ".[${arr_elem}].name")"; then
+                if test ! -v GITPOD_TASKS; then
                     { 
-                        name="AnonTask-${arr_elem}"
+                        return
+                    };
+                else
+                    { 
+                        log::info "Spawning Gitpod tasks in tmux"
                     };
                 fi;
-                cmdfile="/tmp/.cmd-${arr_elem}";
-                printf '%s\n' "$cmd" > "$cmdfile";
-                WINDOW_NAME="$name" tmux::create_window bash -lc "set -x;trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit";
-                ((arr_elem=arr_elem+1))
+                await::for_file_existence "$workspace_dir/.gitpod/ready";
+                cd "$GITPOD_REPO_ROOT";
+                function jqw () 
+                { 
+                    local cmd;
+                    if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2> /dev/null; then
+                        { 
+                            printf '%s\n' "$cmd"
+                        };
+                    else
+                        { 
+                            return 1
+                        };
+                    fi
+                };
+                local name cmd arr_elem=0 cmdfile;
+                while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
+                    { 
+                        if ! name="$(jqw ".[${arr_elem}].name")"; then
+                            { 
+                                name="AnonTask-${arr_elem}"
+                            };
+                        fi;
+                        cmdfile="/tmp/.cmd-${arr_elem}";
+                        printf '%s\n' "$cmd" > "$cmdfile";
+                        WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit";
+                        ((arr_elem=arr_elem+1))
+                    };
+                done
             };
-        done
+        else
+            if is::codespaces; then
+                { 
+                    cd "$CODESPACE_VSCODE_FOLDER"
+                };
+            fi;
+        fi
     };
     local -r _shell_hist_files=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$HOME/.local/share/fish/fish_history");
     function config::shell::persist_history () 
     { 
-        log::info "Persiting Gitpod shell histories to /workspace";
-        local _workspace_persist_dir="/workspace/.persist";
+        log::info "Persiting Gitpod shell histories to $workspace_dir";
+        local _workspace_persist_dir="$workspace_dir/.persist";
         mkdir -p "$_workspace_persist_dir";
         local _hist;
         for _hist in "${_shell_hist_files[@]}";
@@ -838,6 +867,11 @@ SCRIPT
     };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
+        if ! is::gitpod; then
+            { 
+                return
+            };
+        fi;
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
         while read -r _command; do
             { 
@@ -860,9 +894,8 @@ SCRIPT
     function main () 
     { 
         install::dotfiles & disown;
-        if is::gitpod; then
+        if is::gitpod || is::codespaces; then
             { 
-                log::info "Gitpod environment detected!";
                 install::system_packages & disown;
                 install::userland_tools & disown;
                 config::docker_auth & disown;
@@ -871,10 +904,10 @@ SCRIPT
                 config::fish & disown;
                 config::tmux & disown;
                 install::neovim & disown;
-                install::gh & disown
+                install::gh & disown;
+                install::ranger & disown
             };
         fi;
-        install::ranger & disown;
         log::info "Waiting for background jobs to complete" && jobs -l;
         while test -n "$(jobs -p)" && sleep 0.2; do
             { 
@@ -888,4 +921,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%12270 "$@";
+main@bashbox%12535 "$@";

@@ -22,7 +22,11 @@ bashbox::build::before() {
 }
 
 live() (
-	local offline_dotfiles_repo="${DOTFILES_PRIMARY_REPO:-/workspace/dotfiles.public}";
+	local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
+	if test -v DOTFILES_PRIMARY_REPO; then {
+		git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo";
+	} fi
+
 	log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
 
 	# if test "$1" == "r"; then {
@@ -32,7 +36,7 @@ live() (
 	# } fi
 
 	local duplicate_workspace_root="/tmp/.mrroot";
-	local duplicate_repo_root="$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}";
+	local duplicate_repo_root="$duplicate_workspace_root/${arg_path##*/}";
 
 	log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_workspace_root" && {
 		rm -rf "$duplicate_workspace_root";
@@ -40,17 +44,17 @@ live() (
 		cp -ra "$GITPOD_REPO_ROOT" /workspace/.gitpod "$duplicate_workspace_root";
 	}
 
-	local ide_mirror="/tmp/.idem";
-	if test ! -e "$ide_mirror"; then {
-		log::info "Creating /ide mirror";
-		cp -ra /ide "$ide_mirror";
-	} fi
+	# local ide_mirror="/tmp/.idem";
+	# if test ! -e "$ide_mirror"; then {
+	# 	log::info "Creating /ide mirror";
+	# 	cp -ra /ide "$ide_mirror";
+	# } fi
 
 	log::info "Starting a fake Gitpod workspace with headless IDE" && {
-		local ide_cmd ide_port;
-		ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code' | head -n1) -o args --no-headers)";
-		ide_port="33000";
-		ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
+		# local ide_cmd ide_port;
+		# ide_cmd="$(ps -p $(pgrep -f 'sh /ide/bin/gitpod-code' | head -n1) -o args --no-headers)";
+		# ide_port="33000";
+		# ide_cmd="${ide_cmd//23000/${ide_port}} >/ide/server_log 2>&1";
 
 		local docker_args=(
 			run
@@ -101,7 +105,7 @@ live() (
 			-it gitpod/workspace-base:latest
 
 			# Startup command
-			/bin/sh -lic "eval \$(gp env -e); $ide_cmd & \$HOME/.dotfiles/install.sh; exec bash -l"
+			/bin/sh -lic "eval \$(gp env -e); \$HOME/.dotfiles/install.sh; exec bash -l"
 		)
 
 		docker "${docker_args[@]}";

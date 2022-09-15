@@ -12,24 +12,21 @@ function main() {
 	# Dotfiles installation, symlinking files bascially
 	install::dotfiles & disown;
 	
-	if is::gitpod; then {
-		log::info "Gitpod environment detected!";
-	
+	if is::gitpod || is::codespaces; then {
 		# Start installation of system(apt) packages (async)
 		install::system_packages & disown;
 
-		# Install userland tools
+		# Install userland tools, some manually and some with nix
 		install::userland_tools & disown;
 
 		# Configure docker credentials
 		config::docker_auth & disown;
 
-		# Shell + Fish hacks (specific to Gitpod)
+		# Shell + Fish hacks
 		config::shell::persist_history;
 		config::shell::fish::append_hist_from_gitpod_tasks & disown;
-
 		config::fish & disown;
-		
+
 		# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
 		config::tmux & disown;
 
@@ -38,10 +35,10 @@ function main() {
 		
 		# Install and login into gh
 		install::gh & disown;
-	} fi
 
-	# Ranger + plugins
-	install::ranger & disown;
+		# Ranger + plugins
+		install::ranger & disown;
+	} fi
 
 	# Wait for "owned" background processess to exit
 	# it will ignore "disown"ed commands as you can see up there.
