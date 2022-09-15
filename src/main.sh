@@ -1,13 +1,12 @@
 use std::print::log;
 use std::native::sleep;
 
-use variables;
 use utils;
 use install;
 use config;
+use variables;
 
 function main() {
-	variables::init;
 	# "& disown" means some sort of async
 
 	# Dotfiles installation, symlinking files bascially
