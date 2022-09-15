@@ -9,8 +9,6 @@ use variables;
 function main() {
 	# "& disown" means some sort of async
 
-	echo "$workspace_dir"; exit
-
 	# Dotfiles installation, symlinking files bascially
 	install::dotfiles & disown;
 	
