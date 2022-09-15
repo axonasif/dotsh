@@ -260,11 +260,11 @@ function config::tmux() {
 		await::signal get install_dotfiles;
 		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
 		CLOSE=true await::create_shim "$tmux_exec_path";
-		await::signal send config_tmux;
     } fi
 
 	local tmux_default_shell;
 	tmux::create_session;
+	await::signal send config_tmux;
 
 	if is::gitpod; then {
 		if test ! -v GITPOD_TASKS; then {

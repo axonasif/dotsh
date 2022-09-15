@@ -7,5 +7,5 @@ function config::fish() {
 
 		# Fisher plugins
 		# fish -c 'fisher install lilyball/nix-env.fish'; # Might not be necessary because of my own .config/fish/conf.d/bash_env.fish
-	} 1>/dev/null
+	} >/dev/null 2>&1
 }

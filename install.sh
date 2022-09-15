@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7400 () 
+main@bashbox%9850 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%7400 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%7400';
+    ___MAIN_FUNCNAME='main@bashbox%9850';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -87,7 +87,7 @@ main@bashbox%7400 ()
         log::info "Running '$cmd";
         $cmd;
         local duplicate_workspace_root="/tmp/.mrroot";
-        local duplicate_repo_root="$duplicate_workspace_root/${arg_path##*/}";
+        local duplicate_repo_root="$duplicate_workspace_root/${_arg_path##*/}";
         log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_workspace_root" && { 
             rm -rf "$duplicate_workspace_root";
             mkdir -p "$duplicate_workspace_root";
@@ -404,7 +404,7 @@ SCRIPT
             sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
             sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
-        } > /dev/null
+        } > /dev/null 2>&1
     };
     function install::userland_tools () 
     { 
@@ -492,16 +492,9 @@ SCRIPT
     function install::neovim () 
     { 
         log::info "Installing and setting up Neovim";
-        local nvim_conf_dir="$HOME/.config/nvim";
-        if test -e "$nvim_conf_dir" && nvim_conf_bak="${nvim_conf_dir}.bak"; then
-            { 
-                mv "$nvim_conf_dir" "$nvim_conf_bak"
-            };
-        fi;
         curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
         curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null 2>&1;
         await::signal get config_tmux;
-        await::until_true tmux list-session > /dev/null 2>&1;
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
     };
     function config::docker_auth () 
@@ -763,12 +756,12 @@ SCRIPT
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
                 bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
-                CLOSE=true await::create_shim "$tmux_exec_path";
-                await::signal send config_tmux
+                CLOSE=true await::create_shim "$tmux_exec_path"
             };
         fi;
         local tmux_default_shell;
         tmux::create_session;
+        await::signal send config_tmux;
         if is::gitpod; then
             { 
                 if test ! -v GITPOD_TASKS; then
@@ -870,7 +863,7 @@ SCRIPT
         await::until_true command -v fish > /dev/null;
         { 
             fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
-        } > /dev/null
+        } > /dev/null 2>&1
     };
     declare -r workspace_dir="$(
 	if is::gitpod; then {
@@ -921,4 +914,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%7400 "$@";
+main@bashbox%9850 "$@";
