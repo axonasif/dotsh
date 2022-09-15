@@ -7,13 +7,17 @@ Highlights:
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
   - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
-- This repo features **[live testing of dotfiles](#how-to-live-test-changes)** within your existing Gitpod workspace itself so that you can prototype quickly.
+- Features **[live testing of dotfiles](#how-to-live-test-changes)** within your existing Gitpod workspace itself so that you can prototype quickly.
 - Works both locally and on Gitpod.
 - Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the task scripts.
 
 # How to use on Gitpod
 
-Feel free to create your `dotfiles` by forking this repo! You can then use it on https://gitpod.io/preferences for Gitpod.
+If you want to quickly try it out, simply put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod.io/preferences).
+
+![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
+
+Later if you feel like performing advanced customizations, create your `dotfiles` by forking this repo! You can then use it on [preferences](https://gitpod.io/preferences) for Gitpod.
 
 By default it will apply my raw dotfiles tree from https://github.com/axonasif/dotfiles.public
 
@@ -26,10 +30,10 @@ Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-d
 A brief overview:
 
 ```markdown
-├── Gitpod clones this dotfiles repo and executes `install.sh` from $HOME/.dotfiles
+├── Gitpod clones this repo and executes `install.sh` from $HOME/.dotfiles
 │   ├── Asynchronously executes instructions inside `install.sh`
 │   │   ├── Installs some system/userland packages
-│   │   ├── Creates symlinks from this repo to `$HOME/` while following `.dotfilesignore` via a helper function
+│   │   ├── Creates symlinks from your dotfiles sources to `$HOME/` while following `.dotfilesignore` via a helper function
 │   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins into them along several other tools
 │   │   ├── Process Gitpod workspace persisted shell histories
 |   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead
@@ -51,7 +55,7 @@ bashbox build --release
 
 ## How to live test changes
 
-I'm mimicking a minimal a process of how Gitpod starts a workpsace and initalizes dotfiles in it. This way we can quickly test out our dotfiles without having to:
+`dotfiles-sh` mimics a minimal a process of how Gitpod starts a workpsace and initalizes dotfiles in it. This way we can quickly test out our dotfiles without having to:
 
 1. commit+push the changes
 2. create new workspaces each time after that
