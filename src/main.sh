@@ -7,6 +7,7 @@ use install;
 use config;
 
 function main() {
+	variables::init;
 	# "& disown" means some sort of async
 
 	# Dotfiles installation, symlinking files bascially
