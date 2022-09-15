@@ -17,11 +17,7 @@ If you want to quickly try it out, simply put https://github.com/axonasif/dotfil
 
 ![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
 
-Later if you feel like performing advanced customizations, create your `dotfiles` by forking this repo! You can then use it on [preferences](https://gitpod.io/preferences) for Gitpod.
-
-By default it will apply my raw dotfiles tree from https://github.com/axonasif/dotfiles.public
-
-If you wish to use your own raw dotfiles tree, you can either set [DOTFILES_PRIMARY_REPO](https://github.com/axonasif/dotfiles-sh#dotfiles_primary_repo) or modify it [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh).
+Later if you feel like performing advanced customizations, fork this repo and then you can then use it on [preferences](https://gitpod.io/preferences) for Gitpod. By default it will apply my raw dotfiles tree from https://github.com/axonasif/dotfiles.public . If you wish to use your own raw dotfiles tree, you can either set [DOTFILES_PRIMARY_REPO](https://github.com/axonasif/dotfiles-sh#dotfiles_primary_repo) or modify it [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh).
 
 Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
