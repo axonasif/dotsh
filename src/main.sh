@@ -1,5 +1,6 @@
 use std::print::log;
 use std::native::sleep;
+# use std::io::stdio;
 
 use utils;
 use install;
@@ -7,6 +8,10 @@ use config;
 use variables;
 
 function main() {
+	# Logging
+
+	# io::stdio::to_file /tmp/.dotfiles.stdout /tmp/.dotfiles.stderr;
+
 	# "& disown" means some sort of async
 
 	# Dotfiles installation, symlinking files bascially

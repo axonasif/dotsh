@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9850 () 
+main@bashbox%15240 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%9850 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%9850';
+    ___MAIN_FUNCNAME='main@bashbox%15240';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -200,7 +200,7 @@ main@bashbox%9850 ()
         local _generated_source_dir="$_";
         local _source_dir="$_generated_source_dir";
         local _installation_target="${2:-"$HOME"}";
-        local last_applied_filelist="$___self_DIR/.git/.last_applied";
+        local last_applied_filelist="$___self_DIR/.last_applied";
         if test ! -e "$_source_dir"; then
             { 
                 git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :
@@ -755,7 +755,7 @@ SCRIPT
             { 
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
-                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :;
                 CLOSE=true await::create_shim "$tmux_exec_path"
             };
         fi;
@@ -914,4 +914,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%9850 "$@";
+main@bashbox%15240 "$@";

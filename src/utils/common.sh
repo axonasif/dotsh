@@ -69,7 +69,7 @@ function dotfiles::initialize() {
 	local _generated_source_dir="$_";
 	local _source_dir="$_generated_source_dir";
 	local _installation_target="${2:-"$HOME"}";
-	local last_applied_filelist="$___self_DIR/.git/.last_applied";
+	local last_applied_filelist="$___self_DIR/.last_applied";
 	
 	if test ! -e "$_source_dir"; then {
 		git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :;
