@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6350 () 
+main@bashbox%25839 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%6350 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%6350';
+    ___MAIN_FUNCNAME='main@bashbox%25839';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -314,8 +314,8 @@ main@bashbox%6350 ()
         for target in "$@";
         do
             { 
-                shim_source="${target}/.shim/${target##*/}";
-                shim_dir="${shim_source%/*}";
+                shim_dir="${target%/*}/.shim";
+                shim_source="${shim_dir}/${target##*/}";
                 try_sudo mkdir -p "$shim_dir";
                 if test -v CLOSE; then
                     { 
@@ -932,4 +932,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%6350 "$@";
+main@bashbox%25839 "$@";

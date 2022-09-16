@@ -43,8 +43,8 @@ function await::create_shim() {
 	local internal_var_name="DOTFILES_INTERNAL_SHIM_CALL";
 
 	for target in "$@"; do {
-		shim_source="${target}/.shim/${target##*/}";
-		shim_dir="${shim_source%/*}";
+		shim_dir="${target%/*}/.shim";
+		shim_source="${shim_dir}/${target##*/}";
 		try_sudo mkdir -p "$shim_dir";
 
 		if test -v CLOSE; then {
