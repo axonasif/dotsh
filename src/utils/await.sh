@@ -79,7 +79,7 @@ function main() {
 		cp "$target" "$diff_target";
 	} fi
 
-	if test -v $PRINT_INDICATOR; then {
+	if test -v PRINT_INDICATOR; then {
 		printf 'info[shim]: Loading %s\n' "$target";
 	} fi
 
