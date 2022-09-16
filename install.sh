@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%466 () 
+main@bashbox%21640 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%466 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%466';
+    ___MAIN_FUNCNAME='main@bashbox%21640';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -308,13 +308,19 @@ main@bashbox%466 ()
         for target in "$@";
         do
             { 
-                shim_source="${target}.shim_source";
+                shim_source="${target}/.shim/${target##*/}";
+                shim_dir="${shim_source%/*}";
+                { 
+                    mkdir -p "$shim_dir" || sudo mkdir -p "$shim_dir"
+                } 2> /dev/null;
                 if test -v CLOSE; then
                     { 
                         unset "$internal_var_name";
                         if test -e "$shim_source"; then
                             { 
-                                sudo mv "$shim_source" "$target"
+                                { 
+                                    mv "$shim_source" "$target" || sudo mv "$shim_source" "$target"
+                                }
                             };
                         fi;
                         return
@@ -346,9 +352,9 @@ function main() {
 		cp "$target" "$diff_target";
 	} fi
 
-	# if test ! -v $internal_var_name; then {
-	# 	printf 'info[shim]: Loading %s\n' "$target";
-	# } fi
+	if test -v $PRINT_INDICATOR; then {
+		printf 'info[shim]: Loading %s\n' "$target";
+	} fi
 
 	function await() {
 		while cmp --silent -- "$target" "$diff_target"; do {
@@ -742,21 +748,24 @@ SCRIPT
     function config::tmux () 
     { 
         config::tmux::set_tmux_as_default_vscode_shell & disown;
-        config::tmux::hijack_gitpod_task_terminals & local tmux_exec_path="/usr/bin/tmux";
-        KEEP="true" await::create_shim "$tmux_exec_path";
-        if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+        config::tmux::hijack_gitpod_task_terminals & if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
             { 
                 tmux::start_vimpod & disown
             };
         fi;
-        log::info "Setting up tmux";
-        local target="$HOME/.tmux/plugins/tpm";
-        if test ! -e "$target"; then
+        local tmux_exec_path="/usr/bin/tmux";
+        if KEEP="true" await::create_shim "$tmux_exec_path"; then
             { 
-                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                await::signal get install_dotfiles;
-                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
-                CLOSE=true await::create_shim "$tmux_exec_path"
+                log::info "Setting up tmux";
+                local target="$HOME/.tmux/plugins/tpm";
+                if test ! -e "$target"; then
+                    { 
+                        git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
+                        await::signal get install_dotfiles;
+                        bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+                        CLOSE=true await::create_shim "$tmux_exec_path"
+                    };
+                fi
             };
         fi;
         local tmux_default_shell;
@@ -921,4 +930,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%466 "$@";
+main@bashbox%21640 "$@";

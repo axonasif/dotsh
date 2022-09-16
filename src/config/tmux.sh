@@ -245,24 +245,25 @@ function config::tmux() {
 	# Extra steps
 	config::tmux::set_tmux_as_default_vscode_shell & disown;
 	config::tmux::hijack_gitpod_task_terminals &
-
-	local tmux_exec_path="/usr/bin/tmux";
-	KEEP="true" await::create_shim "$tmux_exec_path";
-
 	if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 		tmux::start_vimpod & disown;
 	} fi
 
-	log::info "Setting up tmux";
-    local target="$HOME/.tmux/plugins/tpm";
-    if test ! -e "$target"; then {
-		git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-		await::signal get install_dotfiles;
-		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
-		CLOSE=true await::create_shim "$tmux_exec_path";
-			# await::until_true list-sessions 1>/dev/null;
-			# tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter;
-    } fi
+	local tmux_exec_path="/usr/bin/tmux";
+	if KEEP="true" await::create_shim "$tmux_exec_path"; then {
+
+		log::info "Setting up tmux";
+		local target="$HOME/.tmux/plugins/tpm";
+		if test ! -e "$target"; then {
+			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
+			await::signal get install_dotfiles;
+			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+			CLOSE=true await::create_shim "$tmux_exec_path";
+				# await::until_true list-sessions 1>/dev/null;
+				# tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter;
+		} fi
+
+	} fi
 
 	local tmux_default_shell;
 	tmux::create_session;
@@ -272,7 +273,7 @@ function config::tmux() {
 		if test ! -v GITPOD_TASKS; then {
 			return;
 		} else {
-			log::info "Spawning Gitpod tasks in tmux"
+			log::info "Spawning Gitpod tasks in tmux";
 		} fi
 
 		await::for_file_existence "$workspace_dir/.gitpod/ready";

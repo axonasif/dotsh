@@ -39,12 +39,14 @@ function await::create_shim() {
 	local internal_var_name="DOTFILES_INTERNAL_SHIM_CALL";
 
 	for target in "$@"; do {
-		shim_source="${target}.shim_source";
+		shim_source="${target}/.shim/${target##*/}";
+		shim_dir="${shim_source%/*}";
+		{ mkdir -p "$shim_dir" || sudo mkdir -p "$shim_dir"; } 2>/dev/null;
 
 		if test -v CLOSE; then {
 			unset "$internal_var_name";
 			if test -e "$shim_source"; then {
-				sudo mv "$shim_source" "$target";
+				{ mv "$shim_source" "$target" ||  sudo mv "$shim_source" "$target"; };
 			} fi
 			return;
 		} fi
@@ -58,7 +60,6 @@ function await::create_shim() {
 			local USER && USER="$(id -u -n)";
 			sudo bash -c "touch \"$target\" && chown -h $USER:$USER \"$target\"";
 		} fi
-
 
 		cat > "$target" <<'SCRIPT'
 #!/usr/bin/env bash
@@ -74,9 +75,9 @@ function main() {
 		cp "$target" "$diff_target";
 	} fi
 
-	# if test ! -v $internal_var_name; then {
-	# 	printf 'info[shim]: Loading %s\n' "$target";
-	# } fi
+	if test -v $PRINT_INDICATOR; then {
+		printf 'info[shim]: Loading %s\n' "$target";
+	} fi
 
 	function await() {
 		while cmp --silent -- "$target" "$diff_target"; do {
