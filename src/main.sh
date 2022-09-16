@@ -28,7 +28,7 @@ function main() {
 		config::shell::fish::append_hist_from_gitpod_tasks & disown;
 		config::fish & disown;
 
-		# Start installation of system(apt) packages (async)
+		# Start installation of system(apt) packages
 		install::system_packages & disown;
 
 		# Install userland tools, some manually and some with nix
