@@ -1,6 +1,6 @@
 function is::gitpod() {
       # Check for existent of this gitpod-specific file and the ENV var.
-      test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT;
+      test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT;
 }
 
 function is::codespaces() {
@@ -67,9 +67,9 @@ function dotfiles::initialize() {
 		: "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}";
 	} fi
 	local _generated_source_dir="$_";
-	local _source_dir="$_generated_source_dir";
-	local _installation_target="${2:-"$HOME"}";
-	local last_applied_filelist="$___self_DIR/.last_applied";
+	local _source_dir="${SOURCE_DIR:-"$_generated_source_dir"}";
+	local _installation_target="${1:-"$HOME"}";
+	local last_applied_filelist="$_installation_target/.last_applied";
 	
 	if test ! -e "$_source_dir"; then {
 		git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :;

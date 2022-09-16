@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7528 () 
+main@bashbox%763 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%7528 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%7528';
+    ___MAIN_FUNCNAME='main@bashbox%763';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -70,13 +70,11 @@ main@bashbox%7528 ()
         cp "$_target_workfile" "$root_script";
         chmod +x "$root_script"
     };
-    function bashbox::build::before () 
-    { 
-        rm -rf "$_arg_path/.private"
-    };
     function live () 
     { 
-        ( local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
+        ( source "$_arg_path/src/utils/common.sh";
+        rm -f "$_arg_path/.last_applied";
+        local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
         if test -v DOTFILES_PRIMARY_REPO; then
             { 
                 git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo"
@@ -88,13 +86,41 @@ main@bashbox%7528 ()
         $cmd;
         local duplicate_workspace_root="/tmp/.mrroot";
         local duplicate_repo_root="$duplicate_workspace_root/${_arg_path##*/}";
-        log::info "Creating a clone of $GITPOD_REPO_ROOT at $duplicate_workspace_root" && { 
+        log::info "Creating a clone of $_arg_path at $duplicate_workspace_root" && { 
             rm -rf "$duplicate_workspace_root";
             mkdir -p "$duplicate_workspace_root";
-            cp -ra "$GITPOD_REPO_ROOT" /workspace/.gitpod "$duplicate_workspace_root"
+            cp -ra "$_arg_path" "$duplicate_workspace_root";
+            if test -e /workspace/.gitpod; then
+                { 
+                    cp -ra /workspace/.gitpod "$duplicate_workspace_root"
+                };
+            fi
         };
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
-            local docker_args=(run --net=host -v "$duplicate_workspace_root:/workspace" -v "$duplicate_workspace_root/${GITPOD_REPO_ROOT##*/}:$HOME/.dotfiles" -v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo" -e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -it gitpod/workspace-base:latest /bin/sh -lic "eval \$(gp env -e); \$HOME/.dotfiles/install.sh; exec bash -l");
+            local docker_args=();
+            docker_args+=(run --net=host);
+            docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$duplicate_repo_root:$HOME/.dotfiles");
+            if is::gitpod; then
+                { 
+                    docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro)
+                };
+            fi;
+            docker_args+=(-e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo");
+            if is::gitpod; then
+                { 
+                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
+                };
+            fi;
+            docker_args+=(-it gitpod/workspace-base:latest);
+            if is::gitpod; then
+                { 
+                    docker_args+=(/bin/sh -lic "eval \$(gp env -e); \$HOME/.dotfiles/install.sh; exec bash -l")
+                };
+            else
+                { 
+                    docker_args+=(/bin/sh -lic '$HOME/.dotfiles/install.sh; exec bash -l')
+                };
+            fi;
             docker "${docker_args[@]}"
         } )
     };
@@ -122,7 +148,7 @@ main@bashbox%7528 ()
     };
     function is::gitpod () 
     { 
-        test -e /ide/bin/gitpod-code && test -v GITPOD_REPO_ROOT
+        test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT
     };
     function is::codespaces () 
     { 
@@ -198,9 +224,9 @@ main@bashbox%7528 ()
             fi;
         fi;
         local _generated_source_dir="$_";
-        local _source_dir="$_generated_source_dir";
-        local _installation_target="${2:-"$HOME"}";
-        local last_applied_filelist="$___self_DIR/.last_applied";
+        local _source_dir="${SOURCE_DIR:-"$_generated_source_dir"}";
+        local _installation_target="${1:-"$HOME"}";
+        local last_applied_filelist="$_installation_target/.last_applied";
         if test ! -e "$_source_dir"; then
             { 
                 git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :
@@ -934,4 +960,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%7528 "$@";
+main@bashbox%763 "$@";
