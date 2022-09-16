@@ -261,8 +261,8 @@ function config::tmux() {
 		CLOSE=true await::create_shim "$tmux_exec_path";
 		(
 			cat ~/.tmux.conf
-			bash -x "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" 2>&1;
-			# await::until_true list-sessions 1>/dev/null;
+			"$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null 2>&1;
+			await::until_true list-sessions 1>/dev/null;
 			tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter 2>/dev/null || :;
 		) & disown;
     } fi
