@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 from http.server import (HTTPServer, BaseHTTPRequestHandler)
 from os import getenv
 import sys

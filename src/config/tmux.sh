@@ -249,7 +249,7 @@ function config::tmux() {
 	local tmux_exec_path="/usr/bin/tmux";
 	KEEP="true" await::create_shim "$tmux_exec_path";
 
-	if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+	if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 		tmux::start_vimpod & disown;
 	} fi
 

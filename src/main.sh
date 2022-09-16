@@ -1,6 +1,5 @@
 use std::print::log;
 use std::native::sleep;
-# use std::io::stdio;
 
 use utils;
 use install;
@@ -9,8 +8,11 @@ use variables;
 
 function main() {
 	# Logging
-
-	# io::stdio::to_file /tmp/.dotfiles.stdout /tmp/.dotfiles.stderr;
+	if is::codespaces; then {
+		local log_file="$HOME/.dotfiles.log";
+		exec >> "$log_file";
+		exec 2>&1;
+	} fi
 
 	# "& disown" means some sort of async
 

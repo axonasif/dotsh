@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15240 () 
+main@bashbox%6042 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%15240 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%15240';
+    ___MAIN_FUNCNAME='main@bashbox%6042';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -744,7 +744,7 @@ SCRIPT
         config::tmux::set_tmux_as_default_vscode_shell & disown;
         config::tmux::hijack_gitpod_task_terminals & local tmux_exec_path="/usr/bin/tmux";
         KEEP="true" await::create_shim "$tmux_exec_path";
-        if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+        if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
             { 
                 tmux::start_vimpod & disown
             };
@@ -886,6 +886,13 @@ SCRIPT
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
     function main () 
     { 
+        if is::codespaces; then
+            { 
+                local log_file="$HOME/.dotfiles.log";
+                exec >> "$log_file";
+                exec 2>&1
+            };
+        fi;
         install::dotfiles & disown;
         if is::gitpod || is::codespaces; then
             { 
@@ -914,4 +921,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%15240 "$@";
+main@bashbox%6042 "$@";
