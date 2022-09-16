@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%12580 () 
+main@bashbox%16733 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%12580 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%12580';
+    ___MAIN_FUNCNAME='main@bashbox%16733';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -766,6 +766,9 @@ SCRIPT
                 await::signal get install_dotfiles;
                 tmux -V;
                 tmux -V;
+                tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH || :;
+                bash -lic "tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH" || :;
+                bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
                 CLOSE=true await::create_shim "$tmux_exec_path"
             };
         fi;
@@ -906,13 +909,13 @@ SCRIPT
         install::dotfiles & disown;
         if is::gitpod || is::codespaces; then
             { 
-                install::system_packages & disown;
-                install::userland_tools & disown;
-                config::docker_auth & disown;
+                config::tmux & disown;
                 config::shell::persist_history;
                 config::shell::fish::append_hist_from_gitpod_tasks & disown;
                 config::fish & disown;
-                config::tmux & disown;
+                install::system_packages & disown;
+                install::userland_tools & disown;
+                config::docker_auth & disown;
                 install::neovim & disown;
                 install::gh & disown;
                 install::ranger & disown
@@ -931,4 +934,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%12580 "$@";
+main@bashbox%16733 "$@";

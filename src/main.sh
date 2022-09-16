@@ -20,6 +20,14 @@ function main() {
 	install::dotfiles & disown;
 	
 	if is::gitpod || is::codespaces; then {
+		# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
+		config::tmux & disown;
+
+		# Shell + Fish hacks
+		config::shell::persist_history;
+		config::shell::fish::append_hist_from_gitpod_tasks & disown;
+		config::fish & disown;
+
 		# Start installation of system(apt) packages (async)
 		install::system_packages & disown;
 
@@ -28,14 +36,6 @@ function main() {
 
 		# Configure docker credentials
 		config::docker_auth & disown;
-
-		# Shell + Fish hacks
-		config::shell::persist_history;
-		config::shell::fish::append_hist_from_gitpod_tasks & disown;
-		config::fish & disown;
-
-		# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
-		config::tmux & disown;
 
 		# Configure neovim
 		install::neovim & disown;

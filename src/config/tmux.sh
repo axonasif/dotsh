@@ -259,7 +259,9 @@ function config::tmux() {
 		await::signal get install_dotfiles;
 		tmux -V;
 		tmux -V;
-		# bash -x "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+		tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH ||:
+		bash -lic "tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH" ||:
+		bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
 		CLOSE=true await::create_shim "$tmux_exec_path";
 			# await::until_true list-sessions 1>/dev/null;
 			# tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter;
