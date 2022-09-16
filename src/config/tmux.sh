@@ -258,7 +258,12 @@ function config::tmux() {
     if test ! -e "$target"; then {
 		git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
 		await::signal get install_dotfiles;
-		bash -x "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :;
+		(
+			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" >/dev/null 2>&1;
+			if tmux list-sessions 1>/dev/null; then {
+				tmux source-file "$HOME/.tmux.conf";
+			} fi
+		) & disown;
 		CLOSE=true await::create_shim "$tmux_exec_path";
     } fi
 

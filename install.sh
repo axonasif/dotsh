@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9216 () 
+main@bashbox%8316 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%9216 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%9216';
+    ___MAIN_FUNCNAME='main@bashbox%8316';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -755,7 +755,12 @@ SCRIPT
             { 
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
-                bash -x "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :;
+                ( bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
+                if tmux list-sessions > /dev/null; then
+                    { 
+                        tmux source-file "$HOME/.tmux.conf"
+                    };
+                fi ) & disown;
                 CLOSE=true await::create_shim "$tmux_exec_path"
             };
         fi;
@@ -921,4 +926,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%9216 "$@";
+main@bashbox%8316 "$@";
