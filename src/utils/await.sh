@@ -51,6 +51,7 @@ function await::create_shim() {
 			unset "$internal_var_name";
 			if test -e "$shim_source"; then {
 				try_sudo mv "$shim_source" "$target";
+				rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
 			} fi
 			return;
 		} fi
