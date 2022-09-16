@@ -226,7 +226,7 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 					"path": "bash",
 					"args": [
 						"-c",
-						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -257,11 +257,7 @@ function config::tmux() {
 	if test ! -e "$target"; then {
 		git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
 		await::signal get install_dotfiles;
-		tmux -V;
-		tmux -V;
-		tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH ||:
-		bash -lic "tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH" ||:
-		bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+		bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" >/dev/null 2>&1;
 		CLOSE=true await::create_shim "$tmux_exec_path";
 			# await::until_true list-sessions 1>/dev/null;
 			# tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter;

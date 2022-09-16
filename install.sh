@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16733 () 
+main@bashbox%25868 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%16733 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%16733';
+    ___MAIN_FUNCNAME='main@bashbox%25868';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -737,7 +737,7 @@ SCRIPT
 					"path": "bash",
 					"args": [
 						"-c",
-						"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -764,11 +764,7 @@ SCRIPT
             { 
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
-                tmux -V;
-                tmux -V;
-                tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH || :;
-                bash -lic "tmux start-server\; show-environment -g TMUX_PLUGIN_MANAGER_PATH" || :;
-                bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+                bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
                 CLOSE=true await::create_shim "$tmux_exec_path"
             };
         fi;
@@ -934,4 +930,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%16733 "$@";
+main@bashbox%25868 "$@";
