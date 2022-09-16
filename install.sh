@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21640 () 
+main@bashbox%6350 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21640 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21640';
+    ___MAIN_FUNCNAME='main@bashbox%6350';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -303,6 +303,12 @@ main@bashbox%21640 ()
     };
     function await::create_shim () 
     { 
+        function try_sudo () 
+        { 
+            { 
+                "$@" || sudo "$@"
+            } 2> /dev/null
+        };
         local target shim_source;
         local internal_var_name="DOTFILES_INTERNAL_SHIM_CALL";
         for target in "$@";
@@ -310,17 +316,13 @@ main@bashbox%21640 ()
             { 
                 shim_source="${target}/.shim/${target##*/}";
                 shim_dir="${shim_source%/*}";
-                { 
-                    mkdir -p "$shim_dir" || sudo mkdir -p "$shim_dir"
-                } 2> /dev/null;
+                try_sudo mkdir -p "$shim_dir";
                 if test -v CLOSE; then
                     { 
                         unset "$internal_var_name";
                         if test -e "$shim_source"; then
                             { 
-                                { 
-                                    mv "$shim_source" "$target" || sudo mv "$shim_source" "$target"
-                                }
+                                try_sudo mv "$shim_source" "$target"
                             };
                         fi;
                         return
@@ -329,7 +331,7 @@ main@bashbox%21640 ()
                 if test -e "$target"; then
                     { 
                         log::warn "${FUNCNAME[0]}: $target already exists";
-                        return
+                        try_sudo mv "$target" "$shim_source"
                     };
                 fi;
                 if ! touch "$target" 2> /dev/null; then
@@ -930,4 +932,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%21640 "$@";
+main@bashbox%6350 "$@";

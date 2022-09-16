@@ -35,25 +35,29 @@ function await::signal() {
 }
 
 function await::create_shim() {
+	function try_sudo() {
+		{ "$@" || sudo "$@"; } 2>/dev/null;
+	}
+
 	local target shim_source;
 	local internal_var_name="DOTFILES_INTERNAL_SHIM_CALL";
 
 	for target in "$@"; do {
 		shim_source="${target}/.shim/${target##*/}";
 		shim_dir="${shim_source%/*}";
-		{ mkdir -p "$shim_dir" || sudo mkdir -p "$shim_dir"; } 2>/dev/null;
+		try_sudo mkdir -p "$shim_dir";
 
 		if test -v CLOSE; then {
 			unset "$internal_var_name";
 			if test -e "$shim_source"; then {
-				{ mv "$shim_source" "$target" ||  sudo mv "$shim_source" "$target"; };
+				try_sudo mv "$shim_source" "$target";
 			} fi
 			return;
 		} fi
 
 		if test -e "$target"; then {
 			log::warn "${FUNCNAME[0]}: $target already exists";
-			return;
+			try_sudo mv "$target" "$shim_source";
 		} fi
 
 		if ! touch "$target" 2>/dev/null; then {
