@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25868 () 
+main@bashbox%7528 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%25868 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%25868';
+    ___MAIN_FUNCNAME='main@bashbox%7528';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -727,9 +727,7 @@ SCRIPT
     function config::tmux::set_tmux_as_default_vscode_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        local file json_data;
-        local ms_vscode_server_dir="$HOME/.vscode-server";
-        local ms_vscode_server_settings="$ms_vscode_server_dir/data/Machine/settings.json";
+        local json_data;
         json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
 		{
 			"terminal.integrated.profiles.linux": {
@@ -746,7 +744,13 @@ SCRIPT
 	JSON
 	)";
         printf '%s\n' "$json_data" | vscode::add_settings;
-        printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings
+        local dir;
+        for dir in '.vscode-server' '.vscode-remote';
+        do
+            { 
+                printf '%s\n' "$json_data" | SETTINGS_TARGET="$HOME/$dir/data/Machine/settings.json" vscode::add_settings
+            };
+        done
     };
     function config::tmux () 
     { 
@@ -930,4 +934,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%25868 "$@";
+main@bashbox%7528 "$@";

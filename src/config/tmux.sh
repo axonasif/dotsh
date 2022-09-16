@@ -216,9 +216,7 @@ function config::tmux::hijack_gitpod_task_terminals {
 
 function config::tmux::set_tmux_as_default_vscode_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	local file json_data;
-	local ms_vscode_server_dir="$HOME/.vscode-server";
-	local ms_vscode_server_settings="$ms_vscode_server_dir/data/Machine/settings.json";
+	local json_data;
 	json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
 		{
 			"terminal.integrated.profiles.linux": {
@@ -238,7 +236,10 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 	printf '%s\n' "$json_data" | vscode::add_settings;
 	# For vscode desktop
 	# TIME=2 await::for_file_existence "$ms_vscode_server_dir";
-	printf '%s\n' "$json_data" | SETTINGS_TARGET="$ms_vscode_server_settings" vscode::add_settings;
+	local dir;
+	for dir in '.vscode-server' '.vscode-remote'; do {
+		printf '%s\n' "$json_data" | SETTINGS_TARGET="$HOME/$dir/data/Machine/settings.json" vscode::add_settings;
+	} done
 }
 
 function config::tmux() {
