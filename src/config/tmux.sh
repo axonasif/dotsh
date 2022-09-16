@@ -262,7 +262,7 @@ function config::tmux() {
 		(
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" &
 			if tmux list-sessions 1>/dev/null; then {
-				tmux source-file "$HOME/.tmux.conf";
+				tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'";
 			} fi
 		) & disown;
     } fi
