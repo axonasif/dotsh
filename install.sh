@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14575 () 
+main@bashbox%5721 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%14575 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%14575';
+    ___MAIN_FUNCNAME='main@bashbox%5721';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -756,9 +756,8 @@ SCRIPT
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
                 CLOSE=true await::create_shim "$tmux_exec_path";
-                ( bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
-                await::until_true list-sessions > /dev/null;
-                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" ) & disown
+                ( bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" 2>&1;
+                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter 2> /dev/null || : ) & disown
             };
         fi;
         local tmux_default_shell;
@@ -923,4 +922,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%14575 "$@";
+main@bashbox%5721 "$@";
