@@ -290,7 +290,10 @@ function config::tmux() {
 				}
 
 				local name cmd arr_elem=0 cmdfile;
-				while cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" || cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"; do {
+				while {
+					cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")";
+					cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")";
+				}; do {
 					if ! name="$(jqw ".[${arr_elem}].name")"; then {
 						name="AnonTask-${arr_elem}";
 					} fi

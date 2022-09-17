@@ -129,7 +129,7 @@ live() (
 				-e GITPOD_WORKSPACE_ID
 				-e GITPOD_WORKSPACE_URL
 				# Fake gitpod tasks for testing
-				-e GITPOD_TASKS
+				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
 			)
