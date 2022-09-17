@@ -22,7 +22,7 @@ tasks:
         gp open "$file";
       } done
       exit;
-      
+
   - name: Live test dotfiles
     command: |
       printf 'info: %s\n' "Waiting for the 'init' docker-pull to complete ...";
@@ -31,6 +31,7 @@ tasks:
         continue;
       } done
       source "$HOME/.bashbox/env";
+
 
       bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
 

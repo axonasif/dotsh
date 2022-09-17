@@ -10,6 +10,7 @@ function main() {
 	# Logging
 	if is::codespaces; then {
 		local log_file="$HOME/.dotfiles.log";
+		log::info "Manually redirecting dotfiles install.sh logs to $log_file";
 		exec >> "$log_file";
 		exec 2>&1;
 	} fi
@@ -21,10 +22,10 @@ function main() {
 	
 	if is::gitpod || is::codespaces; then {
 		# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
-		config::tmux & disown;
+		config::tmux &
 
 		# Shell + Fish hacks
-		config::shell::persist_history;
+		config::shell::persist_history & disown;
 		config::shell::fish::append_hist_from_gitpod_tasks & disown;
 		config::fish & disown;
 

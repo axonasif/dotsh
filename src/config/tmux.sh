@@ -243,68 +243,73 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 }
 
 function config::tmux() {
-	# Extra steps
-	config::tmux::set_tmux_as_default_vscode_shell & disown;
-	config::tmux::hijack_gitpod_task_terminals &
-	if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-		tmux::start_vimpod & disown;
-	} fi
-
+	# Lock on tmux
 	local tmux_exec_path="/usr/bin/tmux";
+	log::info "Setting up tmux";
 	KEEP="true" await::create_shim "$tmux_exec_path";
 
-	log::info "Setting up tmux";
-	local target="$HOME/.tmux/plugins/tpm";
-	if test ! -e "$target"; then {
-		git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-		await::signal get install_dotfiles;
-		bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" >/dev/null 2>&1;
-		CLOSE=true await::create_shim "$tmux_exec_path";
-			# await::until_true list-sessions 1>/dev/null;
-			# tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "tmux source-file '$HOME/.tmux.conf'" Enter;
-	} fi
-
-
-	local tmux_default_shell;
-	tmux::create_session;
-	await::signal send config_tmux;
-
-	if is::gitpod; then {
-		if test ! -v GITPOD_TASKS; then {
-			return;
-		} else {
-			log::info "Spawning Gitpod tasks in tmux";
+	{
+		# Extra steps
+		config::tmux::set_tmux_as_default_vscode_shell & disown;
+		config::tmux::hijack_gitpod_task_terminals &
+		if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+			tmux::start_vimpod & disown;
 		} fi
 
-		await::for_file_existence "$workspace_dir/.gitpod/ready";
-		cd "$GITPOD_REPO_ROOT";
+		local target="$HOME/.tmux/plugins/tpm";
+		if test ! -e "$target"; then {
+			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
+			await::signal get install_dotfiles;
+			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" 1>/dev/null || :;
+		} fi
 
-		function jqw() {
-			local cmd;
-			if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2>/dev/null; then {
-				printf '%s\n' "$cmd";
-			} else {
-				return 1;
+
+		local tmux_default_shell;
+		tmux::create_session;
+
+		(
+			if is::gitpod; then {
+				if test ! -v GITPOD_TASKS; then {
+					return;
+				} else {
+					log::info "Spawning Gitpod tasks in tmux";
+				} fi
+
+				await::for_file_existence "$workspace_dir/.gitpod/ready";
+				if ! cd "${GITPOD_REPO_ROOT:-}"; then {
+					log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit;
+				} fi
+
+				function jqw() {
+					local cmd;
+					if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2>/dev/null; then {
+						printf '%s\n' "$cmd";
+					} else {
+						return 1;
+					} fi
+				}
+
+				local name cmd arr_elem=0 cmdfile;
+				while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do {
+					if ! name="$(jqw ".[${arr_elem}].name")"; then {
+						name="AnonTask-${arr_elem}";
+					} fi
+
+					cmdfile="/tmp/.cmd-${arr_elem}";
+					printf '%s\n' "$cmd" > "$cmdfile";
+					# win_i="$(
+						WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit"
+						# )";
+					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
+					#bash -c " printf '%s\n' $cmd; $cmd;"
+					((arr_elem=arr_elem+1));
+				} done
+			} elif is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then {
+				cd "$CODESPACE_VSCODE_FOLDER" || :;
 			} fi
-		}
+		) || :;
 
-		local name cmd arr_elem=0 cmdfile;
-		while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do {
-			if ! name="$(jqw ".[${arr_elem}].name")"; then {
-				name="AnonTask-${arr_elem}";
-			} fi
-
-			cmdfile="/tmp/.cmd-${arr_elem}";
-			printf '%s\n' "$cmd" > "$cmdfile";
-			# win_i="$(
-				WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit"
-				# )";
-			# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
-			#bash -c " printf '%s\n' $cmd; $cmd;"
-			((arr_elem=arr_elem+1));
-		} done
-	} elif is::codespaces; then {
-		cd "$CODESPACE_VSCODE_FOLDER";
-	} fi
-	
+		CLOSE=true await::create_shim "$tmux_exec_path";
+		await::signal send config_tmux;
+	 } & disown;
 }

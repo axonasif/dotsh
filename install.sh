@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%20594 () 
+main@bashbox%7987 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%20594 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%20594';
+    ___MAIN_FUNCNAME='main@bashbox%7987';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -98,7 +98,7 @@ main@bashbox%20594 ()
         };
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
             local docker_args=();
-            docker_args+=(run --net=host);
+            docker_args+=(run --rm --net=host);
             docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$duplicate_repo_root:$HOME/.dotfiles");
             if is::gitpod; then
                 { 
@@ -112,16 +112,46 @@ main@bashbox%20594 ()
                 };
             fi;
             docker_args+=(-it gitpod/workspace-base:latest);
+            function startup_command () 
+            { 
+                local logfile="$HOME/.dotfiles.log";
+                eval "$(gp env -e)";
+                set +m;
+                "$HOME/.dotfiles/install.sh" > "$logfile" 2>&1;
+                set -m;
+                tail -F "$logfile" & disown;
+                printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+                ( until test -n "$(tmux list-clients)"; do
+                    sleep 1;
+                done;
+                sleep 3;
+                tmux display-message -t main "Run 'tmux detach' to exit from here" ) & disown;
+                ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
+                printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";
+                exec bash -l
+            };
             if is::gitpod; then
                 { 
-                    docker_args+=(/bin/bash -cli "eval \$(gp env -e); set +m; \$HOME/.dotfiles/install.sh; set -m; exec bash -l")
+                    docker_args+=(/bin/bash -li)
                 };
             else
                 { 
-                    docker_args+=(/bin/bash -cli 'set +m; $HOME/.dotfiles/install.sh; set -m; exec bash -l')
+                    docker_args+=(/bin/bash -li)
                 };
             fi;
-            docker "${docker_args[@]}"
+            local confirmed_statfile="/tmp/.confirmed_statfile";
+            touch "$confirmed_statfile";
+            local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
+            if [[ "$confirmed_times" -lt 3 ]]; then
+                { 
+                    printf '\n';
+                    printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace" "To exit from there, you can press ${BGREEN}Ctrl+d${RC} or run ${BRED}exit${RC} on the terminal when in ${GRAY}bash${RC} shell" "You can run ${ORANGE}tmux${RC} a on the terminal to attach to the tmux session where Gitpod tasks are opened as tmux-windows" "To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}";
+                    printf '\n';
+                    read -r -p '>>> Press Enter/return to continue execution of "bashbox live" command';
+                    printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
+                };
+            fi;
+            docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")"
         } )
     };
     function log::info () 
@@ -349,7 +379,7 @@ main@bashbox%20594 ()
                         if test -e "$shim_source"; then
                             { 
                                 try_sudo mv "$shim_source" "$target";
-                                rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || :
+                                try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || :
                             };
                         fi;
                         return
@@ -370,22 +400,32 @@ main@bashbox%20594 ()
                 cat > "$target" <<'SCRIPT'
 #!/usr/bin/env bash
 set -eu;
-self="$(<"$0")"
+self="$(<"${BASH_SOURCE[0]}")"
+
+diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+if test ! -e "$diff_target"; then {
+	printf '%s\n' "$self" > "$diff_target";
+} fi
+
 function main() {
+	await_shim() {
+		while test -e "$shim_source"; do {
+			sleep 0.2;
+		} done
+	}
+
+	# Initial loop for detecting $target modifications
 	if test -v "$internal_var_name" && test -e "$shim_source"; then {
-		exec "$shim_source" "$@";
-	} fi
-
-	diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-	if test ! -e "$diff_target"; then {
-		cp "$target" "$diff_target";
-	} fi
-
-	if test -v PRINT_INDICATOR; then {
-		printf 'info[shim]: Loading %s\n' "$target";
-	} fi
-
-	function await() {
+		"$shim_source" "$@";
+		exit;
+	} elif test -e "$shim_source"; then {
+		# For external calls
+		await_shim;
+	} else {
+		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
+			printf 'info[shim]: Loading %s\n' "$target";
+		} fi
+		
 		while cmp --silent -- "$target" "$diff_target"; do {
 			sleep 0.2;
 		} done
@@ -393,28 +433,30 @@ function main() {
 		while lsof -F 'f' -- "$target" 2>/dev/null | grep -q '^f.*w$'; do {
 			sleep 0.2;
 		} done
-	}
 
-	await;
+	} fi
 SCRIPT
 
                 if test -v KEEP; then
                     { 
                         eval "export $internal_var_name=ture";
                         cat >> "$target" <<'SCRIPT'
+	# Create shim
+	if test -v $internal_var_name && test ! -e "$shim_source"; then {
+		sudo mv "$target" "$shim_source";
+		sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+	} fi
+
 	# For internal calls
 	if test -v $internal_var_name; then {
-		if test ! -e "$shim_source"; then {
-			sudo mv "$target" "$shim_source";
-			sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
-		} fi
 		exec "$shim_source" "$@";
 	} fi
 
 	# For external calls
-	while test -e "$shim_source"; do {
-		sleep 0.2;
+	until test -e "$shim_source"; do {
+		sleep 0.5;
 	} done
+	await_shim;
 SCRIPT
 
                     };
@@ -780,75 +822,81 @@ SCRIPT
     };
     function config::tmux () 
     { 
-        config::tmux::set_tmux_as_default_vscode_shell & disown;
-        config::tmux::hijack_gitpod_task_terminals & if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
-            { 
-                tmux::start_vimpod & disown
-            };
-        fi;
         local tmux_exec_path="/usr/bin/tmux";
-        KEEP="true" await::create_shim "$tmux_exec_path";
         log::info "Setting up tmux";
-        local target="$HOME/.tmux/plugins/tpm";
-        if test ! -e "$target"; then
-            { 
-                git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                await::signal get install_dotfiles;
-                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
-                CLOSE=true await::create_shim "$tmux_exec_path"
-            };
-        fi;
-        local tmux_default_shell;
-        tmux::create_session;
-        await::signal send config_tmux;
-        if is::gitpod; then
-            { 
-                if test ! -v GITPOD_TASKS; then
-                    { 
-                        return
-                    };
-                else
-                    { 
-                        log::info "Spawning Gitpod tasks in tmux"
-                    };
-                fi;
-                await::for_file_existence "$workspace_dir/.gitpod/ready";
-                cd "$GITPOD_REPO_ROOT";
-                function jqw () 
+        KEEP="true" await::create_shim "$tmux_exec_path";
+        { 
+            config::tmux::set_tmux_as_default_vscode_shell & disown;
+            config::tmux::hijack_gitpod_task_terminals & if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
                 { 
-                    local cmd;
-                    if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2> /dev/null; then
+                    tmux::start_vimpod & disown
+                };
+            fi;
+            local target="$HOME/.tmux/plugins/tpm";
+            if test ! -e "$target"; then
+                { 
+                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
+                    await::signal get install_dotfiles;
+                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null || :
+                };
+            fi;
+            local tmux_default_shell;
+            tmux::create_session;
+            ( if is::gitpod; then
+                { 
+                    if test ! -v GITPOD_TASKS; then
                         { 
-                            printf '%s\n' "$cmd"
+                            return
                         };
                     else
                         { 
-                            return 1
+                            log::info "Spawning Gitpod tasks in tmux"
                         };
-                    fi
-                };
-                local name cmd arr_elem=0 cmdfile;
-                while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
+                    fi;
+                    await::for_file_existence "$workspace_dir/.gitpod/ready";
+                    if ! cd "${GITPOD_REPO_ROOT:-}"; then
+                        { 
+                            log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit
+                        };
+                    fi;
+                    function jqw () 
                     { 
-                        if ! name="$(jqw ".[${arr_elem}].name")"; then
+                        local cmd;
+                        if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2> /dev/null; then
                             { 
-                                name="AnonTask-${arr_elem}"
+                                printf '%s\n' "$cmd"
                             };
-                        fi;
-                        cmdfile="/tmp/.cmd-${arr_elem}";
-                        printf '%s\n' "$cmd" > "$cmdfile";
-                        WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit";
-                        ((arr_elem=arr_elem+1))
+                        else
+                            { 
+                                return 1
+                            };
+                        fi
                     };
-                done
-            };
-        else
-            if is::codespaces; then
-                { 
-                    cd "$CODESPACE_VSCODE_FOLDER"
+                    local name cmd arr_elem=0 cmdfile;
+                    while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
+                        { 
+                            if ! name="$(jqw ".[${arr_elem}].name")"; then
+                                { 
+                                    name="AnonTask-${arr_elem}"
+                                };
+                            fi;
+                            cmdfile="/tmp/.cmd-${arr_elem}";
+                            printf '%s\n' "$cmd" > "$cmdfile";
+                            WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit";
+                            ((arr_elem=arr_elem+1))
+                        };
+                    done
                 };
-            fi;
-        fi
+            else
+                if is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then
+                    { 
+                        cd "$CODESPACE_VSCODE_FOLDER" || :
+                    };
+                fi;
+            fi ) || :;
+            CLOSE=true await::create_shim "$tmux_exec_path";
+            await::signal send config_tmux
+        } & disown
     };
     local -r _shell_hist_files=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$HOME/.local/share/fish/fish_history");
     function config::shell::persist_history () 
@@ -885,6 +933,7 @@ SCRIPT
                 return
             };
         fi;
+        await::signal install_dotfiles;
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
         while read -r _command; do
             { 
@@ -928,6 +977,7 @@ SCRIPT
         if is::codespaces; then
             { 
                 local log_file="$HOME/.dotfiles.log";
+                log::info "Manually redirecting dotfiles install.sh logs to $log_file";
                 exec >> "$log_file";
                 exec 2>&1
             };
@@ -935,8 +985,7 @@ SCRIPT
         install::dotfiles & disown;
         if is::gitpod || is::codespaces; then
             { 
-                config::tmux & disown;
-                config::shell::persist_history;
+                config::tmux & config::shell::persist_history & disown;
                 config::shell::fish::append_hist_from_gitpod_tasks & disown;
                 config::fish & disown;
                 install::system_packages & disown;
@@ -960,4 +1009,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%20594 "$@";
+main@bashbox%7987 "$@";

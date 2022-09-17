@@ -51,7 +51,7 @@ function await::create_shim() {
 			unset "$internal_var_name";
 			if test -e "$shim_source"; then {
 				try_sudo mv "$shim_source" "$target";
-				rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
+				try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
 			} fi
 			return;
 		} fi
@@ -69,22 +69,32 @@ function await::create_shim() {
 		cat > "$target" <<'SCRIPT'
 #!/usr/bin/env bash
 set -eu;
-self="$(<"$0")"
+self="$(<"${BASH_SOURCE[0]}")"
+
+diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+if test ! -e "$diff_target"; then {
+	printf '%s\n' "$self" > "$diff_target";
+} fi
+
 function main() {
+	await_shim() {
+		while test -e "$shim_source"; do {
+			sleep 0.2;
+		} done
+	}
+
+	# Initial loop for detecting $target modifications
 	if test -v "$internal_var_name" && test -e "$shim_source"; then {
-		exec "$shim_source" "$@";
-	} fi
-
-	diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-	if test ! -e "$diff_target"; then {
-		cp "$target" "$diff_target";
-	} fi
-
-	if test -v PRINT_INDICATOR; then {
-		printf 'info[shim]: Loading %s\n' "$target";
-	} fi
-
-	function await() {
+		"$shim_source" "$@";
+		exit;
+	} elif test -e "$shim_source"; then {
+		# For external calls
+		await_shim;
+	} else {
+		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
+			printf 'info[shim]: Loading %s\n' "$target";
+		} fi
+		
 		while cmp --silent -- "$target" "$diff_target"; do {
 			sleep 0.2;
 		} done
@@ -92,27 +102,29 @@ function main() {
 		while lsof -F 'f' -- "$target" 2>/dev/null | grep -q '^f.*w$'; do {
 			sleep 0.2;
 		} done
-	}
 
-	await;
+	} fi
 SCRIPT
 
 		if test -v KEEP; then {
 			eval "export $internal_var_name=ture";
 			cat >> "$target" <<'SCRIPT'
+	# Create shim
+	if test -v $internal_var_name && test ! -e "$shim_source"; then {
+		sudo mv "$target" "$shim_source";
+		sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+	} fi
+
 	# For internal calls
 	if test -v $internal_var_name; then {
-		if test ! -e "$shim_source"; then {
-			sudo mv "$target" "$shim_source";
-			sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
-		} fi
 		exec "$shim_source" "$@";
 	} fi
 
 	# For external calls
-	while test -e "$shim_source"; do {
-		sleep 0.2;
+	until test -e "$shim_source"; do {
+		sleep 0.5;
 	} done
+	await_shim;
 SCRIPT
 		} fi
 

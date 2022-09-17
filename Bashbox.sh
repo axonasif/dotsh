@@ -65,6 +65,7 @@ live() (
 		local docker_args=();
 		docker_args+=(
 			run
+			--rm
 			--net=host
 		)
 
@@ -126,18 +127,46 @@ live() (
 			# Container image
 			-it gitpod/workspace-base:latest
 		)
+
+		function startup_command() {
+			local logfile="$HOME/.dotfiles.log";
+			eval "$(gp env -e)";
+			set +m;
+			"$HOME/.dotfiles/install.sh" > "$logfile" 2>&1;
+			set -m;
+			tail -F "$logfile" & disown;
+			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+			(until test -n "$(tmux list-clients)"; do sleep 1; done; sleep 3; tmux display-message -t main "Run 'tmux detach' to exit from here") & disown;
+			AWAIT_SHIM_PRINT_INDICATOR=true tmux a
+			printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";
+			exec bash -l;
+		}
+
 		if is::gitpod; then {
 			docker_args+=(
 				# Startup command
-				/bin/bash -cli "eval \$(gp env -e); set +m; \$HOME/.dotfiles/install.sh; set -m; exec bash -l"
+				 /bin/bash -li
 			)
 		} else {
 			docker_args+=(
-				/bin/bash -cli 'set +m; $HOME/.dotfiles/install.sh; set -m; exec bash -l'
+				/bin/bash -li
 			)
 		} fi
+		local confirmed_statfile="/tmp/.confirmed_statfile";
+		touch "$confirmed_statfile";
+		local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
+		if [[ "$confirmed_times" -lt 3 ]]; then {
+			printf '\n';
+			printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace" \
+								"To exit from there, you can press ${BGREEN}Ctrl+d${RC} or run ${BRED}exit${RC} on the terminal when in ${GRAY}bash${RC} shell" \
+								"You can run ${ORANGE}tmux${RC} a on the terminal to attach to the tmux session where Gitpod tasks are opened as tmux-windows" \
+								"To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
+			printf '\n';
+			read -r -p '>>> Press Enter/return to continue execution of "bashbox live" command';
+			printf '%s\n' "$confirmed_times" > "$confirmed_statfile";
+		} fi
 
-		docker "${docker_args[@]}";
+		docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
 	}
 
 )
