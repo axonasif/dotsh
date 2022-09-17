@@ -4,9 +4,10 @@ function install::neovim() {
 	# if test -e "$nvim_conf_dir" && nvim_conf_bak="${nvim_conf_dir}.bak"; then {
 	# 	mv "$nvim_conf_dir" "$nvim_conf_bak";
 	# } fi
+	# set -x
 
-	curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" \
-		| sudo tar -C /usr --strip-components=1 -xpzf -;
+
+	curl -sL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf - >/dev/null 2>&1;
 
 	# Install LunarVim as an example config
 	# git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" >/dev/null 2>&1;

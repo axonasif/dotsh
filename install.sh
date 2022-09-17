@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%763 () 
+main@bashbox%20594 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%763 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%763';
+    ___MAIN_FUNCNAME='main@bashbox%20594';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -114,11 +114,11 @@ main@bashbox%763 ()
             docker_args+=(-it gitpod/workspace-base:latest);
             if is::gitpod; then
                 { 
-                    docker_args+=(/bin/sh -lic "eval \$(gp env -e); \$HOME/.dotfiles/install.sh; exec bash -l")
+                    docker_args+=(/bin/bash -cli "eval \$(gp env -e); set +m; \$HOME/.dotfiles/install.sh; set -m; exec bash -l")
                 };
             else
                 { 
-                    docker_args+=(/bin/sh -lic '$HOME/.dotfiles/install.sh; exec bash -l')
+                    docker_args+=(/bin/bash -cli 'set +m; $HOME/.dotfiles/install.sh; set -m; exec bash -l')
                 };
             fi;
             docker "${docker_args[@]}"
@@ -527,7 +527,7 @@ SCRIPT
     function install::neovim () 
     { 
         log::info "Installing and setting up Neovim";
-        curl -Ls "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf -;
+        curl -sL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf - > /dev/null 2>&1;
         curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null 2>&1;
         await::signal get config_tmux;
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
@@ -794,7 +794,7 @@ SCRIPT
             { 
                 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                 await::signal get install_dotfiles;
-                bash -lic "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
+                bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null 2>&1;
                 CLOSE=true await::create_shim "$tmux_exec_path"
             };
         fi;
@@ -960,4 +960,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%763 "$@";
+main@bashbox%20594 "$@";

@@ -129,11 +129,11 @@ live() (
 		if is::gitpod; then {
 			docker_args+=(
 				# Startup command
-				/bin/sh -lic "eval \$(gp env -e); \$HOME/.dotfiles/install.sh; exec bash -l"
+				/bin/bash -cli "eval \$(gp env -e); set +m; \$HOME/.dotfiles/install.sh; set -m; exec bash -l"
 			)
 		} else {
 			docker_args+=(
-				/bin/sh -lic '$HOME/.dotfiles/install.sh; exec bash -l'
+				/bin/bash -cli 'set +m; $HOME/.dotfiles/install.sh; set -m; exec bash -l'
 			)
 		} fi
 
