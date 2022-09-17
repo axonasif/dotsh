@@ -33,6 +33,7 @@ bashbox::build::before() {
 }
 
 live() (
+	local container_image="gitpod/workspace-base:latest";
 	source "$_arg_path/src/utils/common.sh";
 	rm -f "$_arg_path/.last_applied";
 
@@ -128,7 +129,7 @@ live() (
 				-e GITPOD_WORKSPACE_ID
 				-e GITPOD_WORKSPACE_URL
 				# Fake gitpod tasks for testing
-				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
+				-e GITPOD_TASKS
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
 			)
@@ -136,16 +137,16 @@ live() (
 
 		docker_args+=(
 			# Container image
-			-it gitpod/workspace-base:latest
+			-it "$container_image"
 		)
 
 		function startup_command() {
 			local logfile="$HOME/.dotfiles.log";
 			eval "$(gp env -e)";
 			set +m;
-			"$HOME/.dotfiles/install.sh" > "$logfile" 2>&1;
+			"$HOME/.dotfiles/install.sh";
 			set -m;
-			tail -F "$logfile" & disown;
+			# tail -F "$logfile" & disown;
 			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
 			(until test -n "$(tmux list-clients)"; do sleep 1; done; sleep 3; tmux display-message -t main "Run 'tmux detach' to exit from here") & disown;
 			AWAIT_SHIM_PRINT_INDICATOR=true tmux a

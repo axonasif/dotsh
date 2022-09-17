@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2458 () 
+main@bashbox%5703 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%2458 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%2458';
+    ___MAIN_FUNCNAME='main@bashbox%5703';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,7 +86,8 @@ main@bashbox%2458 ()
     };
     function live () 
     { 
-        ( source "$_arg_path/src/utils/common.sh";
+        ( local container_image="gitpod/workspace-base:latest";
+        source "$_arg_path/src/utils/common.sh";
         rm -f "$_arg_path/.last_applied";
         local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
         if test -v DOTFILES_PRIMARY_REPO; then
@@ -122,18 +123,17 @@ main@bashbox%2458 ()
             docker_args+=(-e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo");
             if is::gitpod; then
                 { 
-                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
+                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS -e DOTFILES_SPAWN_SSH_PROTO=false)
                 };
             fi;
-            docker_args+=(-it gitpod/workspace-base:latest);
+            docker_args+=(-it "$container_image");
             function startup_command () 
             { 
                 local logfile="$HOME/.dotfiles.log";
                 eval "$(gp env -e)";
                 set +m;
-                "$HOME/.dotfiles/install.sh" > "$logfile" 2>&1;
+                "$HOME/.dotfiles/install.sh";
                 set -m;
-                tail -F "$logfile" & disown;
                 printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
                 ( until test -n "$(tmux list-clients)"; do
                     sleep 1;
@@ -495,7 +495,7 @@ SCRIPT
             sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
             sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
-        } > /dev/null 2>&1
+        }
     };
     function install::userland_tools () 
     { 
@@ -887,7 +887,7 @@ SCRIPT
                         fi
                     };
                     local name cmd arr_elem=0 cmdfile;
-                    while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do
+                    while cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" || cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"; do
                         { 
                             if ! name="$(jqw ".[${arr_elem}].name")"; then
                                 { 
@@ -895,8 +895,31 @@ SCRIPT
                                 };
                             fi;
                             cmdfile="/tmp/.cmd-${arr_elem}";
-                            printf '%s\n' "$cmd" > "$cmdfile";
-                            WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit";
+                            cmdfile_task="${cmdfile}.task";
+                            local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
+                            { 
+                                if test -e "$prebuild_log"; then
+                                    { 
+                                        printf 'cat %s\n' "$prebuild_log";
+                                        printf '%s\n' "${cmd_others:-}"
+                                    };
+                                else
+                                    { 
+                                        printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}"
+                                    };
+                                fi
+                            } > "$cmdfile_task";
+                            cat > "$cmdfile" <<CMDFILE
+trap "exec /usr/bin/fish -l" EXIT
+
+printf "$BGREEN>> Executing task:$RC\n";
+printf "${YELLOW}%s${RC}\n" "\$(< "$cmdfile_task")" | awk '{print "  " \$0}';
+printf '\n\n';
+
+source "$cmdfile_task"
+CMDFILE
+
+                            WINDOW_NAME="$name" tmux::create_window bash -cl "source \"$cmdfile\"";
                             ((arr_elem=arr_elem+1))
                         };
                     done
@@ -1023,4 +1046,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%2458 "$@";
+main@bashbox%5703 "$@";

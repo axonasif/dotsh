@@ -290,16 +290,38 @@ function config::tmux() {
 				}
 
 				local name cmd arr_elem=0 cmdfile;
-				while cmd="$(jqw ".[${arr_elem}] | [.init, .before, .command] | map(select(. != null)) | .[]")"; do {
+				while cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" || cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"; do {
 					if ! name="$(jqw ".[${arr_elem}].name")"; then {
 						name="AnonTask-${arr_elem}";
 					} fi
 
 					cmdfile="/tmp/.cmd-${arr_elem}";
-					printf '%s\n' "$cmd" > "$cmdfile";
+					cmdfile_task="${cmdfile}.task";
+					local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
+					
+					{
+						if test -e "$prebuild_log"; then {
+							printf 'cat %s\n' "$prebuild_log";
+							printf '%s\n' "${cmd_others:-}";
+						} else {
+							printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+						} fi
+					} 1> "$cmdfile_task";
+
+
+					cat > "$cmdfile" <<CMDFILE
+trap "exec /usr/bin/fish -l" EXIT
+
+printf "$BGREEN>> Executing task:$RC\n";
+printf "${YELLOW}%s${RC}\n" "\$(< "$cmdfile_task")" | awk '{print "  " \$0}';
+printf '\n\n';
+
+source "$cmdfile_task"
+CMDFILE
 					# win_i="$(
-						WINDOW_NAME="$name" tmux::create_window bash -lc "trap 'exec $tmux_default_shell -l' EXIT; cat $workspace_dir/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; printf \"$BGREEN>> Executing task:$RC\n\"; printf \"${YELLOW}%s${RC}\n\" \"$(< $cmdfile)\" | awk '{print \"  \" \$0}'; printf '\n\n'; source $cmdfile; exit"
 						# )";
+
+					WINDOW_NAME="$name" tmux::create_window bash -cl "source \"$cmdfile\"";
 					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
 					#bash -c " printf '%s\n' $cmd; $cmd;"
 					((arr_elem=arr_elem+1));
