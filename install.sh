@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7987 () 
+main@bashbox%2458 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%7987 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%7987';
+    ___MAIN_FUNCNAME='main@bashbox%2458';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -69,6 +69,20 @@ main@bashbox%7987 ()
         local root_script="$_arg_path/$_script_name";
         cp "$_target_workfile" "$root_script";
         chmod +x "$root_script"
+    };
+    function bashbox::build::before () 
+    { 
+        local git_dir="$_arg_path/.git";
+        local hooks_dir="$git_dir/hooks";
+        local pre_commit_hook="$hooks_dir/pre-commit";
+        if test -e "$git_dir" && test ! -e "$pre_commit_hook"; then
+            { 
+                log::info "Setting up pre-commit git hook";
+                mkdir -p "$hooks_dir";
+                printf '%s\n' '#!/usr/bin/env sh' 'bashbox build --release' 'git add install.sh' > "$pre_commit_hook";
+                chmod +x "$pre_commit_hook"
+            };
+        fi
     };
     function live () 
     { 
@@ -1009,4 +1023,4 @@ SCRIPT
     wait;
     exit
 }
-main@bashbox%7987 "$@";
+main@bashbox%2458 "$@";

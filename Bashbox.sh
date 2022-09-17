@@ -17,9 +17,20 @@ bashbox::build::after() {
 	chmod +x "$root_script";
 }
 
-# bashbox::build::before() {
-# 	rm -rf "$_arg_path/.private";
-# }
+bashbox::build::before() {
+	local git_dir="$_arg_path/.git";
+	local hooks_dir="$git_dir/hooks";
+	local pre_commit_hook="$hooks_dir/pre-commit";
+	if test -e "$git_dir" && test ! -e "$pre_commit_hook"; then {
+		log::info "Setting up pre-commit git hook";
+		mkdir -p "$hooks_dir";
+		printf '%s\n' \
+					'#!/usr/bin/env sh' \
+					'bashbox build --release' \
+					'git add install.sh' > "$pre_commit_hook";
+		chmod +x "$pre_commit_hook";
+	} fi
+}
 
 live() (
 	source "$_arg_path/src/utils/common.sh";
