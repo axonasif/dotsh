@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%20629 () 
+main@bashbox%23472 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%20629 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%20629';
+    ___MAIN_FUNCNAME='main@bashbox%23472';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -495,7 +495,7 @@ SCRIPT
             sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
             sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
-        } > /dev/null 2>&1
+        } > /dev/null
     };
     function install::userland_tools () 
     { 
@@ -973,7 +973,7 @@ CMDFILE
                 return
             };
         fi;
-        await::signal install_dotfiles;
+        await::signal get install_dotfiles;
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
         while read -r _command; do
             { 
@@ -1049,4 +1049,4 @@ CMDFILE
     wait;
     exit
 }
-main@bashbox%20629 "$@";
+main@bashbox%23472 "$@";
