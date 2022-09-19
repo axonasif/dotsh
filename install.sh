@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%27897 () 
+main@bashbox%20629 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%27897 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%27897';
+    ___MAIN_FUNCNAME='main@bashbox%20629';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -495,7 +495,7 @@ SCRIPT
             sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
             sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
-        }
+        } > /dev/null 2>&1
     };
     function install::userland_tools () 
     { 
@@ -1049,4 +1049,4 @@ CMDFILE
     wait;
     exit
 }
-main@bashbox%27897 "$@";
+main@bashbox%20629 "$@";

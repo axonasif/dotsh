@@ -14,6 +14,5 @@ function install::system_packages {
 		sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
 		sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
 		sudo debconf-set-selections <<<'debconf debconf/frontend select Readline';
-	}
-	#>/dev/null 2>&1
+	} >/dev/null 2>&1
 }
