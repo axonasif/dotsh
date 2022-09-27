@@ -33,7 +33,7 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="gitpod/workspace-base:latest";
+	local container_image="gitpod/workspace-full:latest";
 	source "$_arg_path/src/utils/common.sh";
 	rm -f "$_arg_path/.last_applied";
 
@@ -143,11 +143,13 @@ live() (
 		function startup_command() {
 			local logfile="$HOME/.dotfiles.log";
 			eval "$(gp env -e)";
-			set +m;
+			set +m; # Temporarily disable job control
 			"$HOME/.dotfiles/install.sh";
 			set -m;
+			sleep 2;
 			# tail -F "$logfile" & disown;
 			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+			export PATH="$HOME/.nix-profile/bin:$PATH";
 			(until test -n "$(tmux list-clients)"; do sleep 1; done; sleep 3; tmux display-message -t main "Run 'tmux detach' to exit from here") & disown;
 			AWAIT_SHIM_PRINT_INDICATOR=true tmux a
 			printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";

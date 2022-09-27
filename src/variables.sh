@@ -1,3 +1,6 @@
+# Add nix bin PATH in advance
+export PATH="$PATH:$HOME/.nix-profile/bin";
+
 # Readonly variables
 declare -r workspace_dir="$(
 	if is::gitpod; then {

@@ -7,6 +7,7 @@ use config;
 use variables;
 
 function main() {
+
 	# Logging
 	if is::codespaces; then {
 		local log_file="$HOME/.dotfiles.log";

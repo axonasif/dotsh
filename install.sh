@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23472 () 
+main@bashbox%23904 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%23472 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23472';
+    ___MAIN_FUNCNAME='main@bashbox%23904';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,7 +86,7 @@ main@bashbox%23472 ()
     };
     function live () 
     { 
-        ( local container_image="gitpod/workspace-base:latest";
+        ( local container_image="gitpod/workspace-full:latest";
         source "$_arg_path/src/utils/common.sh";
         rm -f "$_arg_path/.last_applied";
         local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
@@ -134,7 +134,9 @@ main@bashbox%23472 ()
                 set +m;
                 "$HOME/.dotfiles/install.sh";
                 set -m;
+                sleep 2;
                 printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+                export PATH="$HOME/.nix-profile/bin:$PATH";
                 ( until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
@@ -233,7 +235,7 @@ main@bashbox%23472 ()
                         touch "$vscode_machine_settings_file"
                     };
                 fi;
-                await::for_file_existence "/usr/bin/jq";
+                await::until_true command -v jq > /dev/null;
                 if test ! -s "$vscode_machine_settings_file" || ! jq -reM '""' "$vscode_machine_settings_file" > /dev/null; then
                     { 
                         printf '%s\n' "$input" > "$vscode_machine_settings_file"
@@ -334,9 +336,19 @@ main@bashbox%23472 ()
     { 
         local time="${TIME:-0.5}";
         local input=("$@");
-        until sleep "$time" && "${input[@]}"; do
+        until "${input[@]}"; do
             { 
-                continue
+                sleep "$time"
+            };
+        done
+    };
+    function await::while_true () 
+    { 
+        local time="${TIME:-0.5}";
+        local input=("$@");
+        while "${input[@]}"; do
+            { 
+                sleep "$time"
             };
         done
     };
@@ -379,121 +391,214 @@ main@bashbox%23472 ()
                 "$@" || sudo "$@"
             } 2> /dev/null
         };
+        function is::custom_shim () 
+        { 
+            test -v CUSTOM_SHIM_SOURCE
+        };
+        function revert_shim () 
+        { 
+            if ! is::custom_shim; then
+                { 
+                    if test -e "$shim_source"; then
+                        { 
+                            try_sudo mv "$shim_source" "$target"
+                        };
+                    fi
+                };
+            else
+                { 
+                    try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
+                    try_sudo rm "$target"
+                };
+            fi;
+            try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || :;
+            unset KEEP_internal_call CUSTOM_SHIM_SOURCE
+        };
+        function create_self () 
+        { 
+            function cmd () 
+            { 
+                printf '%s\n' '#!/usr/bin/env bash' "$(declare -f main)" 'main "$@"'
+            };
+            if ! test -v NO_PRINT; then
+                { 
+                    cmd > "${1:-"${BASH_SOURCE[0]}"}"
+                };
+            else
+                { 
+                    cmd
+                };
+            fi
+        };
         local target shim_source;
-        local internal_var_name="DOTFILES_INTERNAL_SHIM_CALL";
+        if test -v CUSTOM_SHIM_SOURCE; then
+            export CUSTOM_SHIM_SOURCE="${CUSTOM_SHIM_SOURCE:-}";
+        fi;
         for target in "$@";
         do
             { 
-                shim_dir="${target%/*}/.shim";
-                shim_source="${shim_dir}/${target##*/}";
-                try_sudo mkdir -p "$shim_dir";
+                if ! is::custom_shim; then
+                    { 
+                        shim_dir="${target%/*}/.ashim";
+                        shim_source="${shim_dir}/${target##*/}"
+                    };
+                else
+                    { 
+                        shim_dir="${CUSTOM_SHIM_SOURCE%/*}/.cshim";
+                        shim_source="$shim_dir/${CUSTOM_SHIM_SOURCE##*/}"
+                    };
+                fi;
                 if test -v CLOSE; then
                     { 
-                        unset "$internal_var_name";
-                        if test -e "$shim_source"; then
-                            { 
-                                try_sudo mv "$shim_source" "$target";
-                                try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || :
-                            };
-                        fi;
+                        revert_shim;
                         return
                     };
                 fi;
                 if test -e "$target"; then
                     { 
                         log::warn "${FUNCNAME[0]}: $target already exists";
-                        try_sudo mv "$target" "$shim_source"
+                        if ! is::custom_shim; then
+                            { 
+                                try_sudo mv "$target" "$shim_source"
+                            };
+                        fi
                     };
                 fi;
-                if ! touch "$target" 2> /dev/null; then
-                    { 
-                        local USER && USER="$(id -u -n)";
-                        sudo bash -c "touch \"$target\" && chown -h $USER:$USER \"$target\""
-                    };
-                fi;
-                cat > "$target" <<'SCRIPT'
-#!/usr/bin/env bash
-set -eu;
-self="$(<"${BASH_SOURCE[0]}")"
-
-diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-if test ! -e "$diff_target"; then {
-	printf '%s\n' "$self" > "$diff_target";
-} fi
-
-function main() {
-	await_shim() {
-		while test -e "$shim_source"; do {
-			sleep 0.2;
-		} done
-	}
-
-	# Initial loop for detecting $target modifications
-	if test -v "$internal_var_name" && test -e "$shim_source"; then {
-		"$shim_source" "$@";
-		exit;
-	} elif test -e "$shim_source"; then {
-		# For external calls
-		await_shim;
-	} else {
-		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
-			printf 'info[shim]: Loading %s\n' "$target";
-		} fi
-		
-		while cmp --silent -- "$target" "$diff_target"; do {
-			sleep 0.2;
-		} done
-
-		while lsof -F 'f' -- "$target" 2>/dev/null | grep -q '^f.*w$'; do {
-			sleep 0.2;
-		} done
-
-	} fi
-SCRIPT
-
-                if test -v KEEP; then
-                    { 
-                        eval "export $internal_var_name=ture";
-                        cat >> "$target" <<'SCRIPT'
-	# Create shim
-	if test -v $internal_var_name && test ! -e "$shim_source"; then {
-		sudo mv "$target" "$shim_source";
-		sudo env self="$self" target="$target" bash -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
-	} fi
-
-	# For internal calls
-	if test -v $internal_var_name; then {
-		exec "$shim_source" "$@";
-	} fi
-
-	# For external calls
-	until test -e "$shim_source"; do {
-		sleep 0.5;
-	} done
-	await_shim;
-SCRIPT
-
-                    };
-                fi
+                local USER && USER="$(id -u -n)";
+                try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
+                function async_wrapper () 
                 { 
-                    printf '\texec %s "$@"\n\n}\n\n' "$target";
-                    printf '%s="%s"\n' target "$target" shim_source "$shim_source" internal_var_name "$internal_var_name";
-                    printf '%s\n' "$(declare -f sleep)";
-                    printf 'main "$@"\n'
-                } >> "$target";
+                    if test -v DEBUG_TUX; then
+                        set -x;
+                    fi;
+                    set -eu;
+                    diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+                    if test ! -e "$diff_target"; then
+                        { 
+                            create_self "$diff_target"
+                        };
+                    fi;
+                    function await_for_no_open_writes () 
+                    { 
+                        while lsof -F 'f' -- "$1" 2> /dev/null | grep -q '^f.*w$'; do
+                            sleep 0.5${RANDOM};
+                        done
+                    };
+                    function await_while_shim_exists () 
+                    { 
+                        : "$shim_source";
+                        local checkf="$_";
+                        TIME="0.5${RANDOM}" await::while_true test -e "$checkf"
+                    };
+                    if test -v AWAIT_SHIM_PRINT_INDICATOR; then
+                        { 
+                            printf 'info[shim]: Loading %s\n' "$target"
+                        };
+                    fi;
+                    if test "${KEEP_internal_call:-}" == true && test -e "$shim_source"; then
+                        { 
+                            exec "$shim_source" "$@"
+                        };
+                    else
+                        if test -e "$shim_source"; then
+                            { 
+                                await_while_shim_exists
+                            };
+                        else
+                            if ! is::custom_shim; then
+                                { 
+                                    TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+                                    TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
+                                };
+                            else
+                                { 
+                                    TIME="0.5${RANDOM}" await::for_file_existence "$CUSTOM_SHIM_SOURCE";
+                                    await_for_no_open_writes "$CUSTOM_SHIM_SOURCE"
+                                };
+                            fi;
+                        fi;
+                    fi;
+                    if test -v KEEP_internal_call; then
+                        { 
+                            if test "${KEEP_internal_call:-}" == true; then
+                                { 
+                                    if test ! -e "$shim_source"; then
+                                        { 
+                                            try_sudo mkdir -p "${shim_source%/*}";
+                                            if ! is::custom_shim; then
+                                                { 
+                                                    try_sudo mv "$target" "$shim_source";
+                                                    try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target'
+                                                };
+                                            else
+                                                { 
+                                                    try_sudo mv "${CUSTOM_SHIM_SOURCE}" "$shim_source"
+                                                };
+                                            fi
+                                        };
+                                    fi
+                                };
+                            fi;
+                            if test "${KEEP_internal_call:-}" == true; then
+                                { 
+                                    exec "$shim_source" "$@"
+                                };
+                            else
+                                { 
+                                    await_while_shim_exists
+                                };
+                            fi
+                        };
+                    fi;
+                    if is::custom_shim; then
+                        { 
+                            target="$CUSTOM_SHIM_SOURCE"
+                        };
+                    fi;
+                    exec "$target" "$@"
+                };
+                { 
+                    printf 'function main() {\n';
+                    printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir";
+                    if test -v CUSTOM_SHIM_SOURCE; then
+                        { 
+                            printf '%s="%s"\n' CUSTOM_SHIM_SOURCE "$CUSTOM_SHIM_SOURCE"
+                        };
+                    fi;
+                    if test -v KEEP; then
+                        { 
+                            printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}';
+                            export KEEP_internal_call=true
+                        };
+                    fi;
+                    printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
+                    printf '%s\n' 'async_wrapper "$@"; }'
+                } > "$target";
+                ( source "$target";
+                create_self "$target" );
                 chmod +x "$target"
             };
         done
     };
-    levelone_syspkgs=(tmux fish jq lsof);
+    levelone_syspkgs=(tmux fish jq);
+    leveltwo_syspkgs=();
     function install::system_packages () 
     { 
         log::info "Installing system packages";
         { 
             sudo apt-get update;
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-            sudo apt-get install -yq --no-install-recommends "${levelone_syspkgs[@]}";
-            sudo apt-get install -yq --no-install-recommends "${leveltwo_syspkgs[@]}";
+            for level in levelone_syspkgs leveltwo_syspkgs;
+            do
+                { 
+                    declare -n ref="$level";
+                    if test -n "${ref:-}"; then
+                        { 
+                            sudo apt-get install -yq --no-install-recommends "${ref[@]}"
+                        };
+                    fi
+                };
+            done;
             sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
         } > /dev/null
     };
@@ -501,16 +606,29 @@ SCRIPT
     { 
         log::info "Installing userland tools";
         curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall > /dev/null 2>&1 & disown;
-        USER="$(id -u -n)" && export USER;
+        ( USER="$(id -u -n)" && export USER;
         if test ! -e /nix; then
             { 
+                sudo sh -c "mkdir -p /nix && chown -R $USER:$USER /nix";
                 log::info "Installing nix";
                 curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon > /dev/null 2>&1
             };
         fi;
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
-        local pkgs=(nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.neofetch nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.zoxide);
-        nix-env -iA "${pkgs[@]}" > /dev/null 2>&1
+        local levelone_pkgs=(nixpkgs.tmux nixpkgs.fish nixpkgs.jq nixpkgs.lsof);
+        local leveltwo_pkgs=(nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.neofetch nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.zoxide);
+        return;
+        for level in levelone_pkgs leveltwo_pkgs;
+        do
+            { 
+                declare -n ref="$level";
+                if test -n "${ref:-}"; then
+                    { 
+                        nix-env -iA "${ref[@]}" > /dev/null 2>&1
+                    };
+                fi
+            };
+        done ) & disown
     };
     function install::ranger () 
     { 
@@ -851,7 +969,7 @@ SCRIPT
                 { 
                     git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                     await::signal get install_dotfiles;
-                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" > /dev/null || :
+                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
                 };
             fi;
             local tmux_default_shell;
@@ -993,6 +1111,7 @@ CMDFILE
             fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
         } > /dev/null 2>&1
     };
+    export PATH="$PATH:$HOME/.nix-profile/bin";
     declare -r workspace_dir="$(
 	if is::gitpod; then {
 		printf '%s\n' "/workspace";
@@ -1049,4 +1168,4 @@ CMDFILE
     wait;
     exit
 }
-main@bashbox%23472 "$@";
+main@bashbox%23904 "$@";

@@ -256,14 +256,14 @@ function config::tmux() {
 			tmux::start_vimpod & disown;
 		} fi
 
+
 		local target="$HOME/.tmux/plugins/tpm";
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
 			await::signal get install_dotfiles;
-			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" 1>/dev/null || :;
+			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
 		} fi
-
-
+		
 		local tmux_default_shell;
 		tmux::create_session;
 
