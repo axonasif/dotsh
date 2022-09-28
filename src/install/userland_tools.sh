@@ -56,7 +56,7 @@ function install::userland_tools {
 			nixpkgs.zoxide
 			# nixpkgs.zsh
 		)
-		return
+		return # DEBUG
 		for level in levelone_pkgs leveltwo_pkgs; do {
 			declare -n ref="$level";
 			if test -n "${ref:-}"; then {

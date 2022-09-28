@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23904 () 
+main@bashbox%25366 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%23904 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23904';
+    ___MAIN_FUNCNAME='main@bashbox%25366';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -140,7 +140,7 @@ main@bashbox%23904 ()
                 ( until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
-                sleep 3;
+                sleep 2;
                 tmux display-message -t main "Run 'tmux detach' to exit from here" ) & disown;
                 ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
                 printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";
@@ -388,8 +388,8 @@ main@bashbox%23904 ()
         function try_sudo () 
         { 
             { 
-                "$@" || sudo "$@"
-            } 2> /dev/null
+                "$@" 2> /dev/null || sudo "$@"
+            }
         };
         function is::custom_shim () 
         { 
@@ -397,6 +397,7 @@ main@bashbox%23904 ()
         };
         function revert_shim () 
         { 
+            try_sudo touch "$shim_tombstone";
             if ! is::custom_shim; then
                 { 
                     if test -e "$shim_source"; then
@@ -411,7 +412,8 @@ main@bashbox%23904 ()
                     try_sudo rm "$target"
                 };
             fi;
-            try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || :;
+            ( sleep 5 && try_sudo rm -f "$shim_tombstone";
+            try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown;
             unset KEEP_internal_call CUSTOM_SHIM_SOURCE
         };
         function create_self () 
@@ -434,6 +436,7 @@ main@bashbox%23904 ()
         if test -v CUSTOM_SHIM_SOURCE; then
             export CUSTOM_SHIM_SOURCE="${CUSTOM_SHIM_SOURCE:-}";
         fi;
+        local shim_dir shim_source shim_tombstone;
         for target in "$@";
         do
             { 
@@ -448,6 +451,7 @@ main@bashbox%23904 ()
                         shim_source="$shim_dir/${CUSTOM_SHIM_SOURCE##*/}"
                     };
                 fi;
+                shim_tombstone="${shim_source}.tombstone";
                 if test -v CLOSE; then
                     { 
                         revert_shim;
@@ -468,9 +472,6 @@ main@bashbox%23904 ()
                 try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
                 function async_wrapper () 
                 { 
-                    if test -v DEBUG_TUX; then
-                        set -x;
-                    fi;
                     set -eu;
                     diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
                     if test ! -e "$diff_target"; then
@@ -484,45 +485,69 @@ main@bashbox%23904 ()
                             sleep 0.5${RANDOM};
                         done
                     };
+                    function exec_bin () 
+                    { 
+                        local args=("$@");
+                        local bin="${args[0]}";
+                        await::until_true test -x "$bin";
+                        exec "${args[@]}"
+                    };
                     function await_while_shim_exists () 
                     { 
-                        : "$shim_source";
+                        if is::custom_shim; then
+                            { 
+                                : "$target"
+                            };
+                        else
+                            { 
+                                : "$shim_source"
+                            };
+                        fi;
                         local checkf="$_";
-                        TIME="0.5${RANDOM}" await::while_true test -e "$checkf"
+                        for _i in {1..3};
+                        do
+                            { 
+                                sleep 0.2${RANDOM};
+                                TIME="0.5${RANDOM}" await::while_true test -e "$checkf"
+                            };
+                        done
                     };
                     if test -v AWAIT_SHIM_PRINT_INDICATOR; then
                         { 
                             printf 'info[shim]: Loading %s\n' "$target"
                         };
                     fi;
-                    if test "${KEEP_internal_call:-}" == true && test -e "$shim_source"; then
+                    if test -e "$shim_source"; then
                         { 
-                            exec "$shim_source" "$@"
-                        };
-                    else
-                        if test -e "$shim_source"; then
-                            { 
-                                await_while_shim_exists
-                            };
-                        else
-                            if ! is::custom_shim; then
+                            if test "${KEEP_internal_call:-}" == true; then
                                 { 
-                                    TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
-                                    TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
+                                    exec_bin "$shim_source" "$@"
                                 };
                             else
                                 { 
-                                    TIME="0.5${RANDOM}" await::for_file_existence "$CUSTOM_SHIM_SOURCE";
-                                    await_for_no_open_writes "$CUSTOM_SHIM_SOURCE"
+                                    await_while_shim_exists
                                 };
-                            fi;
+                            fi
+                        };
+                    else
+                        if ! is::custom_shim; then
+                            { 
+                                TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+                                rm -f "$diff_target" 2> /dev/null || :;
+                                TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
+                            };
+                        else
+                            { 
+                                TIME="0.5${RANDOM}" await::for_file_existence "$CUSTOM_SHIM_SOURCE";
+                                await_for_no_open_writes "$CUSTOM_SHIM_SOURCE"
+                            };
                         fi;
                     fi;
                     if test -v KEEP_internal_call; then
                         { 
                             if test "${KEEP_internal_call:-}" == true; then
                                 { 
-                                    if test ! -e "$shim_source"; then
+                                    if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then
                                         { 
                                             try_sudo mkdir -p "${shim_source%/*}";
                                             if ! is::custom_shim; then
@@ -536,12 +561,12 @@ main@bashbox%23904 ()
                                                 };
                                             fi
                                         };
+                                    fi;
+                                    if test -e "$shim_source"; then
+                                        { 
+                                            exec_bin "$shim_source" "$@"
+                                        };
                                     fi
-                                };
-                            fi;
-                            if test "${KEEP_internal_call:-}" == true; then
-                                { 
-                                    exec "$shim_source" "$@"
                                 };
                             else
                                 { 
@@ -555,7 +580,7 @@ main@bashbox%23904 ()
                             target="$CUSTOM_SHIM_SOURCE"
                         };
                     fi;
-                    exec "$target" "$@"
+                    exec_bin "$target" "$@"
                 };
                 { 
                     printf 'function main() {\n';
@@ -567,7 +592,7 @@ main@bashbox%23904 ()
                     fi;
                     if test -v KEEP; then
                         { 
-                            printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}';
+                            printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone";
                             export KEEP_internal_call=true
                         };
                     fi;
@@ -1168,4 +1193,4 @@ CMDFILE
     wait;
     exit
 }
-main@bashbox%23904 "$@";
+main@bashbox%25366 "$@";

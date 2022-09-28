@@ -44,7 +44,7 @@ function await::signal() {
 
 function await::create_shim() {
 	function try_sudo() {
-		{ "$@" || sudo "$@"; } 2>/dev/null;
+		{ "$@" 2>/dev/null || sudo "$@"; }
 	}
 
 	# shellcheck disable=SC2120
@@ -53,6 +53,8 @@ function await::create_shim() {
 	}
 
 	function revert_shim() {
+		try_sudo touch "$shim_tombstone";
+
 		if ! is::custom_shim; then {
 			if test -e "$shim_source"; then {
 				try_sudo mv "$shim_source" "$target";
@@ -61,8 +63,11 @@ function await::create_shim() {
 			try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
 			try_sudo rm "$target";
 		} fi
-		try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
-		unset KEEP_internal_call CUSTOM_SHIM_SOURCE;	
+		(
+			sleep 5 && try_sudo rm -f "$shim_tombstone";
+			try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
+		) & disown;
+		unset KEEP_internal_call CUSTOM_SHIM_SOURCE;
 	}
 
 	# shellcheck disable=SC2120
@@ -82,6 +87,7 @@ function await::create_shim() {
 		export CUSTOM_SHIM_SOURCE="${CUSTOM_SHIM_SOURCE:-}"; # Reuse previoulsy exported CUSTOM_SHIM_SOURCE before CLOSE'ing
 	fi
 
+	local shim_dir shim_source shim_tombstone;
 	for target in "$@"; do {
 
 		if ! is::custom_shim; then {
@@ -91,6 +97,7 @@ function await::create_shim() {
 			shim_dir="${CUSTOM_SHIM_SOURCE%/*}/.cshim";
 			shim_source="$shim_dir/${CUSTOM_SHIM_SOURCE##*/}";
 		} fi
+		shim_tombstone="${shim_source}.tombstone";
 
 		if test -v CLOSE; then {
 			revert_shim;
@@ -109,10 +116,16 @@ function await::create_shim() {
 
 		# Embedded script
 		function async_wrapper() {
-			if test -v DEBUG_TUX; then
-				set -x
-			fi
+			# DEBUG
+			# if test -v DEBUG_TUX; then
+			# 	set -x;
+			# fi
 			set -eu;
+
+			# DEBUG
+			# if test "${KEEP_internal_call:-}" == false; then {
+			# 	trap 'printf "[%s]: %s\n" "${LINENO}" "$BASH_COMMAND" >> /tmp/log' DEBUG;
+			# } fi
 
 			diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
 			if test ! -e "$diff_target"; then {
@@ -125,16 +138,39 @@ function await::create_shim() {
 				done
 			}
 
+			exec_bin() {
+				local args=("$@");
+				local bin="${args[0]}";
+				await::until_true test -x "$bin";
+				exec "${args[@]}";
+			}
+
 			await_while_shim_exists() {
-				# if is::custom_shim; then {
-				# 	: "$target"; # We could techincally only check for shim_source
-				# } else {
-				# 	: "$shim_source";
-				# } fi
-				: "$shim_source";
+				# DEBUG
+				# if test "${KEEP_internal_call:-}" == false; then set -x; fi
+
+				# Refer to revert_shim for this if-code-block
+				if is::custom_shim; then {
+					: "$target";
+				} else {
+					: "$shim_source";
+				} fi
 
 				local checkf="$_";
-				TIME="0.5${RANDOM}" await::while_true test -e "$checkf";
+
+				for _i in {1..3}; do {
+					sleep 0.2${RANDOM};
+					TIME="0.5${RANDOM}" await::while_true test -e "$checkf";
+					# DEBUG
+					# while test -e "$checkf"; do {
+						# if test "${KEEP_internal_call:-}" == false; then
+						# 	printf '============ %s\n' "CHEKF=$checkf" "$(ls "$target" ||:;)" "$(ls "$shim_source" ||:;)"
+						# fi
+						# sleep 0.5$RANDOM;
+					# } done
+					
+				} done
+
 			}
 
 			if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
@@ -143,15 +179,18 @@ function await::create_shim() {
 
 			# Initial loop for detecting $target modifications
 			## For KEEP=
-			if test "${KEEP_internal_call:-}" == true && test -e "$shim_source"; then {
-				# When it's not the first time it was called, basically (2nd)
-				exec "$shim_source" "$@";
-			## For KEEP=
-			} elif test -e "$shim_source"; then {
-				# For external calls (2nd)
-				await_while_shim_exists;
+			if test -e "$shim_source"; then {
+				if test "${KEEP_internal_call:-}" == true; then {
+					# When it's not the first time it was called, basically (2nd)
+					exec_bin "$shim_source" "$@";
+				} else {
+					## For KEEP=
+					# For external calls (2nd)
+					await_while_shim_exists;
+				} fi
 			} elif ! is::custom_shim; then {
 				TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+				rm -f "$diff_target" 2>/dev/null || :;
 				TIME="0.5${RANDOM}" await_for_no_open_writes "$target";
 			} else {
 				TIME="0.5${RANDOM}" await::for_file_existence "$CUSTOM_SHIM_SOURCE";
@@ -164,27 +203,22 @@ function await::create_shim() {
 				# Create shim
 				if test "${KEEP_internal_call:-}" == true; then {
 
-					if test ! -e "$shim_source"; then {
-						try_sudo mkdir -p "${shim_source%/*}";
+					# For internal calls
+					if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then {
+							try_sudo mkdir -p "${shim_source%/*}";
 
-						if ! is::custom_shim; then {
-							try_sudo mv "$target" "$shim_source";
-							try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
-						} else {
-							try_sudo mv "${CUSTOM_SHIM_SOURCE}" "$shim_source";
-						} fi
-
+							if ! is::custom_shim; then {
+								try_sudo mv "$target" "$shim_source";
+								try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+							} else {
+								try_sudo mv "${CUSTOM_SHIM_SOURCE}" "$shim_source";
+							} fi
 					} fi
 
-				# } else {
-				# 	until test -e "$shim_source" || test -e "${CUSTOM_SHIM_SOURCE:-}"; do {
-				# 		sleep 0.5${RANDOM}
-				# 	} done
-				} fi
+					if test -e "$shim_source"; then {
+						exec_bin "$shim_source" "$@";
+					} fi
 
-				if test "${KEEP_internal_call:-}" == true; then {
-					# For internal calls
-					exec "$shim_source" "$@";
 				} else {
 					# For external calls
 					await_while_shim_exists;
@@ -201,7 +235,7 @@ function await::create_shim() {
 				target="$CUSTOM_SHIM_SOURCE"; # Set target to CUSTOM_SHIM_SOURCE
 			} fi
 
-			exec "$target" "$@";
+			exec_bin "$target" "$@";
 		}
 
 
@@ -217,7 +251,9 @@ function await::create_shim() {
 			} fi
 			# For KEEP=
 			if test -v KEEP; then {
-				printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}';
+				printf '%s="%s"\n' \
+									"KEEP_internal_call" '${KEEP_internal_call:-false}' \
+									shim_tombstone "$shim_tombstone";
 				export KEEP_internal_call=true;
 			} fi
 

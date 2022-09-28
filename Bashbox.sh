@@ -150,8 +150,8 @@ live() (
 			# tail -F "$logfile" & disown;
 			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
 			export PATH="$HOME/.nix-profile/bin:$PATH";
-			(until test -n "$(tmux list-clients)"; do sleep 1; done; sleep 3; tmux display-message -t main "Run 'tmux detach' to exit from here") & disown;
-			AWAIT_SHIM_PRINT_INDICATOR=true tmux a
+			(until test -n "$(tmux list-clients)"; do sleep 1; done; sleep 2; tmux display-message -t main "Run 'tmux detach' to exit from here") & disown;
+			AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
 			printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";
 			exec bash -l;
 		}

@@ -263,7 +263,7 @@ function config::tmux() {
 			await::signal get install_dotfiles;
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
 		} fi
-		
+
 		local tmux_default_shell;
 		tmux::create_session;
 
