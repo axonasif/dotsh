@@ -42,7 +42,6 @@ A brief overview:
 Ideally it should be easy to understand and customize this repo since I tried my best to make the code very modular and self-explanatory. Take a look inside the entrypoint [`/src/main.sh`](./src/main.sh) to tweak stuff as per your needs, such as commenting out any function on [`/src/main.sh`](./src/main.sh) to disable that particular thing.
 
 
-
 ## How to compile
 
 Run the following command:
@@ -215,6 +214,9 @@ Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/b
 await::create_shim /usr/bin/something_fancy
 ```
 
+#### Problem 1
+----
+
 Let's say we're intalling a tool called `tmux` but since it's asynchronously installed so if an user tries to execute it before it exists, they'll get an error. In order to avoid such a problem we can place an wrapper script at `tmux`'s absolute path using `await::create_shim`, that way the wrapper script as `tmux` will await for the actual command to appear in the filesystem and switch(`exec`) to it if someone executes `tmux` on their terminal before the actual `tmux` binary/program gets fully installed. In other words, if you invoke `tmux` on your terminal, the wrapper script at `/usr/bin/tmux` will `sleep()` until it finds that it itself was overwritten and the actual `tmux` binary was installed at `/usr/bin/tmux`.
 
 Now, there is another problem, let's say you used `await::create_shim /usr/bin/tmux` while `tmux` is being installed in the background asynchronously. What if you also need to install/configure additional `tmux` plguins/customizations from your dotfiles installation script but the _user_ tried to run `tmux` before you installed the additional customization. In this case, `tmux` would start up without your customization during the process you may perform the customizations in the background. There is a solution to that. Here's an example below:
@@ -240,6 +242,39 @@ CLOSE=true await::create_shim /usr/bin/tmux;
 ```
 
 A live usage of `KEEP=true await::create_shim` can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L250).
+
+#### Problem 2
+----
+
+What if you want to install `tmux` with a much complicated package manager such as `nix` for example and that you have to install `nix` first. Well, in that case, if you create the placeholder dirs and the shim before installation of `nix` and the package that you want to install, then it will cause issues during installation of `nix` and the packages that you want to install via it afterwards. So, we can create a shim in a different PATH, which will monitor another path to swap itself with. Here's an example:
+
+```bash
+
+# Install nix if missing
+USER="$(id -u -n)" && export USER;
+if test ! -e /nix; then {
+sudo sh -c "mkdir -p /nix && chown -R $USER:$USER /nix";
+log::info "Installing nix";
+curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon >/dev/null 2>&1;
+} fi
+source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
+
+# Install packages with nix in the background
+# This command will eventually install a symlink to `tmux` at $HOME/.nix-profile/bin
+nix-env -iA nixpkgs.tmux & disown;
+
+# Notice the CUSTOM_SHIM_SOURCE value
+KEEP=true CUSTOM_SHIM_SOURCE=$HOME/.nix-profile/bin/tmux await::create_shim /usr/bin/tmux;
+
+## Extra tmux customization/configuration part
+git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm";
+# Install tmux plugins
+bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+
+# After we're done customizing internally, get rid of the wrapper shim script
+# and let everyone directly hit the actual `tmux` binary.
+CLOSE=true await::create_shim /usr/bin/tmux;
+```
 
 ### [await::signal](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L20)
 
