@@ -253,9 +253,9 @@ What if you want to install `tmux` with a much complicated package manager such 
 # Install nix if missing
 USER="$(id -u -n)" && export USER;
 if test ! -e /nix; then {
-sudo sh -c "mkdir -p /nix && chown -R $USER:$USER /nix";
-log::info "Installing nix";
-curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon >/dev/null 2>&1;
+  sudo sh -c "mkdir -p /nix && chown -R $USER:$USER /nix";
+  log::info "Installing nix";
+  curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon >/dev/null 2>&1;
 } fi
 source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
 

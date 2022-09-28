@@ -33,7 +33,7 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="gitpod/workspace-full:latest";
+	local container_image="axonasif/dotfiles-testing:latest";
 	source "$_arg_path/src/utils/common.sh";
 	rm -f "$_arg_path/.last_applied";
 

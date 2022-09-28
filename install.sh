@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%28804 () 
+main@bashbox%11783 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%28804 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%28804';
+    ___MAIN_FUNCNAME='main@bashbox%11783';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,7 +86,7 @@ main@bashbox%28804 ()
     };
     function live () 
     { 
-        ( local container_image="gitpod/workspace-full:latest";
+        ( local container_image="axonasif/dotfiles-testing:latest";
         source "$_arg_path/src/utils/common.sh";
         rm -f "$_arg_path/.last_applied";
         local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
@@ -1001,13 +1001,13 @@ main@bashbox%28804 ()
             tmux::create_session;
             ( if is::gitpod; then
                 { 
-                    if test ! -v GITPOD_TASKS; then
+                    if test -n "${GITPOD_TASKS:-}"; then
                         { 
-                            return
+                            log::info "Spawning Gitpod tasks in tmux"
                         };
                     else
                         { 
-                            log::info "Spawning Gitpod tasks in tmux"
+                            return
                         };
                     fi;
                     await::for_file_existence "$workspace_dir/.gitpod/ready";
@@ -1029,10 +1029,9 @@ main@bashbox%28804 ()
                             };
                         fi
                     };
-                    local name cmd arr_elem=0 cmdfile;
-                    while { 
-                        cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")";
-                        cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"
+                    local name cmd arr_elem=0;
+                    until { 
+                        ! cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ! cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"
                     }; do
                         { 
                             if ! name="$(jqw ".[${arr_elem}].name")"; then
@@ -1040,32 +1039,31 @@ main@bashbox%28804 ()
                                     name="AnonTask-${arr_elem}"
                                 };
                             fi;
-                            cmdfile="/tmp/.cmd-${arr_elem}";
-                            cmdfile_task="${cmdfile}.task";
                             local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
-                            { 
-                                if test -e "$prebuild_log"; then
-                                    { 
-                                        printf 'cat %s\n' "$prebuild_log";
-                                        printf '%s\n' "${cmd_others:-}"
-                                    };
-                                else
-                                    { 
-                                        printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}"
-                                    };
-                                fi
-                            } > "$cmdfile_task";
-                            cat > "$cmdfile" <<CMDFILE
+                            cmd="$(
+						task="$(
+							if test -e "$prebuild_log"; then {
+								printf 'cat %s\n' "$prebuild_log";
+								printf '%s\n' "${cmd_others:-}";
+							} else {
+								printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+							} fi
+						)"
+IFS='' read -rd '' cmdc <<CMDC || :;
 trap "exec /usr/bin/fish -l" EXIT
-
 printf "$BGREEN>> Executing task:$RC\n";
-printf "${YELLOW}%s${RC}\n" "\$(< "$cmdfile_task")" | awk '{print "  " \$0}';
-printf '\n\n';
-
-source "$cmdfile_task"
-CMDFILE
-
-                            WINDOW_NAME="$name" tmux::create_window bash -cl "source \"$cmdfile\"";
+IFS='' read -rd '' lines <<'EOF' || :;
+$task
+EOF
+printf '%s\n' "\$lines" | while IFS='' read -r line; do
+	printf "    ${YELLOW}%s${RC}\n" "\$line";
+done
+printf '\n';
+$task
+CMDC
+						printf '%s\n' "$cmdc";
+					)";
+                            WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
                     done
@@ -1193,4 +1191,4 @@ CMDFILE
     wait;
     exit
 }
-main@bashbox%28804 "$@";
+main@bashbox%11783 "$@";
