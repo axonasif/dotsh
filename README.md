@@ -78,7 +78,7 @@ TBD, more to write here....
 
 ## How to handle automatic port forwarding in on your SSH tmux session
 
-TBD...
+Install this: https://github.com/axonasif/gssh
 
 ## Tweak behavior via environment variables
 
