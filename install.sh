@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2419 () 
+main@bashbox%23415 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%2419 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%2419';
+    ___MAIN_FUNCNAME='main@bashbox%23415';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -253,7 +253,7 @@ main@bashbox%2419 ()
         local installation_target="${INSTALL_TARGET:-"$HOME"}";
         local last_applied_filelist="$installation_target/.last_applied_dotfiles";
         local dotfiles_repo local_dotfiles_repo_count;
-        local repo_user repo_name source_dir;
+        local repo_user repo_name source_dir repo_dir_name check_dir;
         mkdir -p "$dotfiles_sh_repos_dir";
         if test -e "$last_applied_filelist"; then
             { 
@@ -279,15 +279,25 @@ main@bashbox%2419 ()
                     };
                 else
                     { 
-                        local_dotfiles_repo_count=("$dotfiles_sh_repos_dir"/*);
-                        local_dotfiles_repo_count="${#local_dotfiles_repo_count[*]}";
                         repo_user="${dotfiles_repo%/*}" && repo_user="${repo_user##*/}";
                         repo_name="${dotfiles_repo##*/}";
-                        : "${dotfiles_sh_repos_dir}/$(( local_dotfiles_repo_count + 1 ))-${repo_user}_${repo_name}"
+                        repo_dir_name="--${repo_user}_${repo_name}";
+                        check_dir=("$dotfiles_sh_repos_dir"/*"$repo_dir_name");
+                        if test -n "${check_dir:-}"; then
+                            { 
+                                : "${check_dir[0]}"
+                            };
+                        else
+                            { 
+                                local_dotfiles_repo_count=("$dotfiles_sh_repos_dir"/*);
+                                local_dotfiles_repo_count="${#local_dotfiles_repo_count[*]}";
+                                : "${dotfiles_sh_repos_dir}/$(( local_dotfiles_repo_count + 1 ))${repo_dir_name}"
+                            };
+                        fi
                     };
                 fi;
                 local source_dir="${SOURCE_DIR:-"$_"}";
-                if test ! -e "$source_dir"; then
+                if test ! -e "${source_dir}"; then
                     { 
                         rm -rf "$source_dir";
                         git clone --filter=tree:0 "$dotfiles_repo" "$source_dir" > /dev/null 2>&1 || :
@@ -1197,4 +1207,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%2419 "$@";
+main@bashbox%23415 "$@";

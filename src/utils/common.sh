@@ -58,7 +58,7 @@ function dotfiles::initialize() {
 	local installation_target="${INSTALL_TARGET:-"$HOME"}";
 	local last_applied_filelist="$installation_target/.last_applied_dotfiles";
 	local dotfiles_repo local_dotfiles_repo_count;
-	local repo_user repo_name source_dir;
+	local repo_user repo_name source_dir repo_dir_name check_dir;
 	mkdir -p "$dotfiles_sh_repos_dir";
 
 	# Clean out any broken symlinks
@@ -81,17 +81,24 @@ function dotfiles::initialize() {
 			: "$dotfiles_repo";
 		} else {
 			# Remote dotfiles repo
-			local_dotfiles_repo_count=("$dotfiles_sh_repos_dir"/*);
-			local_dotfiles_repo_count="${#local_dotfiles_repo_count[*]}";
 
 			repo_user="${dotfiles_repo%/*}" && repo_user="${repo_user##*/}";
 			repo_name="${dotfiles_repo##*/}";
-			
-			: "${dotfiles_sh_repos_dir}/$(( local_dotfiles_repo_count + 1 ))-${repo_user}_${repo_name}";
+			repo_dir_name="--${repo_user}_${repo_name}";
+
+			check_dir=("$dotfiles_sh_repos_dir"/*"$repo_dir_name");
+			if test -n "${check_dir:-}"; then {
+				: "${check_dir[0]}";
+			} else {
+				local_dotfiles_repo_count=("$dotfiles_sh_repos_dir"/*);
+				local_dotfiles_repo_count="${#local_dotfiles_repo_count[*]}";
+				: "${dotfiles_sh_repos_dir}/$(( local_dotfiles_repo_count + 1 ))${repo_dir_name}";
+			} fi
 		} fi
+
 		local source_dir="${SOURCE_DIR:-"$_"}";
 		
-		if test ! -e "$source_dir"; then {
+		if test ! -e "${source_dir}"; then {
 			rm -rf "$source_dir";
 			git clone --filter=tree:0 "$dotfiles_repo" "$source_dir" > /dev/null 2>&1 || :;
 		} fi
