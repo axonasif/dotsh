@@ -18,12 +18,13 @@ function install::userland_tools {
 
 		## You can find packages at https://search.nixos.org/packages
 		local levelone_pkgs=(
-			nixpkgs.tmux
-			nixpkgs.fish
-			nixpkgs.jq
-			nixpkgs.lsof
+			# Installing these from system_packages.sh for now
+			# nixpkgs.tmux
+			# nixpkgs.fish
+			# nixpkgs.jq
 		)
 		local leveltwo_pkgs=(
+			nixpkgs.lsof
 			nixpkgs.hollywood
 			nixpkgs.shellcheck
 			# nixpkgs.rsync
@@ -39,24 +40,23 @@ function install::userland_tools {
 			# nixpkgs.fish
 			nixpkgs.fzf
 			# nixpkgs.gawk
-			# nixpkgs.gh
+			nixpkgs.gh
 			# nixpkgs.htop
 			# nixpkgs.iftop
 			# nixpkgs.jq
 			nixpkgs.neofetch
-			# nixpkgs.neovim
-			# nixpkgs.p7zip
+			nixpkgs.neovim
+			nixpkgs.p7zip
 			# nixpkgs.ranger
 			# nixpkgs.reattach-to-user-namespace
 			nixpkgs.ripgrep
 			nixpkgs.shellcheck
-			# nixpkgs.tmux
 			nixpkgs.tree
-			# nixpkgs.yq
+			nixpkgs.yq
 			nixpkgs.zoxide
 			# nixpkgs.zsh
 		)
-		return # DEBUG
+		# return # DEBUG
 		for level in levelone_pkgs leveltwo_pkgs; do {
 			declare -n ref="$level";
 			if test -n "${ref:-}"; then {

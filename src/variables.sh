@@ -26,3 +26,8 @@ declare -r tmux_init_lock="/tmp/.tmux.init";
 # Fish specific
 declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
 
+# Dotfiles specific
+declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
+declare -r dotfiles_sh_repos_dir="$dotfiles_sh_home/repos";
+
+

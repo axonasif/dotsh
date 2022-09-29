@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11783 () 
+main@bashbox%15000 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -49,13 +49,13 @@ main@bashbox%11783 ()
     };
     \command unalias -a || exit;
     set -eEuT -o pipefail;
-    shopt -s inherit_errexit expand_aliases;
+    shopt -sq inherit_errexit expand_aliases nullglob;
     trap 'exit' USR1;
     trap 'BB_ERR_MSG="UNCAUGHT EXCEPTION" log::error "$BASH_COMMAND" || process::self::exit' ERR;
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%11783';
+    ___MAIN_FUNCNAME='main@bashbox%15000';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -88,14 +88,6 @@ main@bashbox%11783 ()
     { 
         ( local container_image="axonasif/dotfiles-testing:latest";
         source "$_arg_path/src/utils/common.sh";
-        rm -f "$_arg_path/.last_applied";
-        local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
-        if test -v DOTFILES_PRIMARY_REPO; then
-            { 
-                git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo"
-            };
-        fi;
-        log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
         cmd="bashbox build --release";
         log::info "Running '$cmd";
         $cmd;
@@ -120,7 +112,12 @@ main@bashbox%11783 ()
                     docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro)
                 };
             fi;
-            docker_args+=(-e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo" -v "$offline_dotfiles_repo:$offline_dotfiles_repo");
+            local dotfiles_sh_dir="$HOME/.dotfiles-sh";
+            if test -e "$dotfiles_sh_dir"; then
+                { 
+                    docker_args+=(-v "$dotfiles_sh_repos_dir:$dotfiles_sh_dir")
+                };
+            fi;
             if is::gitpod; then
                 { 
                     docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
@@ -253,31 +250,11 @@ main@bashbox%11783 ()
     };
     function dotfiles::initialize () 
     { 
-        local _dotfiles_repo="${REPO:-"https://github.com/axonasif/dotfiles.public"}";
-        if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then
-            { 
-                : "$_dotfiles_repo"
-            };
-        else
-            if is::gitpod; then
-                { 
-                    : "/tmp/.dotfiles_repo.${RANDOM}"
-                };
-            else
-                { 
-                    : "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}"
-                };
-            fi;
-        fi;
-        local _generated_source_dir="$_";
-        local _source_dir="${SOURCE_DIR:-"$_generated_source_dir"}";
-        local _installation_target="${1:-"$HOME"}";
-        local last_applied_filelist="$_installation_target/.last_applied";
-        if test ! -e "$_source_dir"; then
-            { 
-                git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :
-            };
-        fi;
+        local installation_target="${INSTALL_TARGET:-"$HOME"}";
+        local last_applied_filelist="$installation_target/.last_applied_dotfiles";
+        local dotfiles_repo local_dotfiles_repo_count;
+        local repo_user repo_name source_dir;
+        mkdir -p "$dotfiles_sh_repos_dir";
         if test -e "$last_applied_filelist"; then
             { 
                 while read -r file; do
@@ -289,48 +266,73 @@ main@bashbox%11783 ()
                             };
                         fi
                     };
-                done < "$last_applied_filelist"
+                done < "$last_applied_filelist";
+                printf '' > "$last_applied_filelist"
             };
         fi;
-        if test -e "$_source_dir"; then
+        for dotfiles_repo in "$@";
+        do
             { 
-                local _dotfiles_ignore="$_source_dir/.dotfilesignore";
-                local _thing_path;
-                local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'$_source_dir/src/*'" -not -path "'$_source_dir/target/*'" -not -path "'$_source_dir/Bashbox.meta'" -not -path "'$_source_dir/install.sh'");
-                if test -e "$_dotfiles_ignore"; then
+                if ! [[ "$dotfiles_repo" =~ (https?|git):// ]]; then
                     { 
-                        while read -r _ignore_thing; do
-                            { 
-                                if [[ ! "$_ignore_thing" =~ ^\# ]]; then
-                                    { 
-                                        _ignore_thing="$_source_dir/${_ignore_thing}";
-                                        _ignore_thing="${_ignore_thing//\/\//\/}";
-                                        _ignore_list+=(-not -path "$_ignore_thing")
-                                    };
-                                fi;
-                                unset _ignore_thing
-                            };
-                        done < "$_dotfiles_ignore"
+                        : "$dotfiles_repo"
+                    };
+                else
+                    { 
+                        local_dotfiles_repo_count=("$dotfiles_sh_repos_dir"/*);
+                        local_dotfiles_repo_count="${#local_dotfiles_repo_count[*]}";
+                        repo_user="${dotfiles_repo%/*}" && repo_user="${repo_user##*/}";
+                        repo_name="${dotfiles_repo##*/}";
+                        : "${dotfiles_sh_repos_dir}/$(( local_dotfiles_repo_count + 1 ))-${repo_user}_${repo_name}"
                     };
                 fi;
-                printf '' > "$last_applied_filelist";
-                local _target_file _target_dir;
-                while read -r _file; do
+                local source_dir="${SOURCE_DIR:-"$_"}";
+                if test ! -e "$source_dir"; then
                     { 
-                        _target_file="$_installation_target/${_file#${_source_dir}/}";
-                        _target_dir="${_target_file%/*}";
-                        if test ! -d "$_target_dir"; then
+                        rm -rf "$source_dir";
+                        git clone --filter=tree:0 "$dotfiles_repo" "$source_dir" > /dev/null 2>&1 || :
+                    };
+                fi;
+                if test -e "$source_dir"; then
+                    { 
+                        local _dotfiles_ignore="$source_dir/.dotfilesignore";
+                        local _thing_path;
+                        local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'*/.gitpod.yml'" -not -path "'$source_dir/src/*'" -not -path "'$source_dir/target/*'" -not -path "'$source_dir/Bashbox.meta'" -not -path "'$source_dir/install.sh'");
+                        if test -e "$_dotfiles_ignore"; then
                             { 
-                                mkdir -p "$_target_dir"
+                                while read -r _ignore_thing; do
+                                    { 
+                                        if [[ ! "$_ignore_thing" =~ ^\# ]]; then
+                                            { 
+                                                _ignore_thing="$source_dir/${_ignore_thing}";
+                                                _ignore_thing="${_ignore_thing//\/\//\/}";
+                                                _ignore_list+=(-not -path "$_ignore_thing")
+                                            };
+                                        fi;
+                                        unset _ignore_thing
+                                    };
+                                done < "$_dotfiles_ignore"
                             };
                         fi;
-                        ln -sf "$_file" "$_target_file";
-                        printf '%s\n' "$_target_file" >> "$last_applied_filelist";
-                        unset _target_file _target_dir
+                        local _target_file _target_dir;
+                        while read -r _file; do
+                            { 
+                                _target_file="$installation_target/${_file#${source_dir}/}";
+                                _target_dir="${_target_file%/*}";
+                                if test ! -d "$_target_dir"; then
+                                    { 
+                                        mkdir -p "$_target_dir"
+                                    };
+                                fi;
+                                ln -sf "$_file" "$_target_file";
+                                printf '%s\n' "$_target_file" >> "$last_applied_filelist";
+                                unset _target_file _target_dir
+                            };
+                        done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$source_dir" -type f)
                     };
-                done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f)
+                fi
             };
-        fi
+        done
     };
     function await::until_true () 
     { 
@@ -605,10 +607,10 @@ main@bashbox%11783 ()
             };
         done
     };
-    levelone_syspkgs=(tmux fish jq);
-    leveltwo_syspkgs=();
     function install::system_packages () 
     { 
+        levelone_syspkgs=(tmux fish jq);
+        leveltwo_syspkgs=();
         log::info "Installing system packages";
         { 
             sudo apt-get update;
@@ -640,9 +642,8 @@ main@bashbox%11783 ()
             };
         fi;
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
-        local levelone_pkgs=(nixpkgs.tmux nixpkgs.fish nixpkgs.jq nixpkgs.lsof);
-        local leveltwo_pkgs=(nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.neofetch nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.zoxide);
-        return;
+        local levelone_pkgs=();
+        local leveltwo_pkgs=(nixpkgs.lsof nixpkgs.hollywood nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.gh nixpkgs.neofetch nixpkgs.neovim nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.yq nixpkgs.zoxide);
         for level in levelone_pkgs leveltwo_pkgs;
         do
             { 
@@ -679,57 +680,12 @@ main@bashbox%11783 ()
             };
         fi
     };
-    function install::gh () 
-    { 
-        local tarball_url gp_credentials;
-        if ! command -v gh > /dev/null; then
-            { 
-                log::info "Installing gh CLI and logging in";
-                tarball_url="$(curl -Ls "https://api.github.com/repos/cli/cli/releases/latest" 			| grep -o 'https://github.com/.*/releases/download/.*/gh_.*linux_amd64.tar.gz')";
-                curl -Ls "$tarball_url" | sudo tar -C /usr --strip-components=1 -xpzf -
-            };
-        fi;
-        if is::gitpod; then
-            { 
-                await::for_vscode_ide_start;
-                if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' 'BEGIN{RS=""} {print $2}')"; then
-                    { 
-                        tries=1;
-                        until printf '%s\n' "${token}" | gh auth login --with-token &> /dev/null; do
-                            { 
-                                if test $tries -gt 20; then
-                                    { 
-                                        log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials" 1 || exit;
-                                        break
-                                    };
-                                fi;
-                                ((tries++));
-                                sleep 1;
-                                continue
-                            };
-                        done
-                    };
-                else
-                    { 
-                        log::error "Failed to get auth token for gh" || exit 1
-                    };
-                fi
-            };
-        fi
-    };
     function install::dotfiles () 
     { 
-        log::info "Installing public dotfiles";
-        REPO="${DOTFILES_PRIMARY_REPO:-}" dotfiles::initialize;
+        log::info "Installing dotfiles";
+        local dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" https://github.com/axonasif/dotfiles.private);
+        dotfiles::initialize "${dotfiles_repos[@]}";
         await::signal send install_dotfiles
-    };
-    function install::neovim () 
-    { 
-        log::info "Installing and setting up Neovim";
-        curl -sL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" | sudo tar -C /usr --strip-components=1 -xpzf - > /dev/null 2>&1;
-        curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null 2>&1;
-        await::signal get config_tmux;
-        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
     };
     function config::docker_auth () 
     { 
@@ -1134,6 +1090,54 @@ CMDC
             fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
         } > /dev/null 2>&1
     };
+    function config::gh () 
+    { 
+        local tarball_url gp_credentials;
+        await::until_true command -v gh > /dev/null;
+        if is::gitpod; then
+            { 
+                await::for_vscode_ide_start;
+                if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then
+                    { 
+                        local tries=1;
+                        until printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token &> /dev/null; do
+                            { 
+                                if test $tries -gt 20; then
+                                    { 
+                                        log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
+                                        break
+                                    };
+                                fi;
+                                ((tries++));
+                                sleep 1;
+                                continue
+                            };
+                        done
+                    };
+                else
+                    { 
+                        log::error "Failed to get auth token for gh" || exit 1
+                    };
+                fi
+            };
+        fi
+    };
+    function config::neovim () 
+    { 
+        log::info "Setting up Neovim";
+        await::until_true command -v nvim > /dev/null;
+        if test ! -e "$HOME/.config/lvim"; then
+            { 
+                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null 2>&1
+            };
+        fi;
+        if is::gitpod || is::codespaces; then
+            { 
+                await::signal get config_tmux;
+                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
+            };
+        fi
+    };
     export PATH="$PATH:$HOME/.nix-profile/bin";
     declare -r workspace_dir="$(
 	if is::gitpod; then {
@@ -1154,6 +1158,8 @@ CMDC
     declare -r tmux_first_window_num="1";
     declare -r tmux_init_lock="/tmp/.tmux.init";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
+    declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
+    declare -r dotfiles_sh_repos_dir="$dotfiles_sh_home/repos";
     function main () 
     { 
         if is::codespaces; then
@@ -1173,8 +1179,8 @@ CMDC
                 install::system_packages & disown;
                 install::userland_tools & disown;
                 config::docker_auth & disown;
-                install::neovim & disown;
-                install::gh & disown;
+                config::neovim & disown;
+                config::gh & disown;
                 install::ranger & disown
             };
         fi;
@@ -1191,4 +1197,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%11783 "$@";
+main@bashbox%15000 "$@";

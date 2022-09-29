@@ -35,14 +35,13 @@ bashbox::build::before() {
 live() (
 	local container_image="axonasif/dotfiles-testing:latest";
 	source "$_arg_path/src/utils/common.sh";
-	rm -f "$_arg_path/.last_applied";
 
-	local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
-	if test -v DOTFILES_PRIMARY_REPO; then {
-		git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo";
-	} fi
+	# local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
+	# if test -v DOTFILES_PRIMARY_REPO; then {
+	# 	git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo";
+	# } fi
 
-	log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
+	# log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
 
 	# if test "$1" == "r"; then {
 		cmd="bashbox build --release";
@@ -95,11 +94,12 @@ live() (
 			)
 		} fi
 		
-		docker_args+=(
-			# Use offline dotfiles repo
-			-e DOTFILES_PRIMARY_REPO="$offline_dotfiles_repo"
-			-v "$offline_dotfiles_repo:$offline_dotfiles_repo"
-		)
+		local dotfiles_sh_dir="$HOME/.dotfiles-sh";
+		if test -e "$dotfiles_sh_dir"; then {
+			docker_args+=(
+				-v "$dotfiles_sh_repos_dir:$dotfiles_sh_dir"
+			)
+		} fi
 
 		if is::gitpod; then {
 			docker_args+=(

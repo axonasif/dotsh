@@ -1,17 +1,14 @@
-levelone_syspkgs=(
-	# It is adviced to add very less packages in this array
-	tmux
-	fish
-	jq
-	
-)
-
-leveltwo_syspkgs=(
-	# Add big packages in this array
-
-)
-
 function install::system_packages {
+	levelone_syspkgs=(
+		# It is adviced to add very less packages in this array
+		tmux
+		fish
+		jq
+	)
+
+	leveltwo_syspkgs=(
+		# Add big packages in this array
+	)
 
 	# return # DEBUG
     log::info "Installing system packages";

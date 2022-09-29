@@ -55,25 +55,11 @@ function vscode::add_settings() {
 }
 
 function dotfiles::initialize() {
-	local _dotfiles_repo="${REPO:-"https://github.com/axonasif/dotfiles.public"}";
-
-	if ! [[ "$_dotfiles_repo" =~ (https?|git):// ]]; then {
-		# Local dotfiles repo
-		: "$_dotfiles_repo";
-	} elif is::gitpod; then {
-		: "/tmp/.dotfiles_repo.${RANDOM}";
-	} else {
-		# TODO: Use repo username as well
-		: "$HOME/.dotfiles-sh_${_dotfiles_repo##*/}";
-	} fi
-	local _generated_source_dir="$_";
-	local _source_dir="${SOURCE_DIR:-"$_generated_source_dir"}";
-	local _installation_target="${1:-"$HOME"}";
-	local last_applied_filelist="$_installation_target/.last_applied";
-	
-	if test ! -e "$_source_dir"; then {
-		git clone --filter=tree:0 "$_dotfiles_repo" "$_source_dir" > /dev/null 2>&1 || :;
-	} fi
+	local installation_target="${INSTALL_TARGET:-"$HOME"}";
+	local last_applied_filelist="$installation_target/.last_applied_dotfiles";
+	local dotfiles_repo local_dotfiles_repo_count;
+	local repo_user repo_name source_dir;
+	mkdir -p "$dotfiles_sh_repos_dir";
 
 	# Clean out any broken symlinks
 	if test -e "$last_applied_filelist"; then {
@@ -83,56 +69,79 @@ function dotfiles::initialize() {
 				rm -f "$file" || :;
 			} fi
 		} done < "$last_applied_filelist"
-	} fi
-	
-	if test -e "$_source_dir" ; then {
-		# Process .dotfiles ignore
-		local _dotfiles_ignore="$_source_dir/.dotfilesignore";
-		local _thing_path;
-		local _ignore_list=(
-			-not -path "'*/.git/*'"
-			-not -path "'*/.dotfilesignore'"
-			# -not -path "'*/.gitpod.yml'"
-			-not -path "'$_source_dir/src/*'"
-			-not -path "'$_source_dir/target/*'"
-			-not -path "'$_source_dir/Bashbox.meta'"
-			-not -path "'$_source_dir/install.sh'"
-		);
 
-		if test -e "$_dotfiles_ignore"; then {
-			while read -r _ignore_thing; do {
-				if [[ ! "$_ignore_thing" =~ ^\# ]]; then {
-					_ignore_thing="$_source_dir/${_ignore_thing}";
-					_ignore_thing="${_ignore_thing//\/\//\/}";
-					_ignore_list+=(-not -path "$_ignore_thing");
-				} fi
-				unset _ignore_thing;
-				# _thing_path="$(readlink -f "$_source_dir/$_ignore_thing")";
-				# if test -f "$_thing_path"; then {
-				#     _ignore_list+=("-not -path '$_thing_path'");
-				# } elif test -d "$_thing_path"; then {
-				#     _ignore_list+=("-not -path '/$_thing_path/*'");
-				# } fi
-			} done < "$_dotfiles_ignore"
+		# Reset last_applied_filelist
+		printf '' > "$last_applied_filelist";
+	} fi
+
+	for dotfiles_repo in "$@"; do {
+
+		if ! [[ "$dotfiles_repo" =~ (https?|git):// ]]; then {
+			# Local dotfiles repo
+			: "$dotfiles_repo";
+		} else {
+			# Remote dotfiles repo
+			local_dotfiles_repo_count=("$dotfiles_sh_repos_dir"/*);
+			local_dotfiles_repo_count="${#local_dotfiles_repo_count[*]}";
+
+			repo_user="${dotfiles_repo%/*}" && repo_user="${repo_user##*/}";
+			repo_name="${dotfiles_repo##*/}";
+			
+			: "${dotfiles_sh_repos_dir}/$(( local_dotfiles_repo_count + 1 ))-${repo_user}_${repo_name}";
+		} fi
+		local source_dir="${SOURCE_DIR:-"$_"}";
+		
+		if test ! -e "$source_dir"; then {
+			rm -rf "$source_dir";
+			git clone --filter=tree:0 "$dotfiles_repo" "$source_dir" > /dev/null 2>&1 || :;
 		} fi
 
-		# pushd "$_source_dir" 1>/dev/null;
+		
+		if test -e "$source_dir" ; then {
+			# Process .dotfiles ignore
+			local _dotfiles_ignore="$source_dir/.dotfilesignore";
+			local _thing_path;
+			local _ignore_list=(
+				-not -path "'*/.git/*'"
+				-not -path "'*/.dotfilesignore'"
+				-not -path "'*/.gitpod.yml'"
+				-not -path "'$source_dir/src/*'"
+				-not -path "'$source_dir/target/*'"
+				-not -path "'$source_dir/Bashbox.meta'"
+				-not -path "'$source_dir/install.sh'"
+			);
 
-	# Reset last_applied_filelist
-		printf '' > "$last_applied_filelist";
-		local _target_file _target_dir;
-		while read -r _file ; do {
-			_target_file="$_installation_target/${_file#${_source_dir}/}";
-			_target_dir="${_target_file%/*}";
-			if test ! -d "$_target_dir"; then {
-				mkdir -p "$_target_dir";
+			if test -e "$_dotfiles_ignore"; then {
+				while read -r _ignore_thing; do {
+					if [[ ! "$_ignore_thing" =~ ^\# ]]; then {
+						_ignore_thing="$source_dir/${_ignore_thing}";
+						_ignore_thing="${_ignore_thing//\/\//\/}";
+						_ignore_list+=(-not -path "$_ignore_thing");
+					} fi
+					unset _ignore_thing;
+					# _thing_path="$(readlink -f "$source_dir/$_ignore_thing")";
+					# if test -f "$_thing_path"; then {
+					#     _ignore_list+=("-not -path '$_thing_path'");
+					# } elif test -d "$_thing_path"; then {
+					#     _ignore_list+=("-not -path '/$_thing_path/*'");
+					# } fi
+				} done < "$_dotfiles_ignore"
 			} fi
-			# echo "s: $_file"
-			# echo "t: $_target_file"
-			ln -sf "$_file" "$_target_file";
-			printf '%s\n' "$_target_file" >> "$last_applied_filelist";
-			unset _target_file _target_dir;
-		}  done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$_source_dir" -type f);
-		# popd 1>/dev/null;
-	} fi
+
+			local _target_file _target_dir;
+			while read -r _file ; do {
+				_target_file="$installation_target/${_file#${source_dir}/}";
+				_target_dir="${_target_file%/*}";
+
+				if test ! -d "$_target_dir"; then {
+					mkdir -p "$_target_dir";
+				} fi
+
+				ln -sf "$_file" "$_target_file";
+				printf '%s\n' "$_target_file" >> "$last_applied_filelist";
+				unset _target_file _target_dir;
+			}  done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$source_dir" -type f);
+
+		} fi
+	} done
 }

@@ -1,3 +1,4 @@
+# Used for live testing (i.e 'bashbox live')
 FROM gitpod/workspace-base:latest
 
 ENV USER=gitpod

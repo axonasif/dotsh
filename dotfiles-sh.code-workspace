@@ -1,6 +1,6 @@
 {
 	"folders": [
 		{ "path": "." },
-		{ "path": "../dotfiles.public" }
+		{ "path": "/home/gitpod/.dotfiles-sh" }
 	]
 }

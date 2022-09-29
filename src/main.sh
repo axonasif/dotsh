@@ -40,10 +40,10 @@ function main() {
 		config::docker_auth & disown;
 
 		# Configure neovim
-		install::neovim & disown;
+		config::neovim & disown;
 		
 		# Install and login into gh
-		install::gh & disown;
+		config::gh & disown;
 
 		# Ranger + plugins
 		install::ranger & disown;
