@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15000 () 
+main@bashbox%2419 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%15000 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%15000';
+    ___MAIN_FUNCNAME='main@bashbox%2419';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -115,7 +115,7 @@ main@bashbox%15000 ()
             local dotfiles_sh_dir="$HOME/.dotfiles-sh";
             if test -e "$dotfiles_sh_dir"; then
                 { 
-                    docker_args+=(-v "$dotfiles_sh_repos_dir:$dotfiles_sh_dir")
+                    docker_args+=(-v "$dotfiles_sh_dir:$dotfiles_sh_dir")
                 };
             fi;
             if is::gitpod; then
@@ -683,7 +683,7 @@ main@bashbox%15000 ()
     function install::dotfiles () 
     { 
         log::info "Installing dotfiles";
-        local dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" https://github.com/axonasif/dotfiles.private);
+        local dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}");
         dotfiles::initialize "${dotfiles_repos[@]}";
         await::signal send install_dotfiles
     };
@@ -1197,4 +1197,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%15000 "$@";
+main@bashbox%2419 "$@";

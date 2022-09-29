@@ -97,7 +97,7 @@ live() (
 		local dotfiles_sh_dir="$HOME/.dotfiles-sh";
 		if test -e "$dotfiles_sh_dir"; then {
 			docker_args+=(
-				-v "$dotfiles_sh_repos_dir:$dotfiles_sh_dir"
+				-v "$dotfiles_sh_dir:$dotfiles_sh_dir"
 			)
 		} fi
 

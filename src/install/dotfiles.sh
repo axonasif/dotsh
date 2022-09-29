@@ -4,7 +4,7 @@ function install::dotfiles() {
     # List all of your dotfiles repo links that you want to apply in the array below:
     local dotfiles_repos=(
         "${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}" # You can remove this line if you like
-        https://github.com/axonasif/dotfiles.private
+        # https://github.com/axonasif/dotfiles.private
     )
 
     dotfiles::initialize "${dotfiles_repos[@]}";
