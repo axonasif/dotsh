@@ -180,6 +180,16 @@ live() (
 			printf '%s\n' "$confirmed_times" > "$confirmed_statfile";
 		} fi
 
+		if is::gitpod; then {
+			local lckfile="/workspace/.dinit";
+			if test ! -e "$lckfile"; then {
+				printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
+				until test -e "$lckfile"; do {
+					sleep 0.5;
+				} done
+			} fi
+		} fi
+
 		docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
 	}
 

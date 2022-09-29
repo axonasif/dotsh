@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23415 () 
+main@bashbox%21764 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%23415 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23415';
+    ___MAIN_FUNCNAME='main@bashbox%21764';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -162,6 +162,21 @@ main@bashbox%23415 ()
                     printf '\n';
                     read -r -p '>>> Press Enter/return to continue execution of "bashbox live" command';
                     printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
+                };
+            fi;
+            if is::gitpod; then
+                { 
+                    local lckfile="/workspace/.dinit";
+                    if test ! -e "$lckfile"; then
+                        { 
+                            printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
+                            until test -e "$lckfile"; do
+                                { 
+                                    sleep 0.5
+                                };
+                            done
+                        };
+                    fi
                 };
             fi;
             docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")"
@@ -1110,7 +1125,8 @@ CMDC
                 if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then
                     { 
                         local tries=1;
-                        until printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token &> /dev/null; do
+                        local token="${BASH_REMATCH[1]}";
+                        until printf '%s\n' "$token" | gh auth login --with-token > /dev/null 2>&1; do
                             { 
                                 if test $tries -gt 20; then
                                     { 
@@ -1207,4 +1223,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%23415 "$@";
+main@bashbox%21764 "$@";

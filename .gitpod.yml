@@ -4,8 +4,8 @@ workspaceLocation: dotfiles-sh/dotfiles-sh.code-workspace
 
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
-  # - name: Cache workspace images
-  #   init: docker pull gitpod/workspace-full:latest; touch /workspace/.dinit; exit;
+  - name: Cache workspace images
+    command: docker pull axonasif/dotfiles-testing:latest; touch /workspace/.dinit; exit;
 
   - name: Compile project
     command: |
@@ -25,14 +25,7 @@ tasks:
 
   - name: Live test dotfiles
     command: |
-      printf 'info: %s\n' "Waiting for the 'init' docker-pull to complete ...";
-      until test -e /workspace/.binit; do {
-        sleep 0.5;
-        continue;
-      } done
       source "$HOME/.bashbox/env";
-
-
       bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
 
 vscode:

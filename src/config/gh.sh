@@ -9,7 +9,8 @@ function config::gh() {
 		await::for_vscode_ide_start;
 		if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then {
 			local tries=1;
-			until printf '%s\n' "${BASH_REMATCH[1]}" | gh auth login --with-token &>/dev/null; do {
+			local token="${BASH_REMATCH[1]}"
+			until printf '%s\n' "$token" | gh auth login --with-token >/dev/null 2>&1; do {
 				if test $tries -gt 20; then {
 					log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
 					break;
