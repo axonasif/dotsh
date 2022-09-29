@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21764 () 
+main@bashbox%20379 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21764 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21764';
+    ___MAIN_FUNCNAME='main@bashbox%20379';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -941,7 +941,7 @@ main@bashbox%21764 ()
 					"path": "bash",
 					"args": [
 						"-c",
-						"until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -1011,8 +1011,13 @@ main@bashbox%21764 ()
                         fi
                     };
                     local name cmd arr_elem=0;
-                    until { 
-                        ! cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ! cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"
+                    while { 
+                        local success=1;
+                        cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success++)) || :;
+                        cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success++)) || :;
+                        if test "$success" -eq 1; then
+                            unset success && false;
+                        fi
                     }; do
                         { 
                             if ! name="$(jqw ".[${arr_elem}].name")"; then
@@ -1223,4 +1228,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%21764 "$@";
+main@bashbox%20379 "$@";
