@@ -60,7 +60,7 @@ function install::userland_tools {
 		for level in levelone_pkgs leveltwo_pkgs; do {
 			declare -n ref="$level";
 			if test -n "${ref:-}"; then {
-				nix-env -iA "${ref[@]}" >/dev/null 2>&1
+				nix-env -iA "${ref[@]}" #>/dev/null 2>&1
 			} fi
 		} done
 	) & disown;

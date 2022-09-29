@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%20379 () 
+main@bashbox%29216 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%20379 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%20379';
+    ___MAIN_FUNCNAME='main@bashbox%29216';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -675,7 +675,7 @@ main@bashbox%20379 ()
                 declare -n ref="$level";
                 if test -n "${ref:-}"; then
                     { 
-                        nix-env -iA "${ref[@]}" > /dev/null 2>&1
+                        nix-env -iA "${ref[@]}"
                     };
                 fi
             };
@@ -941,7 +941,7 @@ main@bashbox%20379 ()
 					"path": "bash",
 					"args": [
 						"-c",
-						"until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -1011,13 +1011,8 @@ main@bashbox%20379 ()
                         fi
                     };
                     local name cmd arr_elem=0;
-                    while { 
-                        local success=1;
-                        cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success++)) || :;
-                        cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success++)) || :;
-                        if test "$success" -eq 1; then
-                            unset success && false;
-                        fi
+                    until { 
+                        ! cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ! cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"
                     }; do
                         { 
                             if ! name="$(jqw ".[${arr_elem}].name")"; then
@@ -1228,4 +1223,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%20379 "$@";
+main@bashbox%29216 "$@";
