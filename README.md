@@ -1,6 +1,6 @@
 # Introduction
 
-This is a wannabe asynchronous dotfiles _installer_ intended for use on Gitpod and locally. Batteries included!
+An asynchronous dotfiles _installer_ intended for use on Gitpod and locally. Batteries included!
 
 Highlights:
 
