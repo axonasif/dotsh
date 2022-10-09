@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%31199 () 
+main@bashbox%15607 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%31199 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%31199';
+    ___MAIN_FUNCNAME='main@bashbox%15607';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -89,7 +89,7 @@ main@bashbox%31199 ()
         ( local container_image="axonasif/dotfiles-testing:latest";
         source "$_arg_path/src/utils/common.sh";
         cmd="bashbox build --release";
-        log::info "Running '$cmd";
+        log::info "Running $cmd";
         $cmd;
         local duplicate_workspace_root="/tmp/.mrroot";
         local duplicate_repo_root="$duplicate_workspace_root/${_arg_path##*/}";
@@ -668,7 +668,7 @@ main@bashbox%31199 ()
         fi;
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
         local levelone_pkgs=();
-        local leveltwo_pkgs=(nixpkgs.lsof nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.gh nixpkgs.neofetch nixpkgs.neovim nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.yq nixpkgs.zoxide);
+        local leveltwo_pkgs=(nixpkgs.lsof nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.gh nixpkgs.neofetch nixpkgs.neovim nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.jq nixpkgs.zoxide);
         for level in levelone_pkgs leveltwo_pkgs;
         do
             { 
@@ -1223,4 +1223,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%31199 "$@";
+main@bashbox%15607 "$@";

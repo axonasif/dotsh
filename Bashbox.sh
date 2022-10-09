@@ -18,6 +18,7 @@ bashbox::build::after() {
 }
 
 bashbox::build::before() {
+	# TODO: Port to std
 	local git_dir="$_arg_path/.git";
 	local hooks_dir="$git_dir/hooks";
 	local pre_commit_hook="$hooks_dir/pre-commit";
@@ -45,7 +46,7 @@ live() (
 
 	# if test "$1" == "r"; then {
 		cmd="bashbox build --release";
-		log::info "Running '$cmd";
+		log::info "Running $cmd";
 		$cmd;
 	# } fi
 

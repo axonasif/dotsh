@@ -51,7 +51,8 @@ function install::userland_tools {
 			nixpkgs.ripgrep
 			nixpkgs.shellcheck
 			nixpkgs.tree
-			nixpkgs.yq
+			# nixpkgs.yq
+			nixpkgs.jq
 			nixpkgs.zoxide
 			# nixpkgs.zsh
 		)
