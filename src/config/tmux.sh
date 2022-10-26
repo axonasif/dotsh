@@ -246,14 +246,23 @@ function config::tmux() {
 	# Lock on tmux
 	local tmux_exec_path="/usr/bin/tmux";
 	log::info "Setting up tmux";
-	KEEP="true" await::create_shim "$tmux_exec_path";
+	if is::gitpod || is::codespaces; then {
+		KEEP="true" await::create_shim "$tmux_exec_path";
+	} else {
+		await::until_true command -v tmux 1>/dev/null;
+	} fi
 
 	{
 		# Extra steps
-		config::tmux::set_tmux_as_default_vscode_shell & disown;
-		config::tmux::hijack_gitpod_task_terminals &
-		if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-			tmux::start_vimpod & disown;
+		if is::gitpod || is::codespaces; then {
+			config::tmux::set_tmux_as_default_vscode_shell & disown;
+		} fi
+		
+		if is::gitpod; then {
+			if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+				tmux::start_vimpod & disown;
+			} fi
+			config::tmux::hijack_gitpod_task_terminals &
 		} fi
 
 
@@ -264,8 +273,10 @@ function config::tmux() {
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
 		} fi
 
-		local tmux_default_shell;
-		tmux::create_session;
+		if is::gitpod || is::codespaces; then {
+			local tmux_default_shell;
+			tmux::create_session;
+		} fi
 
 		(
 			if is::gitpod; then {

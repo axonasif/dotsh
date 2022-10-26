@@ -5,7 +5,7 @@ CODENAME="dotfiles"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
-	std::HEAD
+	std::193c820
 )
 REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"
