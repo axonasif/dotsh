@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15607 () 
+main@bashbox%2814 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,12 +55,12 @@ main@bashbox%15607 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%15607';
+    ___MAIN_FUNCNAME='main@bashbox%2814';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::HEAD);
+    ___self_DEPENDENCIES=(std::193c820);
     ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -192,7 +192,6 @@ main@bashbox%15607 ()
     };
     function sleep () 
     { 
-        local IFS;
         [[ -n "${_snore_fd:-}" ]] || { 
             exec {_snore_fd}<> <(:)
         } 2> /dev/null || { 
@@ -202,7 +201,476 @@ main@bashbox%15607 ()
             exec {_snore_fd}<> "$fifo";
             rm "$fifo"
         };
-        read ${1:+-t "$1"} -u $_snore_fd || :
+        IFS='' read ${1:+-t "$1"} -u $_snore_fd || :
+    };
+    function std::sys::info::cache_uname () 
+    { 
+        if test -v kernel_name; then
+            { 
+                return
+            };
+        fi;
+        IFS=" " read -ra uname <<< "$(uname -srm)";
+        kernel_name="${uname[0]}";
+        kernel_version="${uname[1]}";
+        kernel_machine="${uname[2]}";
+        if [[ "$kernel_name" == "Darwin" ]]; then
+            export SYSTEM_VERSION_COMPAT=0;
+            IFS='
+' read -d "" -ra sw_vers <<< "$(awk -F'<|>' '/key|string/ {print $3}'                             "/System/Library/CoreServices/SystemVersion.plist")";
+            for ((i=0; i<${#sw_vers[@]}; i+=2))
+            do
+                case ${sw_vers[i]} in 
+                    ProductName)
+                        darwin_name=${sw_vers[i+1]}
+                    ;;
+                    ProductVersion)
+                        osx_version=${sw_vers[i+1]}
+                    ;;
+                    ProductBuildVersion)
+                        osx_build=${sw_vers[i+1]}
+                    ;;
+                esac;
+            done;
+        fi
+    };
+    function std::sys::info::cache_os () 
+    { 
+        if test -v os; then
+            { 
+                return
+            };
+        fi;
+        std::sys::info::cache_uname;
+        case $kernel_name in 
+            Darwin)
+                os=$darwin_name
+            ;;
+            SunOS)
+                os=Solaris
+            ;;
+            Haiku)
+                os=Haiku
+            ;;
+            MINIX)
+                os=MINIX
+            ;;
+            AIX)
+                os=AIX
+            ;;
+            IRIX*)
+                os=IRIX
+            ;;
+            FreeMiNT)
+                os=FreeMiNT
+            ;;
+            Linux | GNU*)
+                os=Linux
+            ;;
+            *BSD | DragonFly | Bitrig)
+                os=BSD
+            ;;
+            CYGWIN* | MSYS* | MINGW*)
+                os=Windows
+            ;;
+            *)
+                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." 1>&2;
+                printf '%s\n' "Open an issue on GitHub to add support for your OS." 1>&2;
+                return 1
+            ;;
+        esac
+    };
+    function trim_leading_trailing () 
+    { 
+        local _stream="${1:-}";
+        local _stdin;
+        if test -z "${_stream}"; then
+            { 
+                read -r _stdin;
+                _stream="$_stdin"
+            };
+        fi;
+        _stream="${_stream#"${_stream%%[![:space:]]*}"}";
+        _stream="${_stream%"${_stream##*[![:space:]]}"}";
+        printf '%s\n' "$_stream"
+    };
+    function trim_string () 
+    { 
+        : "${1#"${1%%[![:space:]]*}"}";
+        : "${_%"${_##*[![:space:]]}"}";
+        printf '%s\n' "$_"
+    };
+    function trim_all () 
+    { 
+        set -f;
+        set -- $*;
+        printf '%s\n' "$*";
+        set +f
+    };
+    function trim_quotes () 
+    { 
+        : "${1//\'}";
+        printf '%s\n' "${_//\"}"
+    };
+    function std::sys::info::cache_distro () 
+    { 
+        if test -v distro; then
+            { 
+                return
+            };
+        fi;
+        std::sys::info::cache_os;
+        : "${distro_shorthand:=on}";
+        case $os in 
+            Linux | BSD | MINIX)
+                if [[ -f /bedrock/etc/bedrock-release && -z $BEDROCK_RESTRICT ]]; then
+                    case $distro_shorthand in 
+                        on | tiny)
+                            distro="Bedrock Linux"
+                        ;;
+                        *)
+                            distro=$(< /bedrock/etc/bedrock-release)
+                        ;;
+                    esac;
+                else
+                    if [[ -f /etc/redstar-release ]]; then
+                        case $distro_shorthand in 
+                            on | tiny)
+                                distro="Red Star OS"
+                            ;;
+                            *)
+                                distro="Red Star OS $(awk -F'[^0-9*]' '$0=$2' /etc/redstar-release)"
+                            ;;
+                        esac;
+                    else
+                        if [[ -f /etc/armbian-release ]]; then
+                            . /etc/armbian-release;
+                            distro="Armbian $DISTRIBUTION_CODENAME (${VERSION:-})";
+                        else
+                            if [[ -f /etc/siduction-version ]]; then
+                                case $distro_shorthand in 
+                                    on | tiny)
+                                        distro=Siduction
+                                    ;;
+                                    *)
+                                        distro="Siduction ($(lsb_release -sic))"
+                                    ;;
+                                esac;
+                            else
+                                if [[ -f /etc/mcst_version ]]; then
+                                    case $distro_shorthand in 
+                                        on | tiny)
+                                            distro="OS Elbrus"
+                                        ;;
+                                        *)
+                                            distro="OS Elbrus $(< /etc/mcst_version)"
+                                        ;;
+                                    esac;
+                                else
+                                    if type -p pveversion > /dev/null; then
+                                        case $distro_shorthand in 
+                                            on | tiny)
+                                                distro="Proxmox VE"
+                                            ;;
+                                            *)
+                                                distro=$(pveversion);
+                                                distro=${distro#pve-manager/};
+                                                distro="Proxmox VE ${distro%/*}"
+                                            ;;
+                                        esac;
+                                    else
+                                        if type -p lsb_release > /dev/null; then
+                                            case $distro_shorthand in 
+                                                on)
+                                                    lsb_flags=-si
+                                                ;;
+                                                tiny)
+                                                    lsb_flags=-si
+                                                ;;
+                                                *)
+                                                    lsb_flags=-sd
+                                                ;;
+                                            esac;
+                                            distro=$(lsb_release "$lsb_flags");
+                                        else
+                                            if [[ -f /etc/os-release || -f /usr/lib/os-release || -f /etc/openwrt_release || -f /etc/lsb-release ]]; then
+                                                for file in /etc/lsb-release /usr/lib/os-release /etc/os-release /etc/openwrt_release;
+                                                do
+                                                    source "$file" && break;
+                                                done;
+                                                case $distro_shorthand in 
+                                                    on)
+                                                        distro="${NAME:-${DISTRIB_ID}} ${VERSION_ID:-${DISTRIB_RELEASE}}"
+                                                    ;;
+                                                    tiny)
+                                                        distro="${NAME:-${DISTRIB_ID:-${TAILS_PRODUCT_NAME}}}"
+                                                    ;;
+                                                    off)
+                                                        distro="${PRETTY_NAME:-${DISTRIB_DESCRIPTION}} ${UBUNTU_CODENAME}"
+                                                    ;;
+                                                esac;
+                                            else
+                                                if [[ -f /etc/GoboLinuxVersion ]]; then
+                                                    case $distro_shorthand in 
+                                                        on | tiny)
+                                                            distro=GoboLinux
+                                                        ;;
+                                                        *)
+                                                            distro="GoboLinux $(< /etc/GoboLinuxVersion)"
+                                                        ;;
+                                                    esac;
+                                                else
+                                                    if [[ -f /etc/SDE-VERSION ]]; then
+                                                        distro="$(< /etc/SDE-VERSION)";
+                                                        case $distro_shorthand in 
+                                                            on | tiny)
+                                                                distro="${distro% *}"
+                                                            ;;
+                                                        esac;
+                                                    else
+                                                        if type -p crux > /dev/null; then
+                                                            distro=$(crux);
+                                                            case $distro_shorthand in 
+                                                                on)
+                                                                    distro=${distro//version}
+                                                                ;;
+                                                                tiny)
+                                                                    distro=${distro//version*}
+                                                                ;;
+                                                            esac;
+                                                        else
+                                                            if type -p tazpkg > /dev/null; then
+                                                                distro="SliTaz $(< /etc/slitaz-release)";
+                                                            else
+                                                                if type -p kpt > /dev/null && type -p kpm > /dev/null; then
+                                                                    distro=KSLinux;
+                                                                else
+                                                                    if [[ -d /system/app/ && -d /system/priv-app ]]; then
+                                                                        distro="Android $(getprop ro.build.version.release)";
+                                                                    else
+                                                                        if [[ -f /etc/lsb-release && $(< /etc/lsb-release) == *CHROMEOS* ]]; then
+                                                                            distro='Chrome OS';
+                                                                        else
+                                                                            if type -p guix > /dev/null; then
+                                                                                case $distro_shorthand in 
+                                                                                    on | tiny)
+                                                                                        distro="Guix System"
+                                                                                    ;;
+                                                                                    *)
+                                                                                        distro="Guix System $(guix -V | awk 'NR==1{printf $4}')"
+                                                                                    ;;
+                                                                                esac;
+                                                                            else
+                                                                                if [[ $kernel_name = OpenBSD ]]; then
+                                                                                    read -ra kernel_info <<< "$(sysctl -n kern.version)";
+                                                                                    distro=${kernel_info[*]:0:2};
+                                                                                else
+                                                                                    for release_file in /etc/*-release;
+                                                                                    do
+                                                                                        distro+=$(< "$release_file");
+                                                                                    done;
+                                                                                    if [[ -z $distro ]]; then
+                                                                                        case $distro_shorthand in 
+                                                                                            on | tiny)
+                                                                                                distro=$kernel_name
+                                                                                            ;;
+                                                                                            *)
+                                                                                                distro="$kernel_name $kernel_version"
+                                                                                            ;;
+                                                                                        esac;
+                                                                                        distro=${distro/DragonFly/DragonFlyBSD};
+                                                                                        [[ -f /etc/pcbsd-lang ]] && distro=PCBSD;
+                                                                                        [[ -f /etc/trueos-lang ]] && distro=TrueOS;
+                                                                                        [[ -f /etc/pacbsd-release ]] && distro=PacBSD;
+                                                                                        [[ -f /etc/hbsd-update.conf ]] && distro=HardenedBSD;
+                                                                                    fi;
+                                                                                fi;
+                                                                            fi;
+                                                                        fi;
+                                                                    fi;
+                                                                fi;
+                                                            fi;
+                                                        fi;
+                                                    fi;
+                                                fi;
+                                            fi;
+                                        fi;
+                                    fi;
+                                fi;
+                            fi;
+                        fi;
+                    fi;
+                fi;
+                if [[ $(< /proc/version) == *Microsoft* || $kernel_version == *Microsoft* ]]; then
+                    windows_version=$(wmic.exe os get Version);
+                    windows_version=$(trim_string "${windows_version/Version}");
+                    case $distro_shorthand in 
+                        on)
+                            distro+=" [Windows $windows_version]"
+                        ;;
+                        tiny)
+                            distro="Windows ${windows_version::2}"
+                        ;;
+                        *)
+                            distro+=" on Windows $windows_version"
+                        ;;
+                    esac;
+                else
+                    if [[ $(< /proc/version) == *chrome-bot* || -f /dev/cros_ec ]]; then
+                        [[ $distro != *Chrome* ]] && case $distro_shorthand in 
+                            on)
+                                distro+=" [Chrome OS]"
+                            ;;
+                            tiny)
+                                distro="Chrome OS"
+                            ;;
+                            *)
+                                distro+=" on Chrome OS"
+                            ;;
+                        esac;
+                        distro=${distro## on };
+                    fi;
+                fi;
+                distro=$(trim_quotes "$distro");
+                distro=${distro/NAME=};
+                if [[ $distro == "Ubuntu"* ]]; then
+                    case ${XDG_CONFIG_DIRS:-} in 
+                        *"studio"*)
+                            distro=${distro/Ubuntu/Ubuntu Studio}
+                        ;;
+                        *"plasma"*)
+                            distro=${distro/Ubuntu/Kubuntu}
+                        ;;
+                        *"mate"*)
+                            distro=${distro/Ubuntu/Ubuntu MATE}
+                        ;;
+                        *"xubuntu"*)
+                            distro=${distro/Ubuntu/Xubuntu}
+                        ;;
+                        *"Lubuntu"*)
+                            distro=${distro/Ubuntu/Lubuntu}
+                        ;;
+                        *"budgie"*)
+                            distro=${distro/Ubuntu/Ubuntu Budgie}
+                        ;;
+                        *"cinnamon"*)
+                            distro=${distro/Ubuntu/Ubuntu Cinnamon}
+                        ;;
+                    esac;
+                fi
+            ;;
+            "Mac OS X" | "macOS")
+                case ${osx_version:-} in 
+                    10.4*)
+                        codename="Mac OS X Tiger"
+                    ;;
+                    10.5*)
+                        codename="Mac OS X Leopard"
+                    ;;
+                    10.6*)
+                        codename="Mac OS X Snow Leopard"
+                    ;;
+                    10.7*)
+                        codename="Mac OS X Lion"
+                    ;;
+                    10.8*)
+                        codename="OS X Mountain Lion"
+                    ;;
+                    10.9*)
+                        codename="OS X Mavericks"
+                    ;;
+                    10.10*)
+                        codename="OS X Yosemite"
+                    ;;
+                    10.11*)
+                        codename="OS X El Capitan"
+                    ;;
+                    10.12*)
+                        codename="macOS Sierra"
+                    ;;
+                    10.13*)
+                        codename="macOS High Sierra"
+                    ;;
+                    10.14*)
+                        codename="macOS Mojave"
+                    ;;
+                    10.15*)
+                        codename="macOS Catalina"
+                    ;;
+                    10.16*)
+                        codename="macOS Big Sur"
+                    ;;
+                    11.*)
+                        codename="macOS Big Sur"
+                    ;;
+                    12.*)
+                        codename="macOS Monterey"
+                    ;;
+                    *)
+                        codename=macOS
+                    ;;
+                esac;
+                distro="$codename $osx_version $osx_build";
+                case $distro_shorthand in 
+                    on)
+                        distro=${distro/ ${osx_build}}
+                    ;;
+                    tiny)
+                        case $osx_version in 
+                            10.[4-7]*)
+                                distro=${distro/${codename}/Mac OS X}
+                            ;;
+                            10.[8-9]* | 10.1[0-1]*)
+                                distro=${distro/${codename}/OS X}
+                            ;;
+                            10.1[2-6]* | 11.0*)
+                                distro=${distro/${codename}/macOS}
+                            ;;
+                        esac;
+                        distro=${distro/ ${osx_build}}
+                    ;;
+                esac
+            ;;
+            "iPhone OS")
+                distro="iOS $osx_version";
+                os_arch=off
+            ;;
+            Windows)
+                distro=$(wmic os get Caption);
+                distro=${distro/Caption};
+                distro=${distro/Microsoft }
+            ;;
+            Solaris)
+                case $distro_shorthand in 
+                    on | tiny)
+                        distro=$(awk 'NR==1 {print $1,$3}' /etc/release)
+                    ;;
+                    *)
+                        distro=$(awk 'NR==1 {print $1,$2,$3}' /etc/release)
+                    ;;
+                esac;
+                distro=${distro/\(*}
+            ;;
+            Haiku)
+                distro=Haiku
+            ;;
+            AIX)
+                distro="AIX $(oslevel)"
+            ;;
+            IRIX)
+                distro="IRIX ${kernel_version}"
+            ;;
+            FreeMiNT)
+                distro=FreeMiNT
+            ;;
+        esac;
+        distro=${distro//Enterprise Server};
+        [[ -n $distro ]] || distro="$os (Unknown)"
+    };
+    function std::sys::info::distro::is_ubuntu () 
+    { 
+        std::sys::info::cache_distro;
+        [[ "$distro" == "Ubuntu"* ]]
     };
     function is::gitpod () 
     { 
@@ -322,7 +790,7 @@ main@bashbox%15607 ()
                     { 
                         local _dotfiles_ignore="$source_dir/.dotfilesignore";
                         local _thing_path;
-                        local _ignore_list=(-not -path "'*/.git/*'" -not -path "'*/.dotfilesignore'" -not -path "'*/.gitpod.yml'" -not -path "'$source_dir/src/*'" -not -path "'$source_dir/target/*'" -not -path "'$source_dir/Bashbox.meta'" -not -path "'$source_dir/install.sh'");
+                        local _ignore_list=(-not -path '*/.git/*' -not -path '*/.dotfilesignore' -not -path '*/.gitpod*' -not -path '*/README.md' -not -path "$source_dir/src/*" -not -path "$source_dir/target/*" -not -path "$source_dir/Bashbox.meta" -not -path "$source_dir/install.sh");
                         if test -e "$_dotfiles_ignore"; then
                             { 
                                 while read -r _ignore_thing; do
@@ -339,21 +807,57 @@ main@bashbox%15607 ()
                                 done < "$_dotfiles_ignore"
                             };
                         fi;
-                        local _target_file _target_dir;
+                        local target_file target_dir;
                         while read -r _file; do
                             { 
-                                _target_file="$installation_target/${_file#${source_dir}/}";
-                                _target_dir="${_target_file%/*}";
-                                if test ! -d "$_target_dir"; then
+                                file_name="${_file#"${source_dir}"/}";
+                                target_file="$installation_target/${file_name}";
+                                target_dir="${target_file%/*}";
+                                if test -e "$target_file" && { 
+                                    if test -L "$target_file"; then
+                                        { 
+                                            test "$(readlink "$target_file")" != "$_file"
+                                        };
+                                    fi
+                                }; then
                                     { 
-                                        mkdir -p "$_target_dir"
+                                        case "$file_name" in 
+                                            ".bashrc" | ".zshrc" | ".kshrc" | ".profile")
+                                                log::info "Your $file_name is being injected into the existing host $target_file";
+                                                local check_str="if test -e '$_file'; then source '$_file'; fi";
+                                                if ! grep -q "$check_str" "$target_file"; then
+                                                    { 
+                                                        printf '%s\n' "$check_str" >> "$target_file"
+                                                    };
+                                                fi;
+                                                continue
+                                            ;;
+                                            ".gitconfig")
+                                                log::info "Your $file_name is being injected into the existing host $file_name";
+                                                local check_str="    path = $_file";
+                                                if ! grep -q "$check_str" "$target_file" 2> /dev/null; then
+                                                    { 
+                                                        { 
+                                                            printf '[%s]\n' 'include';
+                                                            printf '%s\n' "$check_str"
+                                                        } >> "$target_file"
+                                                    };
+                                                fi;
+                                                continue
+                                            ;;
+                                        esac
                                     };
                                 fi;
-                                ln -sf "$_file" "$_target_file";
-                                printf '%s\n' "$_target_file" >> "$last_applied_filelist";
-                                unset _target_file _target_dir
+                                if test ! -d "$target_dir"; then
+                                    { 
+                                        mkdir -p "$target_dir"
+                                    };
+                                fi;
+                                ln -sf "$_file" "$target_file";
+                                printf '%s\n' "$target_file" >> "$last_applied_filelist";
+                                unset target_file target_dir
                             };
-                        done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$source_dir" -type f)
+                        done < <(find "$source_dir" -type f "${_ignore_list[@]}")
                     };
                 fi
             };
@@ -657,7 +1161,23 @@ main@bashbox%15607 ()
     function install::userland_tools () 
     { 
         log::info "Installing userland tools";
-        curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall > /dev/null 2>&1 & disown;
+        ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s -- selfinstall --no-modify-path > /dev/null 2>&1;
+        if test -e "$HOME/.bashrc.d"; then
+            { 
+                : ".bashrc.d"
+            };
+        else
+            if test -e "$HOME/.shellrc.d"; then
+                { 
+                    : ".shellrc.d"
+                };
+            else
+                { 
+                    exit 0
+                };
+            fi;
+        fi;
+        printf 'source %s\n' "$HOME/.bashbox/env" > "$HOME/$_/bashbox.bash" ) & disown;
         ( USER="$(id -u -n)" && export USER;
         if test ! -e /nix; then
             { 
@@ -667,15 +1187,23 @@ main@bashbox%15607 ()
             };
         fi;
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
-        local levelone_pkgs=();
-        local leveltwo_pkgs=(nixpkgs.lsof nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.exa nixpkgs.fzf nixpkgs.gh nixpkgs.neofetch nixpkgs.neovim nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree nixpkgs.jq nixpkgs.zoxide);
+        if std::sys::info::distro::is_ubuntu; then
+            { 
+                local levelone_pkgs=()
+            };
+        else
+            { 
+                local levelone_pkgs=(tmux fish jq)
+            };
+        fi;
+        local leveltwo_pkgs=(lsof shellcheck tree file fzf bat bottom exa fzf gh neofetch neovim p7zip ripgrep shellcheck tree jq zoxide);
         for level in levelone_pkgs leveltwo_pkgs;
         do
             { 
                 declare -n ref="$level";
                 if test -n "${ref:-}"; then
                     { 
-                        nix-env -iA "${ref[@]}" > /dev/null 2>&1
+                        nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" > /dev/null 2>&1
                     };
                 fi
             };
@@ -962,12 +1490,29 @@ main@bashbox%15607 ()
     { 
         local tmux_exec_path="/usr/bin/tmux";
         log::info "Setting up tmux";
-        KEEP="true" await::create_shim "$tmux_exec_path";
+        if is::gitpod || is::codespaces; then
+            { 
+                KEEP="true" await::create_shim "$tmux_exec_path"
+            };
+        else
+            { 
+                await::until_true command -v tmux > /dev/null
+            };
+        fi;
         { 
-            config::tmux::set_tmux_as_default_vscode_shell & disown;
-            config::tmux::hijack_gitpod_task_terminals & if is::gitpod && test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+            if is::gitpod || is::codespaces; then
                 { 
-                    tmux::start_vimpod & disown
+                    config::tmux::set_tmux_as_default_vscode_shell & disown
+                };
+            fi;
+            if is::gitpod; then
+                { 
+                    if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+                        { 
+                            tmux::start_vimpod & disown
+                        };
+                    fi;
+                    config::tmux::hijack_gitpod_task_terminals &
                 };
             fi;
             local target="$HOME/.tmux/plugins/tpm";
@@ -978,8 +1523,12 @@ main@bashbox%15607 ()
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
                 };
             fi;
-            local tmux_default_shell;
-            tmux::create_session;
+            if is::gitpod || is::codespaces; then
+                { 
+                    local tmux_default_shell;
+                    tmux::create_session
+                };
+            fi;
             ( if is::gitpod; then
                 { 
                     if test -n "${GITPOD_TASKS:-}"; then
@@ -1124,11 +1673,11 @@ CMDC
                 await::for_vscode_ide_start;
                 if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then
                     { 
-                        local tries=1;
                         local token="${BASH_REMATCH[1]}";
+                        local tries=1;
                         until printf '%s\n' "$token" | gh auth login --with-token > /dev/null 2>&1; do
                             { 
-                                if test $tries -gt 20; then
+                                if test $tries -gt 5; then
                                     { 
                                         log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
                                         break
@@ -1151,10 +1700,18 @@ CMDC
     function config::neovim () 
     { 
         log::info "Setting up Neovim";
-        await::until_true command -v nvim > /dev/null;
+        if is::gitpod || is::codespaces; then
+            { 
+                CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/nvim" await::create_shim "/usr/bin/nvim"
+            };
+        else
+            { 
+                await::until_true command -v nvim > /dev/null
+            };
+        fi;
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null 2>&1
+                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
             };
         fi;
         if is::gitpod || is::codespaces; then
@@ -1197,19 +1754,26 @@ CMDC
             };
         fi;
         install::dotfiles & disown;
-        if is::gitpod || is::codespaces; then
+        config::tmux & if is::gitpod || is::codespaces; then
             { 
-                config::tmux & config::shell::persist_history & disown;
-                config::shell::fish::append_hist_from_gitpod_tasks & disown;
-                config::fish & disown;
-                install::system_packages & disown;
-                install::userland_tools & disown;
-                config::docker_auth & disown;
-                config::neovim & disown;
-                config::gh & disown;
-                install::ranger & disown
+                config::shell::persist_history & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & disown
             };
         fi;
+        config::fish & disown;
+        if std::sys::info::distro::is_ubuntu; then
+            { 
+                install::system_packages & disown
+            };
+        fi;
+        install::userland_tools & disown;
+        if is::gitpod; then
+            { 
+                config::docker_auth & disown
+            };
+        fi;
+        config::neovim & disown;
+        config::gh & disown;
         log::info "Waiting for background jobs to complete" && jobs -l;
         while test -n "$(jobs -p)" && sleep 0.2; do
             { 
@@ -1223,4 +1787,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%15607 "$@";
+main@bashbox%2814 "$@";

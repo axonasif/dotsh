@@ -103,19 +103,19 @@ function dotfiles::initialize() {
 			git clone --filter=tree:0 "$dotfiles_repo" "$source_dir" > /dev/null 2>&1 || :;
 		} fi
 
-		
 		if test -e "$source_dir" ; then {
 			# Process .dotfiles ignore
 			local _dotfiles_ignore="$source_dir/.dotfilesignore";
 			local _thing_path;
 			local _ignore_list=(
-				-not -path "'*/.git/*'"
-				-not -path "'*/.dotfilesignore'"
-				-not -path "'*/.gitpod.yml'"
-				-not -path "'$source_dir/src/*'"
-				-not -path "'$source_dir/target/*'"
-				-not -path "'$source_dir/Bashbox.meta'"
-				-not -path "'$source_dir/install.sh'"
+				-not -path '*/.git/*'
+				-not -path '*/.dotfilesignore'
+				-not -path '*/.gitpod*'
+				-not -path '*/README.md'
+				-not -path "$source_dir/src/*"
+				-not -path "$source_dir/target/*"
+				-not -path "$source_dir/Bashbox.meta"
+				-not -path "$source_dir/install.sh"
 			);
 
 			if test -e "$_dotfiles_ignore"; then {
@@ -126,28 +126,52 @@ function dotfiles::initialize() {
 						_ignore_list+=(-not -path "$_ignore_thing");
 					} fi
 					unset _ignore_thing;
-					# _thing_path="$(readlink -f "$source_dir/$_ignore_thing")";
-					# if test -f "$_thing_path"; then {
-					#     _ignore_list+=("-not -path '$_thing_path'");
-					# } elif test -d "$_thing_path"; then {
-					#     _ignore_list+=("-not -path '/$_thing_path/*'");
-					# } fi
 				} done < "$_dotfiles_ignore"
 			} fi
 
-			local _target_file _target_dir;
-			while read -r _file ; do {
-				_target_file="$installation_target/${_file#${source_dir}/}";
-				_target_dir="${_target_file%/*}";
+			local target_file target_dir;
+			while read -r _file; do {
+				file_name="${_file#"${source_dir}"/}";
+				target_file="$installation_target/${file_name}";
+				target_dir="${target_file%/*}";
 
-				if test ! -d "$_target_dir"; then {
-					mkdir -p "$_target_dir";
+				if test -e "$target_file" && {
+					if test -L "$target_file"; then {
+						test "$(readlink "$target_file")" != "$_file"
+					} fi
+				}; then {
+					# Preserving host config strategy
+					case "$file_name" in
+						".bashrc"|".zshrc"|".kshrc"|".profile")
+							log::info "Your $file_name is being injected into the existing host $target_file";
+							local check_str="if test -e '$_file'; then source '$_file'; fi";
+							if ! grep -q "$check_str" "$target_file"; then {
+								printf '%s\n' "$check_str" >> "$target_file";
+							} fi
+							continue; # End this loop
+						;;
+						".gitconfig")
+							log::info "Your $file_name is being injected into the existing host $file_name";
+							local check_str="    path = $_file";
+							if ! grep -q "$check_str" "$target_file" 2>/dev/null; then {
+								{
+									printf '[%s]\n' 'include';
+									printf '%s\n' "$check_str";
+								} >> "$target_file";
+							} fi
+							continue; # End this loop
+						;;
+					esac
 				} fi
 
-				ln -sf "$_file" "$_target_file";
-				printf '%s\n' "$_target_file" >> "$last_applied_filelist";
-				unset _target_file _target_dir;
-			}  done < <(printf '%s\n' "${_ignore_list[@]}" | xargs find "$source_dir" -type f);
+				if test ! -d "$target_dir"; then {
+					mkdir -p "$target_dir";
+				} fi
+
+				ln -sf "$_file" "$target_file";
+				printf '%s\n' "$target_file" >> "$last_applied_filelist";
+				unset target_file target_dir;
+			}  done < <(find "$source_dir" -type f "${_ignore_list[@]}");
 
 		} fi
 	} done
