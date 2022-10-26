@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%30336 () 
+main@bashbox%11068 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%30336 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%30336';
+    ___MAIN_FUNCNAME='main@bashbox%11068';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -127,20 +127,31 @@ main@bashbox%30336 ()
             function startup_command () 
             { 
                 local logfile="$HOME/.dotfiles.log";
+                local tail_cmd="less -XR +F $logfile";
                 eval "$(gp env -e)";
                 set +m;
-                "$HOME/.dotfiles/install.sh";
-                set -m;
-                sleep 2;
-                printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
-                export PATH="$HOME/.nix-profile/bin:$PATH";
-                ( until test -n "$(tmux list-clients)"; do
+                { 
+                    "$HOME/.dotfiles/install.sh" 2>&1
+                } > "$logfile" 2>&1 & disown;
+                ( until tmux has-session 2> /dev/null; do
+                    sleep 1;
+                done;
+                pkill -9 -f "${tail_cmd//+/\\+}" || :;
+                tmux setw -g mouse on;
+                tmux send-keys "$tail_cmd" Enter;
+                until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
                 sleep 2;
-                tmux display-message -t main "Run 'tmux detach' to exit from here" ) & disown;
+                tmux display-message "Run 'tmux detach' to exit from here";
+                sleep 5;
+                tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager" ) & disown;
+                set -m;
+                $tail_cmd;
+                printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+                export PATH="$HOME/.nix-profile/bin:$PATH";
                 ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
-                printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";
+                printf 'INFO: \n\n%s\n\n' "Switching to a fallback debug bash shell";
                 exec bash -l
             };
             if is::gitpod; then
@@ -1596,7 +1607,54 @@ CMDC
                             WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
-                    done
+                    done;
+                    local spinner="/usr/bin/tmux-dotfiles-spinner.sh";
+                    local spinner_data="$(
+				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+
+				cat <<'EOF'
+set -eu;
+while pgrep -f "$HOME/.dotfiles/install.sh" 1>/dev/null; do
+	for s in / - \\ \|; do
+		sleep 0.1;
+		printf '%s \n' "#[bg=#ff5555,fg=#282a36,bold] $s Dotfiles";
+	done
+done
+
+current_status="$(tmux display -p '#{status-right}')";
+tmux set -g status-right "$(printf '%s\n' "$current_status" | sed "s|#(exec $0)||g")"
+EOF
+			)";
+                    local resources_indicator="/usr/bin/tmux-resources-indicator.sh";
+                    local resources_indicator_data="$(
+			printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+
+				cat <<'EOF'
+printf '\n'; # init quick draw
+
+while true; do {
+	# Read all properties
+	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
+		< <(gp top -j | jq -r ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
+
+	# Human friendly memory numbers
+	read -r hmem_used hmem_max < <(numfmt -z --to=iec --format="%8.2f" $mem_used $mem_max);
+
+	# CPU percentage
+	cpu_perc="$(( (cpu_used * 100) / cpu_max ))";
+
+	# Print to tmux
+	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} ";
+	sleep 3;
+} done
+EOF
+			)";
+                    { 
+                        printf '%s\n' "$spinner_data" | sudo tee "$spinner";
+                        printf '%s\n' "$resources_indicator_data" | sudo tee "$resources_indicator"
+                    } > /dev/null;
+                    sudo chmod +x "$spinner" "$resources_indicator";
+                    tmux set-option -g status-left-length 100\; set-option -g status-right-length 100\; set-option -ga status-right "#(exec $resources_indicator)#(exec $spinner)"
                 };
             else
                 if is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then
@@ -1787,4 +1845,4 @@ CMDC
     wait;
     exit
 }
-main@bashbox%30336 "$@";
+main@bashbox%11068 "$@";

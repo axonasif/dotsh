@@ -343,6 +343,62 @@ CMDC
 					#bash -c " printf '%s\n' $cmd; $cmd;"
 					((arr_elem=arr_elem+1));
 				} done
+
+
+			# Install gitpod specific ephemeral plugins
+			## Dotfiles loading indicator (spinner)
+			local spinner="/usr/bin/tmux-dotfiles-spinner.sh";
+			local spinner_data="$(
+				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+
+				cat <<'EOF'
+set -eu;
+while pgrep -f "$HOME/.dotfiles/install.sh" 1>/dev/null; do
+	for s in / - \\ \|; do
+		sleep 0.1;
+		printf '%s \n' "#[bg=#ff5555,fg=#282a36,bold] $s Dotfiles";
+	done
+done
+
+current_status="$(tmux display -p '#{status-right}')";
+tmux set -g status-right "$(printf '%s\n' "$current_status" | sed "s|#(exec $0)||g")"
+EOF
+			)"
+
+			local resources_indicator="/usr/bin/tmux-resources-indicator.sh";
+			local resources_indicator_data="$(
+			printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+
+				cat <<'EOF'
+printf '\n'; # init quick draw
+
+while true; do {
+	# Read all properties
+	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
+		< <(gp top -j | jq -r ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
+
+	# Human friendly memory numbers
+	read -r hmem_used hmem_max < <(numfmt -z --to=iec --format="%8.2f" $mem_used $mem_max);
+
+	# CPU percentage
+	cpu_perc="$(( (cpu_used * 100) / cpu_max ))";
+
+	# Print to tmux
+	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} ";
+	sleep 3;
+} done
+EOF
+			)"
+
+			{
+				printf '%s\n' "$spinner_data" | sudo tee "$spinner";
+				printf '%s\n' "$resources_indicator_data" | sudo tee "$resources_indicator";
+			} 1>/dev/null;
+			sudo chmod +x "$spinner" "$resources_indicator";
+
+			tmux set-option -g status-left-length 100\; set-option -g status-right-length 100\; \
+				set-option -ga status-right "#(exec $resources_indicator)#(exec $spinner)";
+
 			} elif is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then {
 				cd "$CODESPACE_VSCODE_FOLDER" || :;
 			} fi
