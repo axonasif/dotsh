@@ -34,7 +34,7 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="axonasif/dotfiles-testing:latest"; # Built from src/.testing.Dockerfile
+	local container_image="axonasif/dotfiles-testing:latest";
 	source "$_arg_path/src/utils/common.sh";
 
 	# local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
@@ -143,17 +143,32 @@ live() (
 
 		function startup_command() {
 			local logfile="$HOME/.dotfiles.log";
+			local tail_cmd="less -XR +F $logfile";
 			eval "$(gp env -e)";
 			set +m; # Temporarily disable job control
-			"$HOME/.dotfiles/install.sh";
+			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & disown;
+
+			(
+				until tmux has-session 2>/dev/null; do sleep 1; done;
+				pkill -9 -f "${tail_cmd//+/\\+}" || :;
+				tmux setw -g mouse on;
+                tmux send-keys "$tail_cmd" Enter;
+				until test -n "$(tmux list-clients)"; do sleep 1; done;
+				sleep 2;
+				tmux display-message "Run 'tmux detach' to exit from here";
+				sleep 5;
+				tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager";
+			) & disown;
 			set -m;
-			sleep 2;
-			# tail -F "$logfile" & disown;
+
+			$tail_cmd;
+
 			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
 			export PATH="$HOME/.nix-profile/bin:$PATH";
-			(until test -n "$(tmux list-clients)"; do sleep 1; done; sleep 2; tmux display-message -t main "Run 'tmux detach' to exit from here") & disown;
 			AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
-			printf 'INFO: \n\n%s\n\n' "Spawning a debug bash shell";
+
+			# Fallback
+			printf 'INFO: \n\n%s\n\n' "Switching to a fallback debug bash shell";
 			exec bash -l;
 		}
 
