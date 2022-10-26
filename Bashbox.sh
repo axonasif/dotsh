@@ -34,7 +34,7 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="axonasif/dotfiles-testing:latest";
+	local container_image="axonasif/dotfiles-testing:latest"; # Built from src/.testing.Dockerfile
 	source "$_arg_path/src/utils/common.sh";
 
 	# local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
