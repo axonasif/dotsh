@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14294 () 
+main@bashbox%25436 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%14294 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%14294';
+    ___MAIN_FUNCNAME='main@bashbox%25436';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -172,19 +172,15 @@ main@bashbox%14294 ()
                     printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
                 };
             fi;
-            if is::gitpod; then
+            local lckfile="/workspace/.dinit";
+            if test -e "$lckfile" && test ! -s "$lckfile"; then
                 { 
-                    local lckfile="/workspace/.dinit";
-                    if test ! -e "$lckfile"; then
+                    printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
+                    until test -s "$lckfile"; do
                         { 
-                            printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
-                            until test -e "$lckfile"; do
-                                { 
-                                    sleep 0.5
-                                };
-                            done
+                            sleep 0.5
                         };
-                    fi
+                    done
                 };
             fi;
             docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")"
@@ -798,7 +794,7 @@ main@bashbox%14294 ()
     };
     function vscode::add_settings () 
     { 
-        lockfile "vscode_addsettings";
+        SIGNALS="RETURN ERR" lockfile "vscode_addsettings";
         set -x && exec 2> /tmp/.sl;
         read -t0.5 -u0 -r -d '' input || :;
         if test -z "${input:-}"; then
@@ -1777,4 +1773,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%14294 "$@";
+main@bashbox%25436 "$@";

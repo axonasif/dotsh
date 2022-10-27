@@ -5,7 +5,12 @@ workspaceLocation: dotfiles-sh/dotfiles-sh.code-workspace
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
   - name: Cache workspace images
-    command: docker pull axonasif/dotfiles-testing:latest; touch /workspace/.dinit; exit;
+    command: |
+      l=/workspace/.dinit;
+      touch "$l";
+      docker pull axonasif/dotfiles-testing:latest;
+      printf '%s\n' done > "$l";
+      exit;
 
   - name: Compile project
     command: |
