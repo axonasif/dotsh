@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23477 () 
+main@bashbox%25517 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%23477 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23477';
+    ___MAIN_FUNCNAME='main@bashbox%25517';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -143,7 +143,9 @@ main@bashbox%23477 ()
                     sleep 1;
                 done;
                 sleep 2;
-                tmux display-message "Run 'tmux detach' to exit from here" ) & disown;
+                tmux display-message "Run 'tmux detach' to exit from here";
+                sleep 5;
+                tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager" ) & disown;
                 set -m;
                 $tail_cmd;
                 printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
@@ -689,6 +691,10 @@ main@bashbox%23477 ()
     { 
         test -v CODESPACES || test -e /home/codespaces
     };
+    function is::cde () 
+    { 
+        is::gitpod || is::codespaces
+    };
     function vscode::add_settings () 
     { 
         local lockfile="/tmp/.vscs_add.lock";
@@ -1145,31 +1151,57 @@ main@bashbox%23477 ()
             };
         done
     };
-    function install::system_packages () 
-    { 
-        levelone_syspkgs=(tmux fish jq);
-        leveltwo_syspkgs=();
-        log::info "Installing system packages";
+    syspkgs_level_one=(tmux fish jq);
+    syspkgs_level_two=();
+    userpkgs_level_one=(tmux fish jq);
+    if std::sys::info::distro::is_ubuntu && is::cde; then
         { 
-            sudo apt-get update;
-            sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-            for level in levelone_syspkgs leveltwo_syspkgs;
-            do
-                { 
-                    declare -n ref="$level";
-                    if test -n "${ref:-}"; then
-                        { 
-                            sudo apt-get install -yq --no-install-recommends "${ref[@]}"
-                        };
-                    fi
-                };
-            done;
-            sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline'
-        } > /dev/null
-    };
-    function install::userland_tools () 
+            userpkgs_level_one=()
+        };
+    fi;
+    userpkgs_level_two=(lsof shellcheck tree file fzf bat bottom exa fzf gh neofetch neovim p7zip ripgrep shellcheck tree jq zoxide);
+    function install::packages () 
     { 
-        log::info "Installing userland tools";
+        log::info "Installing system packages";
+        ( sudo apt-get update;
+        sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
+        for level in syspkgs_level_one syspkgs_level_two;
+        do
+            { 
+                declare -n ref="$level";
+                if test -n "${ref:-}"; then
+                    { 
+                        sudo apt-get install -yq --no-install-recommends "${ref[@]}"
+                    };
+                fi
+            };
+        done;
+        sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline' ) > /dev/null & disown;
+        log::info "Installing userland packages";
+        ( USER="$(id -u -n)" && export USER;
+        if test ! -e /nix; then
+            { 
+                sudo sh -c "mkdir -p /nix && chown -R $USER:$USER /nix";
+                log::info "Installing nix";
+                curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon > /dev/null 2>&1
+            };
+        fi;
+        source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
+        for level in userpkgs_level_one userpkgs_level_two;
+        do
+            { 
+                declare -n ref="$level";
+                if test -n "${ref:-}"; then
+                    { 
+                        nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" > /dev/null 2>&1
+                    };
+                fi
+            };
+        done ) & disown
+    };
+    function install::misc () 
+    { 
+        log::info "Installing misc tools";
         ( curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s -- selfinstall --no-modify-path > /dev/null 2>&1;
         if test -e "$HOME/.bashrc.d"; then
             { 
@@ -1186,37 +1218,7 @@ main@bashbox%23477 ()
                 };
             fi;
         fi;
-        printf 'source %s\n' "$HOME/.bashbox/env" > "$HOME/$_/bashbox.bash" ) & disown;
-        ( USER="$(id -u -n)" && export USER;
-        if test ! -e /nix; then
-            { 
-                sudo sh -c "mkdir -p /nix && chown -R $USER:$USER /nix";
-                log::info "Installing nix";
-                curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon > /dev/null 2>&1
-            };
-        fi;
-        source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
-        if std::sys::info::distro::is_ubuntu; then
-            { 
-                local levelone_pkgs=()
-            };
-        else
-            { 
-                local levelone_pkgs=(tmux fish jq)
-            };
-        fi;
-        local leveltwo_pkgs=(lsof shellcheck tree file fzf bat bottom exa fzf gh neofetch neovim p7zip ripgrep shellcheck tree jq zoxide);
-        for level in levelone_pkgs leveltwo_pkgs;
-        do
-            { 
-                declare -n ref="$level";
-                if test -n "${ref:-}"; then
-                    { 
-                        nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" > /dev/null 2>&1
-                    };
-                fi
-            };
-        done ) & disown
+        printf 'source %s\n' "$HOME/.bashbox/env" > "$HOME/$_/bashbox.bash" ) & disown
     };
     function install::ranger () 
     { 
@@ -1271,7 +1273,7 @@ main@bashbox%23477 ()
     readonly PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m';
     function tmux::create_session () 
     { 
-        tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n home -ds "${tmux_first_session_name}" 2> /dev/null || :;
+        tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" 2> /dev/null || :;
         tmux_default_shell="$(tmux display -p '#{default-shell}')"
     };
     function tmux::create_window () 
@@ -1365,7 +1367,7 @@ main@bashbox%23477 ()
     { 
         local tmux_exec_path="/usr/bin/tmux";
         log::info "Setting up tmux";
-        if is::gitpod || is::codespaces; then
+        if is::cde; then
             { 
                 KEEP="true" await::create_shim "$tmux_exec_path"
             };
@@ -1375,7 +1377,7 @@ main@bashbox%23477 ()
             };
         fi;
         { 
-            if is::gitpod || is::codespaces; then
+            if is::cde; then
                 { 
                     config::tmux::set_tmux_as_default_vscode_shell & disown
                 };
@@ -1398,7 +1400,7 @@ main@bashbox%23477 ()
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
                 };
             fi;
-            if is::gitpod || is::codespaces; then
+            if is::cde; then
                 { 
                     local tmux_default_shell;
                     tmux::create_session
@@ -1561,11 +1563,6 @@ EOF
     };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
-        if ! is::gitpod; then
-            { 
-                return
-            };
-        fi;
         await::signal get install_dotfiles;
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
         while read -r _command; do
@@ -1590,39 +1587,35 @@ EOF
     { 
         local tarball_url gp_credentials;
         await::until_true command -v gh > /dev/null;
-        if is::gitpod; then
+        await::for_vscode_ide_start;
+        if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then
             { 
-                await::for_vscode_ide_start;
-                if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then
+                local token="${BASH_REMATCH[1]}";
+                local tries=1;
+                until printf '%s\n' "$token" | gh auth login --with-token > /dev/null 2>&1; do
                     { 
-                        local token="${BASH_REMATCH[1]}";
-                        local tries=1;
-                        until printf '%s\n' "$token" | gh auth login --with-token > /dev/null 2>&1; do
+                        if test $tries -gt 5; then
                             { 
-                                if test $tries -gt 5; then
-                                    { 
-                                        log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
-                                        break
-                                    };
-                                fi;
-                                ((tries++));
-                                sleep 1;
-                                continue
+                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
+                                break
                             };
-                        done
+                        fi;
+                        ((tries++));
+                        sleep 1;
+                        continue
                     };
-                else
-                    { 
-                        log::error "Failed to get auth token for gh" || exit 1
-                    };
-                fi
+                done
+            };
+        else
+            { 
+                log::error "Failed to get auth token for gh" || exit 1
             };
         fi
     };
     function config::neovim () 
     { 
         log::info "Setting up Neovim";
-        if is::gitpod || is::codespaces; then
+        if is::cde; then
             { 
                 CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/nvim" await::create_shim "/usr/bin/nvim"
             };
@@ -1636,10 +1629,10 @@ EOF
                 curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
             };
         fi;
-        if is::gitpod || is::codespaces; then
+        if is::cde; then
             { 
                 await::signal get config_tmux;
-                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter
+                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "lvim" Enter
             };
         fi
     };
@@ -1676,26 +1669,22 @@ EOF
             };
         fi;
         install::dotfiles & disown;
-        config::tmux & if is::gitpod || is::codespaces; then
+        config::tmux & config::fish & disown;
+        install::packages & disown;
+        install::misc & disown;
+        if is::cde; then
             { 
-                config::shell::persist_history & disown;
+                config::shell::persist_history & disown
+            };
+        fi;
+        if is::gitpod; then
+            { 
+                config::docker_auth & disown;
+                config::gh & disown;
                 config::shell::fish::append_hist_from_gitpod_tasks & disown
             };
         fi;
-        config::fish & disown;
-        if std::sys::info::distro::is_ubuntu; then
-            { 
-                install::system_packages & disown
-            };
-        fi;
-        install::userland_tools & disown;
-        if is::gitpod; then
-            { 
-                config::docker_auth & disown
-            };
-        fi;
         config::neovim & disown;
-        config::gh & disown;
         log::info "Waiting for background jobs to complete" && jobs -l;
         while test -n "$(jobs -p)" && sleep 0.2; do
             { 
@@ -1709,4 +1698,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%23477 "$@";
+main@bashbox%25517 "$@";

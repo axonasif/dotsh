@@ -156,8 +156,8 @@ live() (
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				sleep 2;
 				tmux display-message "Run 'tmux detach' to exit from here";
-				# sleep 5;
-				# tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager";
+				sleep 5;
+				tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager";
 			) & disown;
 			set -m;
 

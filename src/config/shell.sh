@@ -26,9 +26,6 @@ function config::shell::persist_history() {
 }
 
 function config::shell::fish::append_hist_from_gitpod_tasks() {
-	if ! is::gitpod; then {
-		return;
-	} fi
 	await::signal get install_dotfiles;
 	# Append .gitpod.yml:tasks hist to fish_hist
 	log::info "Appending .gitpod.yml:tasks shell histories to fish_history";

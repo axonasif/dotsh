@@ -7,6 +7,10 @@ function is::codespaces() {
 	test -v CODESPACES || test -e /home/codespaces;
 }
 
+function is::cde {
+	is::gitpod || is::codespaces;
+}
+
 function vscode::add_settings() {
 	local lockfile="/tmp/.vscs_add.lock";
 	local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";

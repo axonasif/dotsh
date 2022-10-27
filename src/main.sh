@@ -10,7 +10,7 @@ use variables;
 
 function main() {
 
-	# Logging
+	# Special logging case
 	if is::codespaces; then {
 		local log_file="$HOME/.dotfiles.log";
 		log::info "Manually redirecting dotfiles install.sh logs to $log_file";
@@ -18,44 +18,40 @@ function main() {
 		exec 2>&1;
 	} fi
 
-	# "& disown" means some sort of async
+	#### "& disown" means some sort of async :P
 
 	# Dotfiles installation, symlinking files bascially
 	install::dotfiles & disown;
 	
 	# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
 	config::tmux &
-
-	# Shell + Fish hacks
-	if is::gitpod || is::codespaces; then {
-		config::shell::persist_history & disown;
-		config::shell::fish::append_hist_from_gitpod_tasks & disown;
-	} fi
 	config::fish & disown;
 
-	# Start installation of system(apt) packages
-	if std::sys::info::distro::is_ubuntu; then {
-		install::system_packages & disown;
+	# Start installation of system(apt) + userland(nix) packages + misc. things
+	install::packages & disown;
+	install::misc & disown;
+
+	# Shell + Fish hacks
+	if is::cde; then {
+		config::shell::persist_history & disown;
 	} fi
 
-	# Install userland tools, some manually and some with nix
-	install::userland_tools & disown;
-
-	# Configure docker credentials
 	if is::gitpod; then {
+		# Configure docker credentials
 		config::docker_auth & disown;
+		# Install and login into gh
+		config::gh & disown;
+		# Shell + Fish hacks
+		config::shell::fish::append_hist_from_gitpod_tasks & disown;
 	} fi
 
 	# Configure neovim
 	config::neovim & disown;
 	
-	# Install and login into gh
-	config::gh & disown;
-
 	# Ranger + plugins
 	# install::ranger & disown;
 
-	# Wait for "owned" background processess to exit
+	# Wait for "owned" background processess to exit (i.e. processess that were not "disown"ed)
 	# it will ignore "disown"ed commands as you can see up there.
 	log::info "Waiting for background jobs to complete" && jobs -l;
 	while test -n "$(jobs -p)" && sleep 0.2; do {

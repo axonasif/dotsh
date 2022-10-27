@@ -3,7 +3,7 @@ function config::neovim() {
 	log::info "Setting up Neovim";
 
 	# Wait for nix to complete installing neovim at userland_tools.sh:leveltwo_pkgs
-	if is::gitpod || is::codespaces; then {
+	if is::cde; then {
 		CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/nvim" await::create_shim "/usr/bin/nvim";
 	} else {
 		await::until_true command -v nvim 1>/dev/null;
@@ -19,11 +19,11 @@ function config::neovim() {
 	# 	nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' 1>/dev/null;
 	# } done
 
-	if is::gitpod || is::codespaces; then {
+	if is::cde; then {
 		# Wait for tmux to start
 		await::signal get config_tmux;
 
 		# Run 'nvim --version' on tmux first window
-		tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "nvim --version" Enter;
+		tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "lvim" Enter;
 	} fi
 }

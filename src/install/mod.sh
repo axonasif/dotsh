@@ -1,4 +1,4 @@
-use system_packages;
-use userland_tools;
+use packages;
+use misc;
 use ranger;
 use dotfiles;

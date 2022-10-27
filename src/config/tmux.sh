@@ -1,7 +1,7 @@
 use std::term::colors;
 
 function tmux::create_session() {
-	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n home -ds "${tmux_first_session_name}" 2>/dev/null || :;
+	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" 2>/dev/null || :;
 	#\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 
 	tmux_default_shell="$(tmux display -p '#{default-shell}')";
 }
@@ -100,7 +100,7 @@ function config::tmux() {
 	# Lock on tmux
 	local tmux_exec_path="/usr/bin/tmux";
 	log::info "Setting up tmux";
-	if is::gitpod || is::codespaces; then {
+	if is::cde; then {
 		KEEP="true" await::create_shim "$tmux_exec_path";
 	} else {
 		await::until_true command -v tmux 1>/dev/null;
@@ -108,7 +108,7 @@ function config::tmux() {
 
 	{
 		# Extra steps
-		if is::gitpod || is::codespaces; then {
+		if is::cde; then {
 			config::tmux::set_tmux_as_default_vscode_shell & disown;
 		} fi
 		
@@ -127,7 +127,7 @@ function config::tmux() {
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
 		} fi
 
-		if is::gitpod || is::codespaces; then {
+		if is::cde; then {
 			local tmux_default_shell;
 			tmux::create_session;
 		} fi
