@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21844 () 
+main@bashbox%28754 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21844 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21844';
+    ___MAIN_FUNCNAME='main@bashbox%28754';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1452,7 +1452,10 @@ main@bashbox%21844 ()
                 await::until_true command -v tmux > /dev/null
             };
         fi;
-        if is::cde; then
+        ( while sleep 1; do
+            printf '\n%s\n' "========================" >> /tmp/debugme;
+            cat /workspace/.vscode-remote/data/Machine/settings.json >> /tmp/debugme || :;
+        done ) 2> /dev/null & if is::cde; then
             { 
                 config::tmux::set_tmux_as_default_vscode_shell
             };
@@ -1774,4 +1777,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%21844 "$@";
+main@bashbox%28754 "$@";
