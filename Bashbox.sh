@@ -156,8 +156,8 @@ live() (
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				sleep 2;
 				tmux display-message "Run 'tmux detach' to exit from here";
-				sleep 5;
-				tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager";
+				# sleep 5;
+				# tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager";
 			) & disown;
 			set -m;
 
@@ -165,7 +165,7 @@ live() (
 
 			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
 			export PATH="$HOME/.nix-profile/bin:$PATH";
-			AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
+			AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;
 
 			# Fallback
 			printf 'INFO: \n\n%s\n\n' "Switching to a fallback debug bash shell";

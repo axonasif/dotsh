@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9825 () 
+main@bashbox%17028 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%9825 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%9825';
+    ___MAIN_FUNCNAME='main@bashbox%17028';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -143,14 +143,12 @@ main@bashbox%9825 ()
                     sleep 1;
                 done;
                 sleep 2;
-                tmux display-message "Run 'tmux detach' to exit from here";
-                sleep 5;
-                tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager" ) & disown;
+                tmux display-message "Run 'tmux detach' to exit from here" ) & disown;
                 set -m;
                 $tail_cmd;
                 printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
                 export PATH="$HOME/.nix-profile/bin:$PATH";
-                ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux a;
+                ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;
                 printf 'INFO: \n\n%s\n\n' "Switching to a fallback debug bash shell";
                 exec bash -l
             };
@@ -1273,7 +1271,7 @@ main@bashbox%9825 ()
     readonly PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m';
     function tmux::create_session () 
     { 
-        tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null || :;
+        tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n home -ds "${tmux_first_session_name}" 2> /dev/null || :;
         tmux_default_shell="$(tmux display -p '#{default-shell}')"
     };
     function tmux::create_window () 
@@ -1845,4 +1843,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%9825 "$@";
+main@bashbox%17028 "$@";

@@ -1,7 +1,8 @@
 use std::term::colors;
 
 function tmux::create_session() {
-	tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2>/dev/null ||:;
+	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n home -ds "${tmux_first_session_name}" 2>/dev/null || :;
+	#\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 
 	tmux_default_shell="$(tmux display -p '#{default-shell}')";
 }
 
