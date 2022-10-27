@@ -127,12 +127,12 @@ function config::tmux() {
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
 		} fi
 
+		CLOSE=true await::create_shim "$tmux_exec_path";
+
 		if is::cde; then {
 			local tmux_default_shell;
 			tmux::create_session;
 		} fi
-
-		CLOSE=true await::create_shim "$tmux_exec_path";
 		
 		(
 			if is::gitpod; then {
@@ -259,7 +259,7 @@ EOF
 				cd "$CODESPACE_VSCODE_FOLDER" || :;
 			} fi
 		) || :;
-		
+
 		await::signal send config_tmux;
 	 } & disown;
 }

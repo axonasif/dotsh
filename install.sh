@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6578 () 
+main@bashbox%27604 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%6578 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%6578';
+    ___MAIN_FUNCNAME='main@bashbox%27604';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -180,7 +180,8 @@ main@bashbox%6578 ()
                         { 
                             sleep 0.5
                         };
-                    done
+                    done;
+                    rm -f "$lckfile"
                 };
             fi;
             docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")"
@@ -794,7 +795,7 @@ main@bashbox%6578 ()
     };
     function vscode::add_settings () 
     { 
-        SIGNALS="RETURN ERR" lockfile "vscode_addsettings";
+        SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
         set -x && exec 2> /tmp/.sl;
         read -t0.5 -u0 -r -d '' input || :;
         if test -z "${input:-}"; then
@@ -1475,13 +1476,13 @@ main@bashbox%6578 ()
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
                 };
             fi;
+            CLOSE=true await::create_shim "$tmux_exec_path";
             if is::cde; then
                 { 
                     local tmux_default_shell;
                     tmux::create_session
                 };
             fi;
-            CLOSE=true await::create_shim "$tmux_exec_path";
             ( if is::gitpod; then
                 { 
                     if test -n "${GITPOD_TASKS:-}"; then
@@ -1773,4 +1774,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%6578 "$@";
+main@bashbox%27604 "$@";

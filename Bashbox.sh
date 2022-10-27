@@ -202,6 +202,7 @@ live() (
 			until test -s "$lckfile"; do {
 				sleep 0.5;
 			} done
+			rm -f "$lckfile";
 		} fi
 
 		docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
