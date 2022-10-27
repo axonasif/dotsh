@@ -108,7 +108,7 @@ function config::tmux() {
 
 	# Extra steps
 	if is::cde; then {
-		config::tmux::set_tmux_as_default_vscode_shell &
+		config::tmux::set_tmux_as_default_vscode_shell;
 	} fi
 
 	{

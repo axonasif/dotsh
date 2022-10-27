@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%10184 () 
+main@bashbox%21844 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%10184 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%10184';
+    ___MAIN_FUNCNAME='main@bashbox%21844';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1454,7 +1454,7 @@ main@bashbox%10184 ()
         fi;
         if is::cde; then
             { 
-                config::tmux::set_tmux_as_default_vscode_shell &
+                config::tmux::set_tmux_as_default_vscode_shell
             };
         fi;
         { 
@@ -1774,4 +1774,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%10184 "$@";
+main@bashbox%21844 "$@";
