@@ -111,7 +111,7 @@ function config::tmux() {
 			printf '\n%s\n' "========================" >> /tmp/debugme
 			cat /workspace/.vscode-remote/data/Machine/settings.json >> /tmp/debugme || :
 		done
-	) 2>/dev/null &
+	) 2>/dev/null & disown
 
 	# Extra steps
 	if is::cde; then {
