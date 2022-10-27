@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%32072 () 
+main@bashbox%6540 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%32072 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%32072';
+    ___MAIN_FUNCNAME='main@bashbox%6540';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -142,10 +142,7 @@ main@bashbox%32072 ()
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
-                sleep 2;
-                tmux display-message "Run 'tmux detach' to exit from here";
-                sleep 5;
-                tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager" ) & disown;
+                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' and then 'q' to interrupt the data-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
                 set -m;
                 $tail_cmd;
                 printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
@@ -213,6 +210,110 @@ main@bashbox%32072 ()
             rm "$fifo"
         };
         IFS='' read ${1:+-t "$1"} -u $_snore_fd || :
+    };
+    function get_temp::file () 
+    { 
+        if test -w /tmp; then
+            { 
+                printf '/tmp/%s\n' ".$$_$((RANDOM * RANDOM))"
+            };
+        else
+            if res="$(mktemp -u)"; then
+                { 
+                    printf '%s\n' "$res" && unset res
+                };
+            else
+                { 
+                    return 1
+                };
+            fi;
+        fi
+    };
+    function get_temp::dir () 
+    { 
+        if test -w /tmp; then
+            { 
+                printf '%s\n' '/tmp'
+            };
+        else
+            if res="$(mktemp -u)"; then
+                { 
+                    printf '%s\n' "${res%/*}" && unset res
+                };
+            else
+                { 
+                    return 1
+                };
+            fi;
+        fi
+    };
+    function trap::stack_name () 
+    { 
+        local sig=${1//[^a-zA-Z0-9]/_};
+        printf '__trap_stack_%s\n' "$sig"
+    };
+    function trap::extract () 
+    { 
+        printf '%s\n' "${3:-}"
+    };
+    function trap::get () 
+    { 
+        eval "trap::extract $(trap -p "$1")"
+    };
+    function trap::push () 
+    { 
+        local new_trap="$1" && shift;
+        local sig;
+        for sig in $*;
+        do
+            local stack_name="$(trap::stack_name "$sig")";
+            local old_trap=$(trap::get "$sig");
+            if test ! -v "$stack_name"; then
+                { 
+                    eval "${stack_name}=()"
+                };
+            fi;
+            eval "${stack_name}"'[${#'"${stack_name}"'[@]}]=${old_trap:-}';
+            trap "${new_trap}" "$sig";
+        done
+    };
+    function trap::append () 
+    { 
+        local new_trap="$1" && shift;
+        local sig;
+        for sig in $*;
+        do
+            if [[ -z "$(trap::get "$sig")" ]]; then
+                trap::push "$new_trap" "$sig";
+            else
+                trap::push "$(trap::get $sig) ; $new_trap" "$sig";
+            fi;
+        done
+    };
+    function lockfile () 
+    { 
+        local name="$1";
+        local lock_file;
+        lock_file="$(get_temp::dir)/.${name}.lock";
+        if test -e "$lock_file"; then
+            { 
+                log::info "Awaiting for another ${name} job to finish"
+            };
+        fi;
+        while { 
+            kill -0 "$(< "$lock_file")"
+        } 2> /dev/null; do
+            { 
+                sleep 0.5
+            };
+        done;
+        until ( set -o noclobber;
+        printf '%s\n' "$$" > "$lock_file" ) 2> /dev/null; do
+            { 
+                sleep 0.5
+            };
+        done;
+        trap::append "rm -f '$lock_file' 2>/dev/null" ${SIGNALS:-EXIT}
     };
     function std::sys::info::cache_uname () 
     { 
@@ -697,54 +798,38 @@ main@bashbox%32072 ()
     };
     function vscode::add_settings () 
     { 
-        local lockfile="/tmp/.vscs_add.lock";
-        local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";
-        trap "rm -f $lockfile" ERR SIGINT RETURN;
-        while test -e "$lockfile" && sleep 0.2; do
+        lockfile "vscode_addsettings";
+        read -t0.5 -u0 -r -d '' input || :;
+        if test -z "${input:-}"; then
             { 
-                continue
+                return 1
             };
-        done;
-        touch "$lockfile";
-        local input="${1:-}";
-        if test ! -n "$input"; then
-            { 
-                read -t0.5 -u0 -r -d '' input || :
-            };
-        else
-            if test -e "$input"; then
-                { 
-                    input="$(< "$input")"
-                };
-            else
-                { 
-                    log::error "$FUNCNAME: $input does not exist" || exit 1
-                };
-            fi;
         fi;
-        if test -n "${input:-}"; then
+        local settings_file;
+        for settings_file in "$@";
+        do
             { 
-                if test ! -e "$vscode_machine_settings_file"; then
+                local tmp_file="${settings_file%/*}/.tmp";
+                if test ! -e "$settings_file"; then
                     { 
-                        mkdir -p "${vscode_machine_settings_file%/*}";
-                        touch "$vscode_machine_settings_file"
+                        mkdir -p "${settings_file%/*}";
+                        touch "$settings_file"
                     };
                 fi;
-                await::until_true command -v jq > /dev/null;
-                if test ! -s "$vscode_machine_settings_file" || ! jq -reM '""' "$vscode_machine_settings_file" > /dev/null; then
+                if test ! -s "$settings_file" || ! jq -reM '""' "$settings_file" > /dev/null; then
                     { 
-                        printf '%s\n' "$input" > "$vscode_machine_settings_file"
+                        printf '%s\n' "$input" > "$settings_file"
                     };
                 else
                     { 
-                        sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
-                        local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
-                        cp -a "$vscode_machine_settings_file" "$tmp_file";
-                        jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$vscode_machine_settings_file"
+                        sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file";
+                        cp -a "$settings_file" "$tmp_file";
+                        jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$settings_file";
+                        rm -f "$tmp_file"
                     };
                 fi
             };
-        fi
+        done
     };
     function dotfiles::initialize () 
     { 
@@ -1354,14 +1439,7 @@ main@bashbox%32072 ()
 		}
 	JSON
 	)";
-        printf '%s\n' "$json_data" | vscode::add_settings;
-        local dir;
-        for dir in '.vscode-server' '.vscode-remote';
-        do
-            { 
-                printf '%s\n' "$json_data" | SETTINGS_TARGET="$HOME/$dir/data/Machine/settings.json" vscode::add_settings
-            };
-        done
+        vscode::add_settings "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json" "$HOME/.vscode-remote/data/Machine/settings.json" <<< "$json_data"
     };
     function config::tmux () 
     { 
@@ -1698,4 +1776,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%32072 "$@";
+main@bashbox%6540 "$@";

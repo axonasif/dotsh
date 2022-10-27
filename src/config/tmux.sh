@@ -88,13 +88,12 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 	JSON
 	)"
 
-	printf '%s\n' "$json_data" | vscode::add_settings;
-	# For vscode desktop
 	# TIME=2 await::for_file_existence "$ms_vscode_server_dir";
-	local dir;
-	for dir in '.vscode-server' '.vscode-remote'; do {
-		printf '%s\n' "$json_data" | SETTINGS_TARGET="$HOME/$dir/data/Machine/settings.json" vscode::add_settings;
-	} done
+	vscode::add_settings \
+		"$vscode_machine_settings_file" \
+		"$HOME/.vscode-server/data/Machine/settings.json" \
+		"$HOME/.vscode-remote/data/Machine/settings.json" <<<"$json_data"
+
 }
 
 function config::tmux() {

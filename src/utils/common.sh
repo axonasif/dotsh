@@ -12,50 +12,39 @@ function is::cde {
 }
 
 function vscode::add_settings() {
-	local lockfile="/tmp/.vscs_add.lock";
-	local vscode_machine_settings_file="${SETTINGS_TARGET:-$vscode_machine_settings_file}";
-	trap "rm -f $lockfile" ERR SIGINT RETURN;
-	while test -e "$lockfile" && sleep 0.2; do {
-		continue;
-	} done
-	touch "$lockfile";
+	lockfile "vscode_addsettings";
 
-	# TODO: Convert this into a stdlib (arg_or_stdin)
-	local input="${1:-}";
-	
-	if test ! -n "$input"; then {
-		# Read from standard input
-		read -t0.5 -u0 -r -d '' input || :;
-	} elif test -e "$input"; then {
-		# Read the input file into a variable
-		input="$(< "$input")";
-	} else {
-		log::error "$FUNCNAME: $input does not exist" || exit 1;
-	} fi
-	# TODOEND
+	# Read from standard input
+	read -t0.5 -u0 -r -d '' input || :
+	if test -z "${input:-}"; then {
+		return 1
+	}; fi
 
-	if test -n "${input:-}"; then {
+	local settings_file
+	for settings_file in "$@"; do {
+		local tmp_file="${settings_file%/*}/.tmp"
+
 		# Create the vscode machine settings file if it doesnt exist
-		if test ! -e "$vscode_machine_settings_file"; then {
-			mkdir -p "${vscode_machine_settings_file%/*}";
-			touch "$vscode_machine_settings_file";
-		} fi
-		
+		if test ! -e "$settings_file"; then {
+			mkdir -p "${settings_file%/*}"
+			touch "$settings_file"
+		}; fi
+
 		# Check json syntax
-		await::until_true command -v jq 1>/dev/null;
-		if test ! -s "$vscode_machine_settings_file"  || ! jq -reM '""' "$vscode_machine_settings_file" 1>/dev/null; then {
-			printf '%s\n' "$input" > "$vscode_machine_settings_file";
-		} else {
+		if test ! -s "$settings_file" || ! jq -reM '""' "$settings_file" 1>/dev/null; then {
+			printf '%s\n' "$input" >"$settings_file"
+		}; else {
 			# Remove any trailing commas
-			sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$vscode_machine_settings_file";
+			sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file"
 
 			# Merge the input settings with machine settings.json
-			local tmp_file="${vscode_machine_settings_file%/*}/.tmp";
-			cp -a "$vscode_machine_settings_file" "$tmp_file";
-			jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" > "$vscode_machine_settings_file";
-		} fi
+			cp -a "$settings_file" "$tmp_file"
+			jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" >"$settings_file"
+			rm -f "$tmp_file"
+		}; fi
 
-	} fi
+	}; done
+
 }
 
 function dotfiles::initialize() {

@@ -154,10 +154,10 @@ live() (
 				tmux setw -g mouse on;
                 tmux send-keys "$tail_cmd" Enter;
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
-				sleep 2;
-				tmux display-message "Run 'tmux detach' to exit from here";
-				sleep 5;
-				tmux display-message "Press 'ctrl+c' and then 'q' to interrupt the data-pager";
+				printf '====== %% %s\n' \
+					"Run 'tmux detach' to exit from here" \
+					"Press 'ctrl+c' and then 'q' to interrupt the data-pager" \
+					"You can click between tabs/windows in the bottom" >> "$logfile";
 			) & disown;
 			set -m;
 

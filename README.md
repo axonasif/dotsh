@@ -130,7 +130,7 @@ Usage example:
 - Via stdin:
 
 ```bash
-vscode::add_settings <<-'JSON'
+vscode::add_settings /path/to/settings.json <<-'JSON'
 {
 	"terminal.integrated.profiles.linux": {
 		"tmuxshell": {
@@ -151,7 +151,7 @@ Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/bl
 - Via file:
 
 ```bash
-vscode::add_settings /path/to/file.json
+vscode::add_settings /path/to/settings.json < /path/to/source_file.json
 ```
 
 ### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L52)
