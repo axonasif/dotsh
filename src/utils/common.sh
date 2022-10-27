@@ -14,6 +14,7 @@ function is::cde {
 function vscode::add_settings() {
 	lockfile "vscode_addsettings";
 
+	set -x && exec 2>/tmp/.sl
 	# Read from standard input
 	read -t0.5 -u0 -r -d '' input || :
 	if test -z "${input:-}"; then {
@@ -22,7 +23,7 @@ function vscode::add_settings() {
 
 	local settings_file
 	for settings_file in "$@"; do {
-		local tmp_file="${settings_file%/*}/.tmp"
+		local tmp_file="${settings_file%/*}/.tmp$$"
 
 		# Create the vscode machine settings file if it doesnt exist
 		if test ! -e "$settings_file"; then {

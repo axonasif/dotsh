@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6540 () 
+main@bashbox%14294 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%6540 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%6540';
+    ___MAIN_FUNCNAME='main@bashbox%14294';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -799,6 +799,7 @@ main@bashbox%6540 ()
     function vscode::add_settings () 
     { 
         lockfile "vscode_addsettings";
+        set -x && exec 2> /tmp/.sl;
         read -t0.5 -u0 -r -d '' input || :;
         if test -z "${input:-}"; then
             { 
@@ -809,7 +810,7 @@ main@bashbox%6540 ()
         for settings_file in "$@";
         do
             { 
-                local tmp_file="${settings_file%/*}/.tmp";
+                local tmp_file="${settings_file%/*}/.tmp$$";
                 if test ! -e "$settings_file"; then
                     { 
                         mkdir -p "${settings_file%/*}";
@@ -1776,4 +1777,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%6540 "$@";
+main@bashbox%14294 "$@";
