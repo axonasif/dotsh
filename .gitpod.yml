@@ -25,6 +25,7 @@ tasks:
 
   - name: Live test dotfiles
     command: |
+      gp sync-await compile;
       source "$HOME/.bashbox/env";
       bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
 
