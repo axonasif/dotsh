@@ -46,7 +46,7 @@ function inject_tmux() {
 			tmux::create_session;
 			exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
 		} else {
-			exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `inject_tmux_old_complicated()` :P
+			exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:inject_tmux_old_complicated()` :P
 		} fi
 
 	} fi
@@ -64,7 +64,8 @@ function config::tmux::hijack_gitpod_task_terminals {
 		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
 						"tmux_first_window_num=$tmux_first_window_num" \
 						"tmux_init_lock=$tmux_init_lock" \
-						"$(declare -f tmux::start_vimpod tmux::create_session inject_tmux)" 'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+						"$(declare -f tmux::start_vimpod tmux::create_session inject_tmux)" \
+						'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
 	} fi
 }
 
