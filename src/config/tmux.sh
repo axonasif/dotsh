@@ -106,12 +106,12 @@ function config::tmux() {
 		await::until_true command -v tmux 1>/dev/null;
 	} fi
 
+	# Extra steps
+	if is::cde; then {
+		config::tmux::set_tmux_as_default_vscode_shell &
+	} fi
+
 	{
-		# Extra steps
-		if is::cde; then {
-			config::tmux::set_tmux_as_default_vscode_shell & disown;
-		} fi
-		
 		if is::gitpod; then {
 			if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 				tmux::start_vimpod & disown;
