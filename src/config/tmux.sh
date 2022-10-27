@@ -132,12 +132,14 @@ function config::tmux() {
 			tmux::create_session;
 		} fi
 
+		CLOSE=true await::create_shim "$tmux_exec_path";
+		
 		(
 			if is::gitpod; then {
 				if test -n "${GITPOD_TASKS:-}"; then {
 					log::info "Spawning Gitpod tasks in tmux";
 				} else {
-					return;
+					exit;
 				} fi
 
 				await::for_file_existence "$workspace_dir/.gitpod/ready";
@@ -257,8 +259,7 @@ EOF
 				cd "$CODESPACE_VSCODE_FOLDER" || :;
 			} fi
 		) || :;
-
-		CLOSE=true await::create_shim "$tmux_exec_path";
+		
 		await::signal send config_tmux;
 	 } & disown;
 }

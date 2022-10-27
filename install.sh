@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25436 () 
+main@bashbox%6578 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%25436 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%25436';
+    ___MAIN_FUNCNAME='main@bashbox%6578';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1481,6 +1481,7 @@ main@bashbox%25436 ()
                     tmux::create_session
                 };
             fi;
+            CLOSE=true await::create_shim "$tmux_exec_path";
             ( if is::gitpod; then
                 { 
                     if test -n "${GITPOD_TASKS:-}"; then
@@ -1489,7 +1490,7 @@ main@bashbox%25436 ()
                         };
                     else
                         { 
-                            return
+                            exit
                         };
                     fi;
                     await::for_file_existence "$workspace_dir/.gitpod/ready";
@@ -1604,7 +1605,6 @@ EOF
                     };
                 fi;
             fi ) || :;
-            CLOSE=true await::create_shim "$tmux_exec_path";
             await::signal send config_tmux
         } & disown
     };
@@ -1773,4 +1773,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%25436 "$@";
+main@bashbox%6578 "$@";
