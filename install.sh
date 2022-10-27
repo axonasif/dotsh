@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%17028 () 
+main@bashbox%23477 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%17028 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%17028';
+    ___MAIN_FUNCNAME='main@bashbox%23477';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1297,140 +1297,6 @@ main@bashbox%17028 ()
             fi
         } ) & disown
     };
-    function inject_tmux_old_complicated () 
-    { 
-        if test -v TMUX; then
-            { 
-                return
-            };
-        fi;
-        local tmux tmux_default_shell;
-        function create_session () 
-        { 
-            tmux new-session -n home -ds "${tmux_first_session_name}"\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 2> /dev/null;
-            tmux_default_shell="$(tmux display -p '#{default-shell}')"
-        };
-        function new_window () 
-        { 
-            exec tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t main "$@"
-        };
-        function create_window () 
-        { 
-            if test ! -e "$tmux_init_lock" && test -z "$(tmux list-clients -t "$tmux_first_session_name")"; then
-                { 
-                    touch "$tmux_init_lock";
-                    new_window "$@" \; attach
-                };
-            else
-                { 
-                    new_window "$@"
-                };
-            fi
-        };
-        function get_task_term_name () 
-        { 
-            local file_loc="/tmp/.gp_tasks_names";
-            if test ! -e "$file_loc"; then
-                { 
-                    local term_id term_name task_state symbol ref;
-                    while IFS='|' read -r _ term_id term_name task_state _; do
-                        { 
-                            if [[ "$term_id" =~ [0-9]+ ]]; then
-                                { 
-                                    for symbol in term_id term_name task_state;
-                                    do
-                                        { 
-                                            declare -n ref="$symbol";
-                                            ref="${ref% }" && ref="${ref# }"
-                                        };
-                                    done;
-                                    if test "$task_state" == "running"; then
-                                        { 
-                                            printf '%s\n' "$term_name" >> "$file_loc"
-                                        };
-                                    fi;
-                                    unset symbol ref
-                                };
-                            fi
-                        };
-                    done < <(gp tasks list --no-color)
-                };
-            fi;
-            if test -e "$file_loc"; then
-                { 
-                    awk '{$1=$1;print;exit}' "$file_loc";
-                    sed -i '1d' "$file_loc"
-                };
-            fi
-        };
-        if test ! -e "$tmux_init_lock"; then
-            { 
-                "$___self_DIR/src/utils/vimpod.py" & disown;
-                ( { 
-                    gp ports await 23000 && gp ports await 22000
-                } > /dev/null && gp preview "$(gp url 22000)" --external && { 
-                    if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
-                        { 
-                            printf '%s\n' '#!/usr/bin/env sh' 'while sleep $(( 60 * 60 )); do continue; done' > /ide/bin/gitpod-code;
-                            pkill -9 -f 'sh /ide/bin/gitpod-code'
-                        };
-                    fi
-                } ) &
-            };
-        fi;
-        touch "$tmux_init_lock";
-        if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
-            { 
-                if test -v SSH_CONNECTION; then
-                    { 
-                        if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
-                            { 
-                                pkill -9 vimpod || :
-                            };
-                        fi;
-                        create_session;
-                        exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach -t :${tmux_first_window_num}
-                    };
-                fi;
-                create_session;
-                termout=/tmp/.termout.$$;
-                if test ! -v bash_ran_once; then
-                    { 
-                        exec > >(tee -a "$termout") 2>&1
-                    };
-                fi;
-                local stdin;
-                IFS= read -t0.01 -u0 -r -d '' stdin;
-                if test -n "$stdin"; then
-                    { 
-                        if test "${DEBUG_DOTFILES:-false}" == true; then
-                            { 
-                                declare -p stdin;
-                                read -rp running;
-                                set -x
-                            };
-                        fi;
-                        stdin=$(printf '%q' "$stdin");
-                        WINDOW_NAME="$(get_task_term_name)" create_window bash -c "trap 'exec $tmux_default_shell -l' EXIT; less -FXR $termout | cat; printf '%s\n' $stdin; eval $stdin;"
-                    };
-                else
-                    { 
-                        if test "${DEBUG_DOTFILES:-false}" == true; then
-                            { 
-                                read -rp exiting
-                            };
-                        fi;
-                        exit
-                    };
-                fi;
-                bash_ran_once=true
-            };
-        else
-            { 
-                unset ${FUNCNAME[0]} && PROMPT_COMMAND="${PROMPT_COMMAND/${FUNCNAME[0]};/}"
-            };
-        fi
-    };
     function inject_tmux () 
     { 
         if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then
@@ -1478,7 +1344,7 @@ main@bashbox%17028 ()
 					"path": "bash",
 					"args": [
 						"-c",
-						"until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -1843,4 +1709,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%17028 "$@";
+main@bashbox%23477 "$@";
