@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%29779 () 
+main@bashbox%6856 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%29779 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%29779';
+    ___MAIN_FUNCNAME='main@bashbox%6856';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1089,6 +1089,7 @@ main@bashbox%29779 ()
                 if test -e "$target"; then
                     { 
                         log::warn "${FUNCNAME[0]}: $target already exists";
+                        return 0;
                         if ! is::custom_shim; then
                             { 
                                 try_sudo mv "$target" "$shim_source"
@@ -1778,4 +1779,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%29779 "$@";
+main@bashbox%6856 "$@";

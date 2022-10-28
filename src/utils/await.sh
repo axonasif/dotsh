@@ -106,6 +106,7 @@ function await::create_shim() {
 
 		if test -e "$target"; then {
 			log::warn "${FUNCNAME[0]}: $target already exists";
+			return 0;
 			if ! is::custom_shim; then {
 				try_sudo mv "$target" "$shim_source";
 			} fi
