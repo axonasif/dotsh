@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%29393 () 
+main@bashbox%29779 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%29393 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%29393';
+    ___MAIN_FUNCNAME='main@bashbox%29779';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1504,7 +1504,7 @@ main@bashbox%29393 ()
                     function jqw () 
                     { 
                         local cmd;
-                        if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2> /dev/null; then
+                        if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS"); then
                             { 
                                 printf '%s\n' "$cmd"
                             };
@@ -1513,10 +1513,13 @@ main@bashbox%29393 ()
                                 return 1
                             };
                         fi
-                    };
+                    } 2> /dev/null;
                     local name cmd arr_elem=0;
-                    until { 
-                        ! cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ! cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"
+                    while { 
+                        success=0;
+                        cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
+                        cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
+                        test $success -gt 0
                     }; do
                         { 
                             if ! name="$(jqw ".[${arr_elem}].name")"; then
@@ -1775,4 +1778,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%29393 "$@";
+main@bashbox%29779 "$@";

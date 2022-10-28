@@ -150,17 +150,20 @@ function config::tmux() {
 
 				function jqw() {
 					local cmd;
-					if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS") 2>/dev/null; then {
+					if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS"); then {
 						printf '%s\n' "$cmd";
 					} else {
 						return 1;
 					} fi
-				}
+				} 2>/dev/null
 
 				local name cmd arr_elem=0;
-				until {
-					! cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && \
-					! cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")"
+				# local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
+				while {
+					success=0;
+					cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
+					cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
+					test $success -gt 0;
 				}; do {
 					if ! name="$(jqw ".[${arr_elem}].name")"; then {
 						name="AnonTask-${arr_elem}";
@@ -191,6 +194,7 @@ $task
 CMDC
 						printf '%s\n' "$cmdc";
 					)";
+					# printf '%s\n' "$cmd" > "$cmd_tmp_file"
 
 					# win_i="$(
 						# )";
