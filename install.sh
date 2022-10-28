@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%5539 () 
+main@bashbox%29393 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%5539 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%5539';
+    ___MAIN_FUNCNAME='main@bashbox%29393';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1423,7 +1423,7 @@ main@bashbox%5539 ()
         local pyh="$HOME/.bashrc.d/60-python";
         if test -e "$pyh"; then
             { 
-                sed '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh"
+                sed -i '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh"
             };
         fi;
         local json_data;
@@ -1450,16 +1450,12 @@ main@bashbox%5539 ()
         log::info "Setting up tmux";
         if is::cde; then
             { 
-                KEEP="true" await::create_shim "$tmux_exec_path"
+                KEEP="true" await::create_shim "$tmux_exec_path";
+                config::tmux::set_tmux_as_default_vscode_shell
             };
         else
             { 
                 await::until_true command -v tmux > /dev/null
-            };
-        fi;
-        if is::cde; then
-            { 
-                config::tmux::set_tmux_as_default_vscode_shell & disown
             };
         fi;
         { 
@@ -1779,4 +1775,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%5539 "$@";
+main@bashbox%29393 "$@";

@@ -74,7 +74,7 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 	local pyh="$HOME/.bashrc.d/60-python"
 	if test -e "$pyh"; then {
 		# Workaround for now
-		sed '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh";
+		sed -i '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh";
 	} fi
 	local json_data;
 	json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
@@ -107,13 +107,9 @@ function config::tmux() {
 	log::info "Setting up tmux";
 	if is::cde; then {
 		KEEP="true" await::create_shim "$tmux_exec_path";
+		config::tmux::set_tmux_as_default_vscode_shell;
 	} else {
 		await::until_true command -v tmux 1>/dev/null;
-	} fi
-
-	# Extra steps
-	if is::cde; then {
-		config::tmux::set_tmux_as_default_vscode_shell & disown;
 	} fi
 
 	{
