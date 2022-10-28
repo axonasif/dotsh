@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4224 () 
+main@bashbox%5539 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%4224 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%4224';
+    ___MAIN_FUNCNAME='main@bashbox%5539';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1420,9 +1420,10 @@ main@bashbox%4224 ()
     function config::tmux::set_tmux_as_default_vscode_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
-        if test -e "$HOME/.bashrc.d/60-python"; then
+        local pyh="$HOME/.bashrc.d/60-python";
+        if test -e "$pyh"; then
             { 
-                await::until_true test -s "$vscode_machine_settings_file" && sleep 0.3
+                sed '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh"
             };
         fi;
         local json_data;
@@ -1778,4 +1779,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%4224 "$@";
+main@bashbox%5539 "$@";

@@ -71,9 +71,10 @@ function config::tmux::hijack_gitpod_task_terminals {
 
 function config::tmux::set_tmux_as_default_vscode_shell() {
 	log::info "Setting the integrated tmux shell for VScode as default";
-	if test -e "$HOME/.bashrc.d/60-python"; then {
+	local pyh="$HOME/.bashrc.d/60-python"
+	if test -e "$pyh"; then {
 		# Workaround for now
-		await::until_true test -s "$vscode_machine_settings_file" && sleep 0.3;
+		sed '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh";
 	} fi
 	local json_data;
 	json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
