@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%1923 () 
+main@bashbox%4224 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%1923 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%1923';
+    ___MAIN_FUNCNAME='main@bashbox%4224';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1420,6 +1420,11 @@ main@bashbox%1923 ()
     function config::tmux::set_tmux_as_default_vscode_shell () 
     { 
         log::info "Setting the integrated tmux shell for VScode as default";
+        if test -e "$HOME/.bashrc.d/60-python"; then
+            { 
+                await::until_true test -s "$vscode_machine_settings_file" && sleep 0.3
+            };
+        fi;
         local json_data;
         json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
 		{
@@ -1453,7 +1458,7 @@ main@bashbox%1923 ()
         fi;
         if is::cde; then
             { 
-                config::tmux::set_tmux_as_default_vscode_shell
+                config::tmux::set_tmux_as_default_vscode_shell & disown
             };
         fi;
         { 
@@ -1773,4 +1778,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%1923 "$@";
+main@bashbox%4224 "$@";
