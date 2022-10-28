@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2677 () 
+main@bashbox%1923 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%2677 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%2677';
+    ___MAIN_FUNCNAME='main@bashbox%1923';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -796,7 +796,6 @@ main@bashbox%2677 ()
     function vscode::add_settings () 
     { 
         SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
-        set -x && exec 2> /tmp/.sl;
         read -t0.5 -u0 -r -d '' input || :;
         if test -z "${input:-}"; then
             { 
@@ -1452,10 +1451,6 @@ main@bashbox%2677 ()
                 await::until_true command -v tmux > /dev/null
             };
         fi;
-        ( while sleep 1; do
-            printf '\n%s\n' "========================" >> /tmp/debugme;
-            cat /workspace/.vscode-remote/data/Machine/settings.json >> /tmp/debugme || :;
-        done ) 2> /dev/null & disown;
         if is::cde; then
             { 
                 config::tmux::set_tmux_as_default_vscode_shell
@@ -1778,4 +1773,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%2677 "$@";
+main@bashbox%1923 "$@";

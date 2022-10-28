@@ -106,13 +106,6 @@ function config::tmux() {
 		await::until_true command -v tmux 1>/dev/null;
 	} fi
 
-	(
-		while sleep 1; do 
-			printf '\n%s\n' "========================" >> /tmp/debugme
-			cat /workspace/.vscode-remote/data/Machine/settings.json >> /tmp/debugme || :
-		done
-	) 2>/dev/null & disown
-
 	# Extra steps
 	if is::cde; then {
 		config::tmux::set_tmux_as_default_vscode_shell;

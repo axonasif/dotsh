@@ -14,7 +14,6 @@ function is::cde {
 function vscode::add_settings() {
 	SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
 
-	set -x && exec 2>/tmp/.sl
 	# Read from standard input
 	read -t0.5 -u0 -r -d '' input || :
 	if test -z "${input:-}"; then {
