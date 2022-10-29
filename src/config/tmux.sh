@@ -1,9 +1,8 @@
 use std::term::colors;
 
 function tmux::create_session() {
-	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" 2>/dev/null || :;
+	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get_set::default_shell)" -li 2>/dev/null || :;
 	#\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 
-	tmux_default_shell="$(tmux display -p '#{default-shell}')";
 }
 
 function tmux::create_window() {
@@ -33,22 +32,43 @@ function inject_tmux() {
 			return;
 		} fi
 
-		# Switch to tmux on SSH.
-		if test -v SSH_CONNECTION; then {
-			if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
-				pkill -9 vimpod || :;
-			} fi
-			# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
-			# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
-			# or tell tmux to allways use the largest size, which can confuse some people sometimes.
-			# I'll go with the second option for now
-			# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
-			tmux::create_session;
-			exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
-		} else {
-			exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:inject_tmux_old_complicated()` :P
-		} fi
+		if test "${DOTFILES_TMUX:-true}" == true; then {
 
+			# Switch to tmux on SSH.
+			if test -v SSH_CONNECTION; then {
+				if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
+					pkill -9 vimpod || :;
+				} fi
+				# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
+				# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
+				# or tell tmux to allways use the largest size, which can confuse some people sometimes.
+				# I'll go with the second option for now
+				# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
+				AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
+				exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
+			} else {
+				exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:inject_tmux_old_complicated()` :P
+			} fi
+
+		} else {
+
+			local stdin;
+			IFS= read -t0.01 -u0 -r -d '' stdin;
+			stdin="$(
+				printf '%s\n' "$stdin";
+			)"; # To make it passable directly with -lic argument to bash.
+			if test -n "$stdin"; then {
+				if test "${#stdin}" -gt 4050; then {
+					local tmp_cmd_file="/tmp/.custom_shell_cmd";
+					printf '%s\n' "$stdin" > "$tmp_cmd_file";
+					stdin="$(
+							printf 'eval "$(< "%s")"\n' "$tmp_cmd_file";
+					)";
+				} fi
+
+				exec bash -lic "trap 'exec $(get_set::default_shell) -il' EXIT; $stdin";
+			} fi
+		} fi
 	} fi
 }
 
@@ -84,7 +104,7 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 					"path": "bash",
 					"args": [
 						"-c",
-						"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -102,10 +122,17 @@ function config::tmux::set_tmux_as_default_vscode_shell() {
 }
 
 function config::tmux() {
-	# Lock on tmux
+
+	# In case tmux feature is disabled
+	if test "${DOTFILES_TMUX:-true}" != true; then {
+		return;
+	} fi
+
 	local tmux_exec_path="/usr/bin/tmux";
 	log::info "Setting up tmux";
+
 	if is::cde; then {
+		# Lock on tmux binary
 		KEEP="true" await::create_shim "$tmux_exec_path";
 		config::tmux::set_tmux_as_default_vscode_shell;
 	} else {
@@ -129,9 +156,9 @@ function config::tmux() {
 		} fi
 
 		CLOSE=true await::create_shim "$tmux_exec_path";
+		await::signal send config_tmux;
 
 		if is::cde; then {
-			local tmux_default_shell;
 			tmux::create_session;
 		} fi
 		
@@ -181,7 +208,7 @@ function config::tmux() {
 							} fi
 						)"
 IFS='' read -rd '' cmdc <<CMDC || :;
-trap "exec /usr/bin/fish -l" EXIT
+trap "exec '$(get_set::default_shell)' -il" EXIT
 printf "$BGREEN>> Executing task:$RC\n";
 IFS='' read -rd '' lines <<'EOF' || :;
 $task
@@ -189,7 +216,7 @@ EOF
 printf '%s\n' "\$lines" | while IFS='' read -r line; do
 	printf "    ${YELLOW}%s${RC}\n" "\$line";
 done
-printf '\n';
+# printf '\n';
 $task
 CMDC
 						printf '%s\n' "$cmdc";
@@ -270,6 +297,5 @@ EOF
 			} fi
 		) || :;
 
-		await::signal send config_tmux;
 	 } & disown;
 }

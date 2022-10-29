@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%1193 () 
+main@bashbox%32164 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%1193 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%1193';
+    ___MAIN_FUNCNAME='main@bashbox%32164';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -127,7 +127,7 @@ main@bashbox%1193 ()
             function startup_command () 
             { 
                 local logfile="$HOME/.dotfiles.log";
-                local tail_cmd="less -XR +F $logfile";
+                local tail_cmd="tail -f $logfile";
                 eval "$(gp env -e)";
                 set +m;
                 { 
@@ -142,14 +142,26 @@ main@bashbox%1193 ()
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
-                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' and then 'q' to interrupt the data-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
+                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
                 set -m;
-                $tail_cmd;
-                printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
                 export PATH="$HOME/.nix-profile/bin:$PATH";
-                ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;
-                printf 'INFO: \n\n%s\n\n' "Switching to a fallback debug bash shell";
-                exec bash -l
+                if test "${DOTFILES_TMUX:-true}" == true; then
+                    { 
+                        $tail_cmd;
+                        ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach
+                    };
+                else
+                    { 
+                        ( sleep 2 && $tail_cmd ) & exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li
+                    };
+                fi;
+                if test $? != 0; then
+                    { 
+                        printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+                        printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
+                        exec bash -li
+                    };
+                fi
             };
             if is::gitpod; then
                 { 
@@ -793,6 +805,51 @@ main@bashbox%1193 ()
     { 
         is::gitpod || is::codespaces
     };
+    function get_set::default_shell () 
+    { 
+        function get_tmux_shell () 
+        { 
+            tmux start-server\; run-shell '\echo #{default-shell}'
+        };
+        local custom_shell;
+        if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then
+            { 
+                custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
+                if test "${DOTFILES_TMUX:-true}" == true; then
+                    { 
+                        local tmux_shell;
+                        if tmux_shell="$(get_tmux_shell)" && test "$tmux_shell" != "$custom_shell"; then
+                            { 
+                                ( exec 1>&-;
+                                until tmux has-session 2> /dev/null; do
+                                    { 
+                                        sleep 1
+                                    };
+                                done;
+                                tmux set -g default-shell "$custom_shell" || : ) & disown
+                            };
+                        fi
+                    };
+                fi
+            };
+        else
+            if test "${DOTFILES_TMUX:-true}" == true; then
+                { 
+                    await::signal get config_tmux;
+                    if custom_shell="$(get_tmux_shell)" && [ "${custom_shell}" == "/bin/sh" ]; then
+                        { 
+                            custom_shell="$(command -v bash)"
+                        };
+                    fi
+                };
+            else
+                { 
+                    custom_shell="$(command -v bash)"
+                };
+            fi;
+        fi;
+        printf '%s\n' "$custom_shell"
+    };
     function vscode::add_settings () 
     { 
         SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
@@ -1356,8 +1413,7 @@ main@bashbox%1193 ()
     readonly PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m';
     function tmux::create_session () 
     { 
-        tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" 2> /dev/null || :;
-        tmux_default_shell="$(tmux display -p '#{default-shell}')"
+        tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get_set::default_shell)" -li 2> /dev/null || :
     };
     function tmux::create_window () 
     { 
@@ -1391,19 +1447,45 @@ main@bashbox%1193 ()
                         return
                     };
                 fi;
-                if test -v SSH_CONNECTION; then
+                if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
-                        if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
+                        if test -v SSH_CONNECTION; then
                             { 
-                                pkill -9 vimpod || :
+                                if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then
+                                    { 
+                                        pkill -9 vimpod || :
+                                    };
+                                fi;
+                                AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
+                                exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num}
                             };
-                        fi;
-                        tmux::create_session;
-                        exec tmux set-window-option -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num}
+                        else
+                            { 
+                                exit 0
+                            };
+                        fi
                     };
                 else
                     { 
-                        exit 0
+                        local stdin;
+                        IFS= read -t0.01 -u0 -r -d '' stdin;
+                        stdin="$(
+				printf '%s\n' "$stdin";
+			)";
+                        if test -n "$stdin"; then
+                            { 
+                                if test "${#stdin}" -gt 4050; then
+                                    { 
+                                        local tmp_cmd_file="/tmp/.custom_shell_cmd";
+                                        printf '%s\n' "$stdin" > "$tmp_cmd_file";
+                                        stdin="$(
+							printf 'eval "$(< "%s")"\n' "$tmp_cmd_file";
+					)"
+                                    };
+                                fi;
+                                exec bash -lic "trap 'exec $(get_set::default_shell) -il' EXIT; $stdin"
+                            };
+                        fi
                     };
                 fi
             };
@@ -1435,7 +1517,7 @@ main@bashbox%1193 ()
 					"path": "bash",
 					"args": [
 						"-c",
-						"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+						"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 					]
 				}
 			},
@@ -1447,6 +1529,11 @@ main@bashbox%1193 ()
     };
     function config::tmux () 
     { 
+        if test "${DOTFILES_TMUX:-true}" != true; then
+            { 
+                return
+            };
+        fi;
         local tmux_exec_path="/usr/bin/tmux";
         log::info "Setting up tmux";
         if is::cde; then
@@ -1479,9 +1566,9 @@ main@bashbox%1193 ()
                 };
             fi;
             CLOSE=true await::create_shim "$tmux_exec_path";
+            await::signal send config_tmux;
             if is::cde; then
                 { 
-                    local tmux_default_shell;
                     tmux::create_session
                 };
             fi;
@@ -1540,7 +1627,7 @@ main@bashbox%1193 ()
 							} fi
 						)"
 IFS='' read -rd '' cmdc <<CMDC || :;
-trap "exec /usr/bin/fish -l" EXIT
+trap "exec '$(get_set::default_shell)' -il" EXIT
 printf "$BGREEN>> Executing task:$RC\n";
 IFS='' read -rd '' lines <<'EOF' || :;
 $task
@@ -1548,7 +1635,7 @@ EOF
 printf '%s\n' "\$lines" | while IFS='' read -r line; do
 	printf "    ${YELLOW}%s${RC}\n" "\$line";
 done
-printf '\n';
+# printf '\n';
 $task
 CMDC
 						printf '%s\n' "$cmdc";
@@ -1619,8 +1706,7 @@ EOF
                         cd "$CODESPACE_VSCODE_FOLDER" || :
                     };
                 fi;
-            fi ) || :;
-            await::signal send config_tmux
+            fi ) || :
         } & disown
     };
     local -r _shell_hist_files=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$HOME/.local/share/fish/fish_history");
@@ -1788,4 +1874,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%1193 "$@";
+main@bashbox%32164 "$@";

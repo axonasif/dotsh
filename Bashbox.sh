@@ -133,6 +133,9 @@ live() (
 				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
+				## These options below are also available, see README.md for more info
+				# -e DOTFILES_DEFAULT_SHELL=zsh
+				# -e DOTFILES_TMUX=false
 			)
 		} fi
 
@@ -143,7 +146,8 @@ live() (
 
 		function startup_command() {
 			local logfile="$HOME/.dotfiles.log";
-			local tail_cmd="less -XR +F $logfile";
+			# local tail_cmd="less -XR +F $logfile";
+			local tail_cmd="tail -f $logfile"
 			eval "$(gp env -e)";
 			set +m; # Temporarily disable job control
 			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & disown;
@@ -156,20 +160,27 @@ live() (
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				printf '====== %% %s\n' \
 					"Run 'tmux detach' to exit from here" \
-					"Press 'ctrl+c' and then 'q' to interrupt the data-pager" \
+					"Press 'ctrl+c' the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
 			) & disown;
 			set -m;
 
-			$tail_cmd;
 
-			printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
 			export PATH="$HOME/.nix-profile/bin:$PATH";
-			AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;
+			if test "${DOTFILES_TMUX:-true}" == true; then {
+				$tail_cmd;
+				AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;
+			} else {
+				(sleep 2 && $tail_cmd) &
+				exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li;
+			} fi
 
 			# Fallback
-			printf 'INFO: \n\n%s\n\n' "Switching to a fallback debug bash shell";
-			exec bash -l;
+			if test $? != 0; then {
+				printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+				printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
+				exec bash -li;
+			} fi
 		}
 
 		if is::gitpod; then {

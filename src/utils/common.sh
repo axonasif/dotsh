@@ -11,6 +11,39 @@ function is::cde {
 	is::gitpod || is::codespaces;
 }
 
+function get_set::default_shell() {
+	function get_tmux_shell {
+		tmux start-server\; run-shell '\echo #{default-shell}'
+	}
+	local custom_shell;
+	if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then {
+		custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
+
+		if test "${DOTFILES_TMUX:-true}" == true; then {
+			local tmux_shell;
+			if tmux_shell="$(get_tmux_shell)" \
+			&& test "$tmux_shell" != "$custom_shell"; then {
+				(
+					exec 1>&-;
+					until tmux has-session 2>/dev/null; do {
+						sleep 1;
+					} done
+					tmux set -g default-shell "$custom_shell" || :;
+				) & disown;
+			} fi
+		} fi
+	} elif test "${DOTFILES_TMUX:-true}" == true; then {
+		await::signal get config_tmux;
+		if custom_shell="$(get_tmux_shell)" \
+		&& [ "${custom_shell}" == "/bin/sh" ]; then {
+			custom_shell="$(command -v bash)";
+		} fi
+	} else {
+		custom_shell="$(command -v bash)";
+	} fi
+	printf '%s\n' "$custom_shell";
+}
+
 function vscode::add_settings() {
 	SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
 
