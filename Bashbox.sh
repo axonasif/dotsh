@@ -131,6 +131,8 @@ live() (
 				-e GITPOD_WORKSPACE_URL
 				# Fake gitpod tasks for testing
 				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
+
+				# !! Note: the DOTFILES_ env vars could be overwritten by https://gitpod.io/variables even if you set them here.
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
 				## These options below are also available, see README.md for more info
@@ -160,11 +162,10 @@ live() (
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				printf '====== %% %s\n' \
 					"Run 'tmux detach' to exit from here" \
-					"Press 'ctrl+c' the log-pager" \
+					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
 			) & disown;
 			set -m;
-
 
 			export PATH="$HOME/.nix-profile/bin:$PATH";
 			if test "${DOTFILES_TMUX:-true}" == true; then {

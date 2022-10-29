@@ -11,11 +11,12 @@ function is::cde {
 	is::gitpod || is::codespaces;
 }
 
-function get_set::default_shell() {
+function get::default_shell() {
 	function get_tmux_shell {
 		tmux start-server\; run-shell '\echo #{default-shell}'
 	}
 	local custom_shell;
+
 	if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then {
 		custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
 
@@ -32,15 +33,18 @@ function get_set::default_shell() {
 				) & disown;
 			} fi
 		} fi
+
 	} elif test "${DOTFILES_TMUX:-true}" == true; then {
 		await::signal get config_tmux;
 		if custom_shell="$(get_tmux_shell)" \
 		&& [ "${custom_shell}" == "/bin/sh" ]; then {
 			custom_shell="$(command -v bash)";
 		} fi
-	} else {
+
+	} elif ! custom_shell="$(command -v fish)"; then {
 		custom_shell="$(command -v bash)";
 	} fi
+	
 	printf '%s\n' "$custom_shell";
 }
 

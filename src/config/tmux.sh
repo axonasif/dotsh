@@ -1,7 +1,7 @@
 use std::term::colors;
 
 function tmux::create_session() {
-	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get_set::default_shell)" -li 2>/dev/null || :;
+	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get::default_shell)" -li 2>/dev/null || :;
 	#\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 
 }
 
@@ -25,106 +25,103 @@ function tmux::start_vimpod() {
 	) & disown
 }
 
-function inject_tmux() {
-	# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
-	if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
-		if test -v TMUX; then {
-			return;
-		} fi
+function get::task_cmd() {
+	local task="$1";
+	local cmdc;
+	local cmdc_tmp_file="/tmp/.dotfiles_task_cmd.$((RANDOM * $$))";
 
-		if test "${DOTFILES_TMUX:-true}" == true; then {
+	IFS='' read -rd '' cmdc <<CMDC || :;
+trap "rm -f $cmdc_tmp_file 2>/dev/null || true; exec '$(get::default_shell)' -il" EXIT
+printf "$BGREEN>> Executing task:$RC\n";
+IFS='' read -rd '' lines <<'EOF' || :;
+$task
+EOF
+printf '%s\n' "\$lines" | while IFS='' read -r line; do
+	printf "    ${YELLOW}%s${RC}\n" "\$line";
+done
+# printf '\n';
+$task
+CMDC
 
-			# Switch to tmux on SSH.
-			if test -v SSH_CONNECTION; then {
-				if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
-					pkill -9 vimpod || :;
-				} fi
-				# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
-				# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
-				# or tell tmux to allways use the largest size, which can confuse some people sometimes.
-				# I'll go with the second option for now
-				# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
-				AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
-				exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
-			} else {
-				exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:inject_tmux_old_complicated()` :P
-			} fi
-
-		} else {
-
-			local stdin;
-			IFS= read -t0.01 -u0 -r -d '' stdin;
-			stdin="$(
-				printf '%s\n' "$stdin";
-			)"; # To make it passable directly with -lic argument to bash.
-			if test -n "$stdin"; then {
-				if test "${#stdin}" -gt 4050; then {
-					local tmp_cmd_file="/tmp/.custom_shell_cmd";
-					printf '%s\n' "$stdin" > "$tmp_cmd_file";
-					stdin="$(
-							printf 'eval "$(< "%s")"\n' "$tmp_cmd_file";
-					)";
-				} fi
-
-				exec bash -lic "trap 'exec $(get_set::default_shell) -il' EXIT; $stdin";
-			} fi
-		} fi
+	if test "${#cmdc}" -gt 4096; then {
+		printf '%s\n' "$cmdc" > "$cmdc_tmp_file";
+		cmdc="$(
+			printf 'eval "$(< "%s")"\n' "$cmdc_tmp_file";
+		)";
 	} fi
+
+	printf '%s\n' "$cmdc";
 }
 
+
 function config::tmux::hijack_gitpod_task_terminals {
+	function tmux::inject() {
+		# The supervisor creates the task terminals, supervisor calls BASH from `/bin/bash` instead of the realpath `/usr/bin/bash`
+		if [ "$BASH" == /bin/bash ] || [ "$PPID" == "$(pgrep -f "supervisor run" | head -n1)" ]; then {
+			if test -v TMUX; then {
+				return;
+			} fi
+
+			if test "${DOTFILES_TMUX:-true}" == true; then {
+
+				# Switch to tmux on SSH.
+				if test -v SSH_CONNECTION; then {
+					if test "${DOTFILES_NO_VSCODE:-false}" == "true"; then {
+						pkill -9 vimpod || :;
+					} fi
+					# Tmux window sizing conflicts happen as by default it inherits the smallest client sizes (which is usually the terminal TAB on VSCode)
+					# There are two things we can do, either detach all the connected clients. (tmux detach -t main)
+					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
+					# I'll go with the second option for now
+					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
+					AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
+					exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
+				} else {
+					exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
+				} fi
+
+			} else {
+
+				local stdin cmd;
+				IFS= read -t0.01 -u0 -r -d '' stdin;
+
+				if test -n "$stdin"; then {
+					cmd="$(get::task_cmd)";
+					exec bash -lic "$cmd";
+				} fi
+
+			} fi
+		} fi
+	}
 	# For debugging
 	# trap 'read -p eval: && eval "$REPLY"' ERR EXIT SIGTERM SIGINT
 	
 	# Make gitpod task spawned terminals use fish
-	if ! grep -q 'PROMPT_COMMAND=".*inject_tmux.*"' "$HOME/.bashrc" 2>/dev/null; then {
-	log::info "Setting tmux as the interactive shell for Gitpod task terminals"
-
+	if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2>/dev/null; then {
+		# log::info "Setting tmux as the interactive shell for Gitpod task terminals"
+		local function_exports=(
+			tmux::create_session
+			tmux::inject
+			get::task_cmd
+			get::default_shell
+			await::signal
+		)
 		# Entry point, very important!!!
 		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
 						"tmux_first_window_num=$tmux_first_window_num" \
 						"tmux_init_lock=$tmux_init_lock" \
-						"$(declare -f tmux::start_vimpod tmux::create_session inject_tmux)" \
-						'PROMPT_COMMAND="inject_tmux;$PROMPT_COMMAND"' >> "$HOME/.bashrc";
+						"$(declare -f "${function_exports[@]}")" \
+						'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc";
 	} fi
 }
 
-function config::tmux::set_tmux_as_default_vscode_shell() {
-	log::info "Setting the integrated tmux shell for VScode as default";
-	local pyh="$HOME/.bashrc.d/60-python"
-	if test -e "$pyh"; then {
-		# Workaround for now
-		sed -i '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh";
-	} fi
-	local json_data;
-	json_data="$(cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
-		{
-			"terminal.integrated.profiles.linux": {
-				"tmuxshell": {
-					"path": "bash",
-					"args": [
-						"-c",
-						"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
-					]
-				}
-			},
-			"terminal.integrated.defaultProfile.linux": "tmuxshell"
-		}
-	JSON
-	)"
 
-	# TIME=2 await::for_file_existence "$ms_vscode_server_dir";
-	vscode::add_settings \
-		"$vscode_machine_settings_file" \
-		"$HOME/.vscode-server/data/Machine/settings.json" \
-		"$HOME/.vscode-remote/data/Machine/settings.json" <<<"$json_data"
-
-}
 
 function config::tmux() {
 
 	# In case tmux feature is disabled
 	if test "${DOTFILES_TMUX:-true}" != true; then {
+		await::signal send config_tmux;
 		return;
 	} fi
 
@@ -134,7 +131,6 @@ function config::tmux() {
 	if is::cde; then {
 		# Lock on tmux binary
 		KEEP="true" await::create_shim "$tmux_exec_path";
-		config::tmux::set_tmux_as_default_vscode_shell;
 	} else {
 		await::until_true command -v tmux 1>/dev/null;
 	} fi
@@ -199,41 +195,18 @@ function config::tmux() {
 					local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
 					
 					cmd="$(
-						task="$(
-							if test -e "$prebuild_log"; then {
-								printf 'cat %s\n' "$prebuild_log";
-								printf '%s\n' "${cmd_others:-}";
-							} else {
-								printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
-							} fi
-						)"
-IFS='' read -rd '' cmdc <<CMDC || :;
-trap "exec '$(get_set::default_shell)' -il" EXIT
-printf "$BGREEN>> Executing task:$RC\n";
-IFS='' read -rd '' lines <<'EOF' || :;
-$task
-EOF
-printf '%s\n' "\$lines" | while IFS='' read -r line; do
-	printf "    ${YELLOW}%s${RC}\n" "\$line";
-done
-# printf '\n';
-$task
-CMDC
-						printf '%s\n' "$cmdc";
+						if test -e "$prebuild_log"; then {
+							printf 'cat %s\n' "$prebuild_log";
+							printf '%s\n' "${cmd_others:-}";
+						} else {
+							printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+						} fi
 					)";
-
-					# win_i="$(
-						# )";
-					if test "${#cmd}" -gt 4096; then {
-						printf '%s\n' "$cmd" > "$cmd_tmp_file";
-						cmd="$(
-							printf 'eval "$(< "%s")"\n' "$cmd_tmp_file";
-						)";
-					} fi
+					cmd="$(get::task_cmd "$cmd")";
 
 					WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
 					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
-					#bash -c " printf '%s\n' $cmd; $cmd;"
+
 					((arr_elem=arr_elem+1));
 				} done
 

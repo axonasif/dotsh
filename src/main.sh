@@ -35,6 +35,7 @@ function main() {
 	# Shell + Fish hacks
 	if is::cde; then {
 		config::shell::persist_history & disown;
+		config::shell::set_default_vscode_profile & disown;
 	} fi
 
 	if is::gitpod; then {

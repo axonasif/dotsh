@@ -1,4 +1,4 @@
-function inject_tmux_old_complicated() {
+function tmux::inject_old_complicated() {
 	if test -v TMUX; then {
 		return;
 	} fi

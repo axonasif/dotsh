@@ -29,10 +29,7 @@ A brief overview:
 ├── Gitpod clones this repo and executes `install.sh` from $HOME/.dotfiles
 │   ├── Asynchronously executes instructions inside `install.sh`
 │   │   ├── Installs some system/userland packages
-│   │   ├── Creates symlinks from your dotfiles sources to `$HOME/` while following `.dotfilesignore` via a helper function
-│   │   ├── Installs CLIs such as `gh`, `gcloud` and auto-logins into them along several other tools
-│   │   ├── Process Gitpod workspace persisted shell histories
-|   |   ├── Takes over how Gitpod starts the task-terminals and replaces them with `tmux` windows instead
+│   │   ├── Creates symlinks from your dotfiles sources to `$HOME/`while following`.dotfilesignore`via a helper function │ │ ├── Installs CLIs such as`gh`, `gcloud`and auto-logins into them along several other tools │ │ ├── Process Gitpod workspace persisted shell histories | | ├── Takes over how Gitpod starts the task-terminals and replaces them with`tmux` windows instead
 ├── Gitpod starts the IDE process
 └── Logs are saved to $HOME/.dotfiles.log
 ```
@@ -40,7 +37,6 @@ A brief overview:
 # Customizing
 
 Ideally it should be easy to understand and customize this repo since I tried my best to make the code very modular and self-explanatory. Take a look inside the entrypoint [`/src/main.sh`](./src/main.sh) to tweak stuff as per your needs, such as commenting out any function on [`/src/main.sh`](./src/main.sh) to disable that particular thing.
-
 
 ## How to compile
 
@@ -113,9 +109,21 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 ### `DOTFILES_DEFAULT_SHELL`
 
-> Defaults to `/usr/bin/fish` (this is planned, not implemented yet).
+> Defaults to `/usr/bin/fish`.
 
-> This is the shell that our `tmux` session will use.
+> It will be set as the default for:
+>
+> - Tmux
+> - Fallback shell for Gitpod task terminals (i.e. tasks are run in `bash` but then auto switched to your specified shell)
+> - VSCode terminal profiles
+
+---
+
+### `DOTFILES_TMUX`
+
+> Defaults to `true`
+
+> Setting this to `false` will disable the use of tmux for all terminal creation across VSCode, Gitpod task terminals and SSH.
 
 ## Helper functions
 
@@ -215,7 +223,8 @@ await::create_shim /usr/bin/something_fancy
 ```
 
 #### Problem 1
-----
+
+---
 
 Let's say we're intalling a tool called `tmux` but since it's asynchronously installed so if an user tries to execute it before it exists, they'll get an error. In order to avoid such a problem we can place an wrapper script at `tmux`'s absolute path using `await::create_shim`, that way the wrapper script as `tmux` will await for the actual command to appear in the filesystem and switch(`exec`) to it if someone executes `tmux` on their terminal before the actual `tmux` binary/program gets fully installed. In other words, if you invoke `tmux` on your terminal, the wrapper script at `/usr/bin/tmux` will `sleep()` until it finds that it itself was overwritten and the actual `tmux` binary was installed at `/usr/bin/tmux`.
 
@@ -244,7 +253,8 @@ CLOSE=true await::create_shim /usr/bin/tmux;
 A live usage of `KEEP=true await::create_shim` can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L250).
 
 #### Problem 2
-----
+
+---
 
 What if you want to install `tmux` with a much complicated package manager such as `nix` for example and that you have to install `nix` first. Well, in that case, if you create the placeholder dirs and the shim before installation of `nix` and the package that you want to install, then it will cause issues during installation of `nix` and the packages that you want to install via it afterwards. So, we can create a shim in a different PATH, which will monitor another path to swap itself with. Here's an example:
 
@@ -283,6 +293,7 @@ Let's you await between multiple async commands.
 Example:
 
 In function `foo` we have:
+
 ```bash
 function foo() {
 	await::signal get boo_is_cool; # Blocks execution until signal is received
@@ -294,6 +305,7 @@ function foo() {
 ```
 
 In function `boo` we have:
+
 ```bash
 function boo() {
 	# Let's run some random commands
