@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%6856 () 
+main@bashbox%1193 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%6856 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%6856';
+    ___MAIN_FUNCNAME='main@bashbox%1193';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1242,7 +1242,7 @@ main@bashbox%6856 ()
             userpkgs_level_one=()
         };
     fi;
-    userpkgs_level_two=(lsof shellcheck tree file fzf bat bottom exa fzf gh neofetch neovim p7zip ripgrep shellcheck tree jq zoxide);
+    userpkgs_level_two=(lsof shellcheck tree file fzf bat bottom exa fzf gh neofetch neovim p7zip ripgrep shellcheck tree jq zoxide rclone);
     function install::packages () 
     { 
         log::info "Installing system packages";
@@ -1516,6 +1516,7 @@ main@bashbox%6856 ()
                         fi
                     } 2> /dev/null;
                     local name cmd arr_elem=0;
+                    local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
                     while { 
                         success=0;
                         cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
@@ -1552,6 +1553,14 @@ $task
 CMDC
 						printf '%s\n' "$cmdc";
 					)";
+                            if test "${#cmd}" -gt 4096; then
+                                { 
+                                    printf '%s\n' "$cmd" > "$cmd_tmp_file";
+                                    cmd="$(
+							printf 'eval "$(< "%s")"\n' "$cmd_tmp_file";
+						)"
+                                };
+                            fi;
                             WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
@@ -1779,4 +1788,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%6856 "$@";
+main@bashbox%1193 "$@";

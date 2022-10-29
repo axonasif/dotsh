@@ -158,7 +158,7 @@ function config::tmux() {
 				} 2>/dev/null
 
 				local name cmd arr_elem=0;
-				# local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
+				local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
 				while {
 					success=0;
 					cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
@@ -194,10 +194,15 @@ $task
 CMDC
 						printf '%s\n' "$cmdc";
 					)";
-					# printf '%s\n' "$cmd" > "$cmd_tmp_file"
 
 					# win_i="$(
 						# )";
+					if test "${#cmd}" -gt 4096; then {
+						printf '%s\n' "$cmd" > "$cmd_tmp_file";
+						cmd="$(
+							printf 'eval "$(< "%s")"\n' "$cmd_tmp_file";
+						)";
+					} fi
 
 					WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
 					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";

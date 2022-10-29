@@ -66,6 +66,7 @@ userpkgs_level_two=(
     # yq
     jq
     zoxide
+    rclone
     # zsh
 )
 
