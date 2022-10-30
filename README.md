@@ -148,7 +148,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 ### `DOTFILES_DEFAULT_SHELL`
 
-> Defaults to `/usr/bin/fish`.
+> Defaults to `fish`. (an absolute path to the binary could be used too, e.g. `/usr/bin/fish`)
 
 > Gitpod only.
 
