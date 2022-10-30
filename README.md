@@ -28,8 +28,8 @@ Right now **only Linux and MacOS is supported**. In theory it could work on othe
 ## Prerequisites
 
 - git
-- `bash` 4.3 or above
-- `docker` (optional, only needed if you want to [live-test](#live-test-changes))
+- bash 4.3 or above
+- [docker](https://docs.docker.com/engine/install/) and [bashbox](https://github.com/bashbox/bashbox#getting-started) (optional, only needed if you want to [live-test](#live-test-changes))
 
 ### Linux
 
@@ -53,9 +53,6 @@ exec bash -li # Reload bash
 After you've made sure that the prerequisites are met, run:
 
 ```bash
-# Install bashbox (optional, only needed if you want to #live-test)
-curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
-
 git clone https://github.com/axonasif/dotfiles-sh ~/.dotfiles
 bash ~/.dotfiles/install.sh
 ```
