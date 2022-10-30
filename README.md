@@ -19,7 +19,7 @@ Simply put https://github.com/axonasif/dotfiles-sh on your [preferences](https:/
 
 ![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
 
-Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
+Learn more about dotfiles behavior on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
 # Quickstart for local machine
 
