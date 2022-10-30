@@ -7,21 +7,59 @@ Highlights:
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
   - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
-- Features **[live testing of dotfiles](#how-to-live-test-changes)** within your existing Gitpod workspace itself so that you can prototype quickly.
+- Features **[live testing of dotfiles](#live-test-changes)** within your existing Gitpod workspace or locally so that you can prototype quickly without compromising your environment.
 - Works both locally and on Gitpod.
 - Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the task scripts.
+- Save/restore/persist files **across** or **scoped-to-specific** Gitpod workspaces.
+- Preserve existing host configs (e.g. `.bashrc`, `.gitconfig` and etc.) but load your own configs on top of them when necessary.
 
-# How to use on Gitpod
+# Quickstart for Gitpod
 
-If you want to quickly try it out, simply put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod.io/preferences).
+Simply put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod.io/preferences).
 
 ![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
 
-Later if you feel like performing advanced customizations, fork this repo and then you can then use it on [preferences](https://gitpod.io/preferences) for Gitpod. By default it will apply my raw dotfiles tree from https://github.com/axonasif/dotfiles.public . If you wish to use your own raw dotfiles tree, you can either set [DOTFILES_PRIMARY_REPO](https://github.com/axonasif/dotfiles-sh#dotfiles_primary_repo) or modify it [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh).
-
 Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
-# How it works on Gitpod
+# Quickstart for local machine
+
+Right now **only Linux and MacOS is supported**. In theory it could work on other *nix systems and maybe Windows, that said, the script would run fine but some special handling of how things are installed or configured needs to be done for these systems, please contribute if you're an user of an "unsupported" system.
+
+## Prerequisites
+
+- git
+- `bash` 4.3 or above
+- `docker` (optional, only needed if you want to [live-test](#live-test-changes))
+
+### Linux
+
+Install `git` with your distro's package manager. Generally `bash` version is not an issue on Linux distros.
+
+### MacOS
+
+In MacOS you could install these via `brew` before proceeding.
+```bash
+# If you don't have homebrew already, otherwise skip this command
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+set -m # Disable job control temporarily
+bash -lic 'brew install git bash'
+set +m # Re-enable job control
+
+exec bash -li # Reload bash
+```
+
+After you've made sure that the prerequisites are met, run:
+
+```bash
+# Install bashbox (optional, only needed if you want to #live-test)
+curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
+
+git clone https://github.com/axonasif/dotfiles-sh ~/.dotfiles
+bash ~/.dotfiles/install.sh
+```
+
+# How it works on Gitpod or local machine
 
 A brief overview:
 
@@ -36,17 +74,11 @@ A brief overview:
 
 # Customizing
 
+For advanced customizations, fork this repo and make it your own. By default it will apply my raw dotfiles tree from https://github.com/axonasif/dotfiles.public. If you wish to use your own raw dotfiles tree, you can either set [DOTFILES_PRIMARY_REPO](#dotfiles_primary_repo) or modify it [here](/src/install/dotfiles.sh) (recommended).
+
 Ideally it should be easy to understand and customize this repo since I tried my best to make the code very modular and self-explanatory. Take a look inside the entrypoint [`/src/main.sh`](./src/main.sh) to tweak stuff as per your needs, such as commenting out any function on [`/src/main.sh`](./src/main.sh) to disable that particular thing.
 
-## How to compile
-
-Run the following command:
-
-```bash
-bashbox build --release
-```
-
-## How to live test changes
+## Live test changes
 
 `dotfiles-sh` mimics a minimal a process of how Gitpod starts a workpsace and initalizes dotfiles in it. This way we can quickly test out our dotfiles without having to:
 
@@ -55,29 +87,31 @@ bashbox build --release
 
 which was a very annoying and time consuming process.
 
-There is a custom package script defined inside the [`Bashbox.sh`](./Bashbox.sh) called [`live`](https://github.com/axonasif/dotfiles/blob/main/Bashbox.sh#L23). You can execute it like so:
+There is a custom box script defined inside the [`Bashbox.sh`](./Bashbox.sh) called [`live`](/Bashbox.sh#L23). You can execute it like so:
 
 ```bash
 bashbox live
 ```
 
-And it will test out your new dotfiles changes inside the existing workspace without affecting it. Sounds fun, right!?
+This will perform all the installation inside a docker container.
 
-## How to automatically launch Gitpod workspaces inside your local terminal emulator
+Thus, you can safely test out your new dotfiles changes without affecting the workspace or machine.
 
-As you may already know, Gitpod will automatically launch your [Desktop-VSCode](https://www.gitpod.io/docs/ides-and-editors/vscode) for you if you selected to use it. However that's not the case for plain SSH based workflow yet (Related: https://github.com/gitpod-io/gitpod/issues/9323).
+## Only compile
 
-Although, since Gitpod is pretty scriptable and modular, it's possible to handle this ourselves until this has been polished out in the Gitpod side.
+Run the following command:
 
-TBD, more to write here....
+```bash
+bashbox build --release
+```
 
-## How to handle automatic port forwarding in on your SSH tmux session
-
-Install this: https://github.com/axonasif/gssh
+This can be useful to only check for any compile time errors (e.g. syntax errors, missing files)
 
 ## Tweak behavior via environment variables
 
 For Gitpod, you can set these on https://gitpod.io/variables with `*/*` as the scope.
+
+For a local machine, you could do: `export KEY=value` once before executing `install.sh` per session.
 
 Currently there are a few variables which can alter the behavior of `dotfiles-sh` on the fly:
 
@@ -85,7 +119,9 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 > Defaults to `false`.
 
-> Setting this to `true` will cause it to kill VSCode so that you can claim back your memory and CPU usage 😜
+> Gitpod only.
+
+> Setting this to `true` will cause it to kill VSCode on Gitpod so that you can claim back your memory and CPU usage 😜
 
 ---
 
@@ -93,7 +129,9 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 > Defaults to `true`.
 
-> Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol.
+> Gitpod only.
+
+> Setting this to `false` will cause it to skip launching your local terminal emulator via the `ssh://` protocol on Gitpod.
 
 ---
 
@@ -111,6 +149,8 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 > Defaults to `/usr/bin/fish`.
 
+> Gitpod only.
+
 > It will be set as the default for:
 >
 > - Tmux
@@ -123,13 +163,29 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 > Defaults to `true`
 
-> Setting this to `false` will disable the use of tmux for all terminal creation across VSCode, Gitpod task terminals and SSH.
+> Gitpod only.
 
-## Helper functions
+> Setting this to `false` will disable the use of tmux for all terminal creation across VSCode, task terminals and SSH.
+
+# FAQs
+
+## How to automatically launch Gitpod workspaces inside your local terminal emulator
+
+As you may already know, Gitpod will automatically launch your [Desktop-VSCode](https://www.gitpod.io/docs/ides-and-editors/vscode) for you if you selected to use it. However that's not the case for plain SSH based workflow yet (Related: https://github.com/gitpod-io/gitpod/issues/9323).
+
+Although, since Gitpod is pretty scriptable and modular, it's possible to handle this ourselves until this has been polished out in the Gitpod side.
+
+TBD, more to write here....
+
+## How to handle automatic port forwarding in on your SSH tmux session for `ssh://` protocol.
+
+Install this: https://github.com/axonasif/gssh
+
+# Helper functions
 
 These are some functions that you can use if you wish to do some advanced customization on your own.
 
-### [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/main/src/utils/common.sh#L6)
+## [vscode::add_settings](https://github.com/axonasif/dotfiles/blob/main/src/utils/common.sh#L6)
 
 This let's you easily add settings to the Gitpod workspace VSCode instance. Settings added via this function will not be synced and is scoped to the applied workspaces only.
 
@@ -140,16 +196,16 @@ Usage example:
 ```bash
 vscode::add_settings /path/to/settings.json <<-'JSON'
 {
-	"terminal.integrated.profiles.linux": {
-		"tmuxshell": {
-			"path": "bash",
-			"args": [
-				"-c",
-				"tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main"
-			]
-		}
-	},
-	"terminal.integrated.defaultProfile.linux": "tmuxshell"
+    "terminal.integrated.profiles.linux": {
+        "tmuxshell": {
+            "path": "bash",
+            "args": [
+                "-c",
+                "tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.linux": "tmuxshell"
 }
 JSON
 ```
@@ -162,7 +218,7 @@ Live usage example can be seen [here](https://github.com/axonasif/dotfiles-sh/bl
 vscode::add_settings /path/to/settings.json < /path/to/source_file.json
 ```
 
-### [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L52)
+## [dotfiles::initialize](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L52)
 
 Automatically clone and symlink from a remote `dotfiles` repository tree. It also cleans up broken symlinks from previous apply (useful when used on local PC). You can ignore symlinking files by specifying their paths on a [`.dotfilesignore`](https://github.com/axonasif/dotfiles.public/blob/main/.dotfilesignore) on the repo root of your dotfiles raw tree.
 
@@ -196,7 +252,7 @@ Simple wrapper for awaiting a command to return `true`
 
 Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L296).
 
-### [await::for_file_existence](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L9)
+## [await::for_file_existence](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L9)
 
 ```js
 await::for_file_existence <file_path>;
@@ -206,7 +262,7 @@ Await for a file to appear in the filesystem.
 
 Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/common.sh#L36).
 
-### [await::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L14)
+## [await::for_vscode_ide_start](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L14)
 
 ```js
 await::for_vscode_ide_start;
@@ -216,13 +272,13 @@ Await for the Gitpod VSCode window to appear.
 
 Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/gh.sh#L11).
 
-### [await::create_shim](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L37)
+## [await::create_shim](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L37)
 
 ```js
 await::create_shim /usr/bin/something_fancy
 ```
 
-#### Problem 1
+### Problem 1
 
 ---
 
@@ -252,7 +308,7 @@ CLOSE=true await::create_shim /usr/bin/tmux;
 
 A live usage of `KEEP=true await::create_shim` can be seen [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/config/tmux.sh#L250).
 
-#### Problem 2
+### Problem 2
 
 ---
 
@@ -286,7 +342,7 @@ bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
 CLOSE=true await::create_shim /usr/bin/tmux;
 ```
 
-### [await::signal](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L20)
+## [await::signal](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L20)
 
 Let's you await between multiple async commands.
 
@@ -296,11 +352,11 @@ In function `foo` we have:
 
 ```bash
 function foo() {
-	await::signal get boo_is_cool; # Blocks execution until signal is received
+    await::signal get boo_is_cool; # Blocks execution until signal is received
 
-	echo "Now we can proceeed!";
+    echo "Now we can proceeed!";
 
-	# More commands below...
+    # More commands below...
 }
 ```
 
@@ -308,9 +364,9 @@ In function `boo` we have:
 
 ```bash
 function boo() {
-	# Let's run some random commands
-	sudo apt install shellcheck;
+    # Let's run some random commands
+    sudo apt install shellcheck;
 
-	await::signal send boo_is_cool; # Sends the singal to any awaiting client so that they can continue execution
+    await::signal send boo_is_cool; # Sends the singal to any awaiting client so that they can continue execution
 }
 ```
