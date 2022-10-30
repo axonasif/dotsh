@@ -23,7 +23,7 @@ Learn more about using dotfiles on Gitpod at https://www.gitpod.io/docs/config-d
 
 # Quickstart for local machine
 
-Right now **only Linux and MacOS is supported**. In theory it could work on other *nix systems and maybe Windows, that said, the script would run fine but some special handling of how things are installed or configured needs to be done for these systems, please contribute if you're an user of an "unsupported" system.
+Right now **only Linux and MacOS is supported**. In theory it could work on other \*nix systems and maybe Windows, that said, the script would run fine but some special handling of how things are installed or configured needs to be done for these systems, please contribute if you're an user of an "unsupported" system.
 
 ## Prerequisites
 
@@ -38,6 +38,7 @@ Install `git` with your distro's package manager. Generally `bash` version is no
 ### MacOS
 
 In MacOS you could install these via `brew` before proceeding.
+
 ```bash
 # If you don't have homebrew already, otherwise skip this command
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -242,7 +243,7 @@ REPO="your-repo-link/path-here" dotfiles::initialize "/root/.local/very/deep/loc
 
 Live examples of it's usage can be found on this [file](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh)
 
-### [await::until_true](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L1)
+## [await::until_true](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L1)
 
 ```js
 await::until_true <cmd>;
