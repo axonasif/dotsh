@@ -34,31 +34,26 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="axonasif/dotfiles-testing:latest";
+	local container_image="axonasif/dotfiles-testing:latest"; # From src/.testing.Dockerfile
 	source "$_arg_path/src/utils/common.sh";
-	source "$_arg_path/src/variable.sh";
 
-	# local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
-	# if test -v DOTFILES_PRIMARY_REPO; then {
-	# 	git clone "$DOTFILES_PRIMARY_REPO" "$offline_dotfiles_repo";
-	# } fi
-
-	# log::info "Using $offline_dotfiles_repo as the raw dotfiles repo";
-
-	# if test "$1" == "r"; then {
-		cmd="bashbox build --release";
-		log::info "Running $cmd";
-		$cmd || exit 1;
-	# } fi
+	cmd="bashbox build --release";
+	log::info "Running $cmd";
+	$cmd || exit 1;
 
 	local duplicate_workspace_root="/tmp/.mrroot";
-	local workspace_source="${workspace_dir:-"${_arg_path}"}"
-	local duplicate_repo_root="$duplicate_workspace_root/${workspace_source##*/}";
+	local workspace_sources;
+	if test -n "${GITPOD_REPO_ROOTS:-}"; then {
+		local repo_roots;
+		IFS=',' read -ra workspace_sources <<<"$GITPOD_REPO_ROOTS";
+	} else {
+		workspace_sources=("${_arg_path}");
+	} fi
 
-	log::info "Creating a clone of $workspace_source at $duplicate_workspace_root" && {
+	log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && {
 		rm -rf "$duplicate_workspace_root";
 		mkdir -p "$duplicate_workspace_root";
-		cp -ra "$workspace_source" "$duplicate_workspace_root";
+		cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root";
 		if test -e /workspace/.gitpod; then {
 			cp -ra /workspace/.gitpod "$duplicate_workspace_root";
 		} fi
@@ -86,7 +81,7 @@ live() (
 		docker_args+=(
 			# Shared mountpoints
 			-v "$duplicate_workspace_root:/workspace"
-			-v "$duplicate_repo_root:$HOME/.dotfiles"
+			-v "$_arg_path:$HOME/.dotfiles"
 		)
 
 		if is::gitpod; then {
@@ -155,8 +150,8 @@ live() (
 
 		function startup_command() {
 			local logfile="$HOME/.dotfiles.log";
-			# local tail_cmd="less -XR +F $logfile";
-			local tail_cmd="tail -f $logfile"
+			local tail_cmd="less -S -XR +F $logfile";
+			# local tail_cmd="tail -f $logfile"
 			eval "$(gp env -e)";
 			set +m; # Temporarily disable job control
 			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & disown;

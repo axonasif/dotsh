@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9432 () 
+main@bashbox%26543 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%9432 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%9432';
+    ___MAIN_FUNCNAME='main@bashbox%26543';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -88,17 +88,25 @@ main@bashbox%9432 ()
     { 
         ( local container_image="axonasif/dotfiles-testing:latest";
         source "$_arg_path/src/utils/common.sh";
-        source "$_arg_path/src/variable.sh";
         cmd="bashbox build --release";
         log::info "Running $cmd";
         $cmd || exit 1;
         local duplicate_workspace_root="/tmp/.mrroot";
-        local workspace_source="${workspace_dir:-"${_arg_path}"}";
-        local duplicate_repo_root="$duplicate_workspace_root/${workspace_source##*/}";
-        log::info "Creating a clone of $workspace_source at $duplicate_workspace_root" && { 
+        local workspace_sources;
+        if test -n "${GITPOD_REPO_ROOTS:-}"; then
+            { 
+                local repo_roots;
+                ___self_IFS=',' read -ra workspace_sources <<< "$GITPOD_REPO_ROOTS"
+            };
+        else
+            { 
+                workspace_sources=("${_arg_path}")
+            };
+        fi;
+        log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && { 
             rm -rf "$duplicate_workspace_root";
             mkdir -p "$duplicate_workspace_root";
-            cp -ra "$workspace_source" "$duplicate_workspace_root";
+            cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root";
             if test -e /workspace/.gitpod; then
                 { 
                     cp -ra /workspace/.gitpod "$duplicate_workspace_root"
@@ -108,7 +116,7 @@ main@bashbox%9432 ()
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
             local docker_args=();
             docker_args+=(run --rm --net=host);
-            docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$duplicate_repo_root:$HOME/.dotfiles");
+            docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$_arg_path:$HOME/.dotfiles");
             if is::gitpod; then
                 { 
                     docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
@@ -129,7 +137,7 @@ main@bashbox%9432 ()
             function startup_command () 
             { 
                 local logfile="$HOME/.dotfiles.log";
-                local tail_cmd="tail -f $logfile";
+                local tail_cmd="less -S -XR +F $logfile";
                 eval "$(gp env -e)";
                 set +m;
                 { 
@@ -1834,7 +1842,7 @@ EOF
                     { 
                         if test $tries -gt 5; then
                             { 
-                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:12}" 1 || exit;
+                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:9}" 1 || exit;
                                 break
                             };
                         fi;
@@ -1940,4 +1948,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%9432 "$@";
+main@bashbox%26543 "$@";
