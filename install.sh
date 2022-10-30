@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25017 () 
+main@bashbox%9432 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%25017 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%25017';
+    ___MAIN_FUNCNAME='main@bashbox%9432';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -88,15 +88,17 @@ main@bashbox%25017 ()
     { 
         ( local container_image="axonasif/dotfiles-testing:latest";
         source "$_arg_path/src/utils/common.sh";
+        source "$_arg_path/src/variable.sh";
         cmd="bashbox build --release";
         log::info "Running $cmd";
-        $cmd;
+        $cmd || exit 1;
         local duplicate_workspace_root="/tmp/.mrroot";
-        local duplicate_repo_root="$duplicate_workspace_root/${_arg_path##*/}";
-        log::info "Creating a clone of $_arg_path at $duplicate_workspace_root" && { 
+        local workspace_source="${workspace_dir:-"${_arg_path}"}";
+        local duplicate_repo_root="$duplicate_workspace_root/${workspace_source##*/}";
+        log::info "Creating a clone of $workspace_source at $duplicate_workspace_root" && { 
             rm -rf "$duplicate_workspace_root";
             mkdir -p "$duplicate_workspace_root";
-            cp -ra "$_arg_path" "$duplicate_workspace_root";
+            cp -ra "$workspace_source" "$duplicate_workspace_root";
             if test -e /workspace/.gitpod; then
                 { 
                     cp -ra /workspace/.gitpod "$duplicate_workspace_root"
@@ -109,7 +111,7 @@ main@bashbox%25017 ()
             docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$duplicate_repo_root:$HOME/.dotfiles");
             if is::gitpod; then
                 { 
-                    docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro)
+                    docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
                 };
             fi;
             local dotfiles_sh_dir="$HOME/.dotfiles-sh";
@@ -138,7 +140,6 @@ main@bashbox%25017 ()
                 done;
                 pkill -9 -f "${tail_cmd//+/\\+}" || :;
                 tmux setw -g mouse on;
-                tmux send-keys "$tail_cmd" Enter;
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
@@ -805,6 +806,10 @@ main@bashbox%25017 ()
     { 
         is::gitpod || is::codespaces
     };
+    function try_sudo () 
+    { 
+        "$@" 2> /dev/null || sudo "$@"
+    };
     function get::default_shell () 
     { 
         function get_tmux_shell () 
@@ -891,8 +896,7 @@ main@bashbox%25017 ()
     { 
         local installation_target="${INSTALL_TARGET:-"$HOME"}";
         local last_applied_filelist="$installation_target/.last_applied_dotfiles";
-        local dotfiles_repo local_dotfiles_repo_count;
-        local repo_user repo_name source_dir repo_dir_name check_dir;
+        local dotfiles_repo local_dotfiles_repo_count repo_user repo_name source_dir repo_dir_name check_dir;
         mkdir -p "$dotfiles_sh_repos_dir";
         if test -e "$last_applied_filelist"; then
             { 
@@ -1072,10 +1076,6 @@ main@bashbox%25017 ()
     };
     function await::create_shim () 
     { 
-        function try_sudo () 
-        { 
-            "$@" 2> /dev/null || sudo "$@"
-        };
         function is::custom_shim () 
         { 
             test -v CUSTOM_SHIM_SOURCE
@@ -1292,7 +1292,7 @@ main@bashbox%25017 ()
         done
     };
     syspkgs_level_one=(tmux fish jq);
-    syspkgs_level_two=();
+    syspkgs_level_two=(fuse);
     userpkgs_level_one=(tmux fish jq);
     if std::sys::info::distro::is_ubuntu && is::cde; then
         { 
@@ -1333,7 +1333,7 @@ main@bashbox%25017 ()
                 declare -n ref="$level";
                 if test -n "${ref:-}"; then
                     { 
-                        nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" > /dev/null 2>&1
+                        nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
                     };
                 fi
             };
@@ -1388,24 +1388,107 @@ main@bashbox%25017 ()
     { 
         log::info "Installing dotfiles";
         local dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}");
-        dotfiles::initialize "${dotfiles_repos[@]}";
+        TARGET="$HOME" dotfiles::initialize "${dotfiles_repos[@]}";
         await::signal send install_dotfiles
     };
-    function config::docker_auth () 
+    function install::filesync () 
     { 
-        local var_name=DOCKER_AUTH_TOKEN;
-        local target="$HOME/.docker/config.json";
-        if test -v $var_name; then
+        if is::cde; then
             { 
-                log::info "Setting up docker login credentials";
-                mkdir -p "${target%/*}";
-                printf '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}\n' "${!var_name}" > "$target"
+                log::info "Performing local filesync, scoped to ${HOSTNAME:-"${GITPOD_WORKSPACE_ID:-}"} workspace";
+                local files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
+                if test -e "$workspace_persist_dir"; then
+                    { 
+                        filesync::restore_local
+                    };
+                else
+                    { 
+                        filesync::save_local "${files_to_persist_locally[@]}"
+                    };
+                fi
             };
-        else
+        fi;
+        if test -n "${RCLONE_DATA:-}"; then
             { 
-                log::warn "$var_name is not set"
+                mkdir -p "${rclone_conf_file%/*}";
+                printf '%s\n' "${RCLONE_DATA}" | base64 -d > "$rclone_conf_file";
+                until { 
+                    command -v rclone && command -v fusermount
+                } > /dev/null; do
+                    { 
+                        sleep 1
+                    };
+                done;
+                log::info "Performing cloud filesync, scoped globally";
+                mkdir -p "${rclone_mount_dir}";
+                rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" & disown;
+                local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
+                local times=0;
+                until test -e "$rclone_dotfiles_dir"; do
+                    { 
+                        sleep 1;
+                        if test $times -gt 10; then
+                            { 
+                                break
+                            };
+                        fi;
+                        ((times=times+1))
+                    };
+                done;
+                if test -e "$rclone_dotfiles_dir"; then
+                    { 
+                        TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_dir"
+                    };
+                fi
             };
         fi
+    };
+    function filesync::restore_local () 
+    { 
+        mkdir -p "$workspace_persist_dir";
+        local _input _persisted_node _persisted_node_dir;
+        while read -r _input; do
+            { 
+                _persisted_node="${_input#"${workspace_persist_dir}"}";
+                _persisted_node_dir="${_persisted_node%/*}";
+                if test -e "$_persisted_node"; then
+                    { 
+                        log::info "Overwriting ${_input} with workspace persisted file";
+                        try_sudo mkdir -p "${_input%/*}";
+                        ln -sf "$_persisted_node" "$_input"
+                    };
+                fi
+            };
+        done < <(find "$workspace_persist_dir" -type f)
+    };
+    function filesync::save_local () 
+    { 
+        mkdir -p "$workspace_persist_dir";
+        local _input _persisted_node _persisted_node_dir;
+        for _input in "$@";
+        do
+            { 
+                _persisted_node="${workspace_persist_dir}/${_input}";
+                _persisted_node_dir="${_persisted_node%/*}";
+                if test ! -e "$_persisted_node"; then
+                    { 
+                        mkdir -p "$_persisted_node_dir";
+                        if test ! -d "$_input"; then
+                            { 
+                                printf '' > "$_input"
+                            };
+                        fi;
+                        cp -ra "$_input" "$_persisted_node_dir";
+                        rm -rf "$_input";
+                        ln -sr "$_persisted_node" "$_input"
+                    };
+                else
+                    { 
+                        log::warn "$_input is already persisted"
+                    };
+                fi
+            };
+        done
     };
     readonly RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m';
     readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
@@ -1513,7 +1596,7 @@ CMDC
         if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2> /dev/null; then
             { 
                 local function_exports=(tmux::create_session tmux::inject get::task_cmd get::default_shell await::signal);
-                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "tmux_init_lock=$tmux_init_lock" "$(declare -f "${function_exports[@]}")" 'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "$(declare -f "${function_exports[@]}")" 'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -1616,7 +1699,7 @@ CMDC
 						} fi
 					)";
                             cmd="$(get::task_cmd "$cmd")";
-                            WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
+                            WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
                     done;
@@ -1677,43 +1760,16 @@ EOF
             fi ) || :
         } & disown
     };
-    local -r _shell_hist_files=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$HOME/.local/share/fish/fish_history");
-    function config::shell::persist_history () 
-    { 
-        log::info "Persiting Gitpod shell histories to $workspace_dir";
-        local _workspace_persist_dir="$workspace_dir/.persist";
-        mkdir -p "$_workspace_persist_dir";
-        local _hist;
-        for _hist in "${_shell_hist_files[@]}";
-        do
-            { 
-                mkdir -p "${_hist%/*}";
-                _hist_name="${_hist##*/}";
-                if test -e "$_workspace_persist_dir/$_hist_name"; then
-                    { 
-                        log::info "Overwriting $_hist with workspace persisted history file";
-                        ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
-                    };
-                else
-                    { 
-                        touch "$_hist";
-                        cp "$_hist" "$_workspace_persist_dir/";
-                        ln -srf "$_workspace_persist_dir/${_hist_name}" "$_hist"
-                    };
-                fi;
-                unset _hist_name
-            };
-        done
-    };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
+        sed -i '/ set +o history/,/truncate -s 0 "$HISTFILE"/d' "/ide/startup.sh" 2> /dev/null || :;
         await::signal get install_dotfiles;
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
         while read -r _command; do
             { 
                 if test -n "$_command"; then
                     { 
-                        printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "${_shell_hist_files[2]}"
+                        printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "$fish_hist_file"
                     };
                 fi
             };
@@ -1760,6 +1816,7 @@ EOF
     { 
         log::info "Installing fisher and some plugins for fish-shell";
         await::until_true command -v fish > /dev/null;
+        mkdir -p "$fish_confd_dir";
         { 
             fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
         } > /dev/null 2>&1
@@ -1777,7 +1834,7 @@ EOF
                     { 
                         if test $tries -gt 5; then
                             { 
-                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
+                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:12}" 1 || exit;
                                 break
                             };
                         fi;
@@ -1825,6 +1882,7 @@ EOF
 		printf '%s\n' "/workspaces";
 	} fi
 )";
+    declare -r workspace_persist_dir="$workspace_dir/.persist_root";
     declare -r vscode_machine_settings_file="$(
 	if is::gitpod; then {
 		: "$workspace_dir";
@@ -1835,10 +1893,13 @@ EOF
 )";
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
-    declare -r tmux_init_lock="/tmp/.tmux.init";
-    declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
+    declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
+    declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
     declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
     declare -r dotfiles_sh_repos_dir="$dotfiles_sh_home/repos";
+    declare -r rclone_mount_dir="$HOME/cloudsync";
+    declare -r rclone_conf_file="$HOME/.config/rclone/rclone.conf";
+    declare -r rclone_profile_name="cloudsync";
     function main () 
     { 
         if is::codespaces; then
@@ -1850,20 +1911,19 @@ EOF
             };
         fi;
         install::dotfiles & disown;
+        install::filesync & disown;
         config::tmux & config::fish & disown;
         install::packages & disown;
         install::misc & disown;
         if is::cde; then
             { 
-                config::shell::persist_history & disown;
-                config::shell::set_default_vscode_profile & disown
+                config::shell::set_default_vscode_profile & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & disown
             };
         fi;
         if is::gitpod; then
             { 
-                config::docker_auth & disown;
-                config::gh & disown;
-                config::shell::fish::append_hist_from_gitpod_tasks & disown
+                config::gh & disown
             };
         fi;
         config::neovim & disown;
@@ -1880,4 +1940,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%25017 "$@";
+main@bashbox%9432 "$@";

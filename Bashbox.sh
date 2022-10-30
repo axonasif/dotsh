@@ -36,6 +36,7 @@ bashbox::build::before() {
 live() (
 	local container_image="axonasif/dotfiles-testing:latest";
 	source "$_arg_path/src/utils/common.sh";
+	source "$_arg_path/src/variable.sh";
 
 	# local offline_dotfiles_repo="${_arg_path%/*}/dotfiles.public";
 	# if test -v DOTFILES_PRIMARY_REPO; then {
@@ -47,16 +48,17 @@ live() (
 	# if test "$1" == "r"; then {
 		cmd="bashbox build --release";
 		log::info "Running $cmd";
-		$cmd;
+		$cmd || exit 1;
 	# } fi
 
 	local duplicate_workspace_root="/tmp/.mrroot";
-	local duplicate_repo_root="$duplicate_workspace_root/${_arg_path##*/}";
+	local workspace_source="${workspace_dir:-"${_arg_path}"}"
+	local duplicate_repo_root="$duplicate_workspace_root/${workspace_source##*/}";
 
-	log::info "Creating a clone of $_arg_path at $duplicate_workspace_root" && {
+	log::info "Creating a clone of $workspace_source at $duplicate_workspace_root" && {
 		rm -rf "$duplicate_workspace_root";
 		mkdir -p "$duplicate_workspace_root";
-		cp -ra "$_arg_path" "$duplicate_workspace_root";
+		cp -ra "$workspace_source" "$duplicate_workspace_root";
 		if test -e /workspace/.gitpod; then {
 			cp -ra /workspace/.gitpod "$duplicate_workspace_root";
 		} fi
@@ -92,6 +94,11 @@ live() (
 				# IDE mountpoints
 				# -v "$ide_mirror:/ide"
 				-v /usr/bin/gp:/usr/bin/gp:ro
+				# Required for rclone
+				--privileged
+				--device /dev/fuse
+				# Docker socket
+				-v /var/run/docker.sock:/var/run/docker.sock
 			)
 		} fi
 		
@@ -158,7 +165,6 @@ live() (
 				until tmux has-session 2>/dev/null; do sleep 1; done;
 				pkill -9 -f "${tail_cmd//+/\\+}" || :;
 				tmux setw -g mouse on;
-                tmux send-keys "$tail_cmd" Enter;
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				printf '====== %% %s\n' \
 					"Run 'tmux detach' to exit from here" \

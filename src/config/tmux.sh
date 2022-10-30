@@ -109,7 +109,6 @@ function config::tmux::hijack_gitpod_task_terminals {
 		# Entry point, very important!!!
 		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
 						"tmux_first_window_num=$tmux_first_window_num" \
-						"tmux_init_lock=$tmux_init_lock" \
 						"$(declare -f "${function_exports[@]}")" \
 						'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc";
 	} fi
@@ -204,7 +203,7 @@ function config::tmux() {
 					)";
 					cmd="$(get::task_cmd "$cmd")";
 
-					WINDOW_NAME="$name" tmux::create_window bash -cli "$cmd";
+					WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
 					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
 
 					((arr_elem=arr_elem+1));

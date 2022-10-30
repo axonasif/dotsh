@@ -14,6 +14,7 @@ syspkgs_level_one=(
 # shellcheck disable=SC2034
 syspkgs_level_two=(
     # Add big packages in this array
+    fuse
 )
 
 # =================================================
@@ -101,7 +102,7 @@ function install::packages {
         for level in userpkgs_level_one userpkgs_level_two; do {
             declare -n ref="$level";
             if test -n "${ref:-}"; then {
-                nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" >/dev/null 2>&1;
+                nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)';
             } fi
         } done
     ) & disown;

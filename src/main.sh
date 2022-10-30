@@ -23,6 +23,9 @@ function main() {
 
 	# Dotfiles installation, symlinking files bascially
 	install::dotfiles & disown;
+
+	# Sync local + global files
+	install::filesync & disown;
 	
 	# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
 	config::tmux &
@@ -34,17 +37,13 @@ function main() {
 
 	# Shell + Fish hacks
 	if is::cde; then {
-		config::shell::persist_history & disown;
 		config::shell::set_default_vscode_profile & disown;
+		config::shell::fish::append_hist_from_gitpod_tasks & disown;
 	} fi
 
 	if is::gitpod; then {
-		# Configure docker credentials
-		config::docker_auth & disown;
 		# Install and login into gh
 		config::gh & disown;
-		# Shell + Fish hacks
-		config::shell::fish::append_hist_from_gitpod_tasks & disown;
 	} fi
 
 	# Configure neovim

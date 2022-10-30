@@ -43,9 +43,7 @@ function await::signal() {
 }
 
 function await::create_shim() {
-	function try_sudo() {
-		"$@" 2>/dev/null || sudo "$@";
-	}
+	
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {

@@ -1,7 +1,9 @@
+## Readonly variables
+
 # Add nix bin PATH in advance
 export PATH="$PATH:$HOME/.nix-profile/bin";
 
-# Readonly variables
+# Gitpod specific
 declare -r workspace_dir="$(
 	if is::gitpod; then {
 		printf '%s\n' "/workspace";
@@ -9,6 +11,7 @@ declare -r workspace_dir="$(
 		printf '%s\n' "/workspaces";
 	} fi
 )";
+declare -r workspace_persist_dir="$workspace_dir/.persist_root";
 declare -r vscode_machine_settings_file="$(
 	if is::gitpod; then {
 		: "$workspace_dir";
@@ -21,13 +24,16 @@ declare -r vscode_machine_settings_file="$(
 # Tmux specific
 declare -r tmux_first_session_name="main";
 declare -r tmux_first_window_num="1";
-declare -r tmux_init_lock="/tmp/.tmux.init";
 
 # Fish specific
-declare -r fish_confd_dir="$HOME/.config/fish/conf.d" && mkdir -p "$fish_confd_dir";
+declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
+declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
 
 # Dotfiles specific
 declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
 declare -r dotfiles_sh_repos_dir="$dotfiles_sh_home/repos";
 
-
+# Rclone specific
+declare -r rclone_mount_dir="$HOME/cloudsync";
+declare -r rclone_conf_file="$HOME/.config/rclone/rclone.conf";
+declare -r rclone_profile_name="cloudsync";

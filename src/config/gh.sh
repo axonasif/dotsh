@@ -11,7 +11,7 @@ function config::gh() {
 		local tries=1;
 		until printf '%s\n' "$token" | gh auth login --with-token >/dev/null 2>&1; do {
 			if test $tries -gt 5; then {
-				log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times" 1 || exit;
+				log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:12}" 1 || exit;
 				break;
 			} fi
 			((tries++));

@@ -1,7 +1,9 @@
 function config::fish() {
 	# Install fisher plugin manager
 	log::info "Installing fisher and some plugins for fish-shell";
+
 	await::until_true command -v fish 1>/dev/null;
+	mkdir -p "$fish_confd_dir";
 	{
 		fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher';
 

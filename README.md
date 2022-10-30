@@ -2,7 +2,9 @@
 
 An asynchronous dotfiles _installer_ intended for use on Gitpod and locally. Batteries included!
 
-Highlights:
+What's special about it? Nothing. It's compilation of some automation to create consistent terminal-focused dev environment across different systems, that's all. There are no configuration files (such as `.yaml`) for this, it is meant to be edited from the source code and compiled.
+
+## Features
 
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
@@ -11,7 +13,7 @@ Highlights:
 - Works both locally and on Gitpod.
 - Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the task scripts.
 - Save/restore/persist files **across** or **scoped-to-specific** Gitpod workspaces.
-- Preserve existing host configs (e.g. `.bashrc`, `.gitconfig` and etc.) but load your own configs on top of them when necessary.
+- Preserve existing host configs (e.g. `.bashrc`, `.gitconfig` and etc.) while applying `dotfiles` but inject your own configs on top of them when necessary.
 
 # Quickstart for Gitpod
 

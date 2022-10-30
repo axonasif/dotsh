@@ -7,7 +7,8 @@ function install::dotfiles() {
         # https://github.com/axonasif/dotfiles.private
     )
 
-    dotfiles::initialize "${dotfiles_repos[@]}";
+    #  WHERE-TO         FUNCTION                SOURCES
+    TARGET="$HOME" dotfiles::initialize "${dotfiles_repos[@]}";
 
     await::signal send install_dotfiles;
 }

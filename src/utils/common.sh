@@ -11,6 +11,10 @@ function is::cde {
 	is::gitpod || is::codespaces;
 }
 
+function try_sudo() {
+	"$@" 2>/dev/null || sudo "$@";
+}
+
 function get::default_shell() {
 	function get_tmux_shell {
 		tmux start-server\; run-shell '\echo #{default-shell}'
@@ -87,8 +91,13 @@ function vscode::add_settings() {
 function dotfiles::initialize() {
 	local installation_target="${INSTALL_TARGET:-"$HOME"}";
 	local last_applied_filelist="$installation_target/.last_applied_dotfiles";
-	local dotfiles_repo local_dotfiles_repo_count;
-	local repo_user repo_name source_dir repo_dir_name check_dir;
+	local 	dotfiles_repo \
+			local_dotfiles_repo_count \
+			repo_user \
+			repo_name \
+			source_dir \
+			repo_dir_name \
+			check_dir;
 	mkdir -p "$dotfiles_sh_repos_dir";
 
 	# Clean out any broken symlinks
