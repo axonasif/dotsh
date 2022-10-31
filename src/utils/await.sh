@@ -51,7 +51,7 @@ function await::create_shim() {
 	}
 
 	function revert_shim() {
-		try_sudo touch "$shim_tombstone";
+		try_sudo touch "$shim_tombstone" 2>/dev/null || true;
 
 		if ! is::custom_shim; then {
 			if test -e "$shim_source"; then {
@@ -59,7 +59,7 @@ function await::create_shim() {
 			} fi
 		} else {
 			try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
-			try_sudo rm "$target";
+			try_sudo ln -sf "$CUSTOM_SHIM_SOURCE" "$target";
 		} fi
 		(
 			sleep 5 && try_sudo rm -f "$shim_tombstone";
@@ -149,11 +149,11 @@ function await::create_shim() {
 				# if test "${KEEP_internal_call:-}" == false; then set -x; fi
 
 				# Refer to revert_shim for this if-code-block
-				if is::custom_shim; then {
-					: "$target";
-				} else {
+				# if is::custom_shim; then {
+				# 	: "$target";
+				# } else {
 					: "$shim_source";
-				} fi
+				# } fi
 
 				local checkf="$_";
 

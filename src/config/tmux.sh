@@ -129,7 +129,8 @@ function config::tmux() {
 
 	if is::cde; then {
 		# Lock on tmux binary
-		KEEP="true" await::create_shim "$tmux_exec_path";
+		KEEP="true" CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/tmux" \
+			await::create_shim "$tmux_exec_path";
 	} else {
 		await::until_true command -v tmux 1>/dev/null;
 	} fi

@@ -9,6 +9,8 @@ function config::neovim() {
 		await::until_true command -v nvim 1>/dev/null;
 	} fi
 
+	await::until_true command -v git 1>/dev/null;
+
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {
 		# git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" >/dev/null 2>&1;

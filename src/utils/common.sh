@@ -17,8 +17,20 @@ function try_sudo() {
 
 function get::default_shell() {
 	function get_tmux_shell {
-		tmux start-server\; run-shell '\echo #{default-shell}'
+		local shell;
+		shell="$(tmux start-server\; display -p '#{default-shell}' 2>/dev/null)" || true;
+		
+		if test -z "${shell:-}"; then {
+			shell="$(tmux start-server\; run-shell '\echo #{default-shell}' 2>/dev/null)" || true;
+		} fi
+
+		if test -n "${shell:-}"; then {
+			printf '%s\n' "${shell}";
+		} else {
+			false;
+		} fi
 	}
+
 	local custom_shell;
 
 	if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then {
@@ -27,7 +39,7 @@ function get::default_shell() {
 		if test "${DOTFILES_TMUX:-true}" == true; then {
 			local tmux_shell;
 			if tmux_shell="$(get_tmux_shell)" \
-			&& test "$tmux_shell" != "$custom_shell"; then {
+			&& [ "$tmux_shell" != "$custom_shell" ]; then {
 				(
 					exec 1>&-;
 					until tmux has-session 2>/dev/null; do {
@@ -49,7 +61,7 @@ function get::default_shell() {
 		custom_shell="$(command -v bash)";
 	} fi
 	
-	printf '%s\n' "$custom_shell";
+	printf '%s\n' "${custom_shell:-/bin/bash}";
 }
 
 function vscode::add_settings() {
@@ -89,6 +101,8 @@ function vscode::add_settings() {
 }
 
 function dotfiles::initialize() {
+	await::until_true command -v git 1>/dev/null;
+	
 	local installation_target="${INSTALL_TARGET:-"$HOME"}";
 	local last_applied_filelist="$installation_target/.last_applied_dotfiles";
 	local 	dotfiles_repo \
