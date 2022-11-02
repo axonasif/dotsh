@@ -51,21 +51,26 @@ function await::create_shim() {
 	}
 
 	function revert_shim() {
-		try_sudo touch "$shim_tombstone";
+		if test -e "$shim_source"; then {
+			
+			try_sudo touch "$shim_tombstone";
 
-		if ! is::custom_shim; then {
-			if test -e "$shim_source"; then {
+			if ! is::custom_shim; then {
 				try_sudo mv "$shim_source" "$target";
+			} else {
+				try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
+				try_sudo ln -sf "$CUSTOM_SHIM_SOURCE" "$target";
 			} fi
-		} else {
-			try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
-			try_sudo rm "$target";
+			(
+				sleep 3;
+				try_sudo rm -f "$shim_tombstone" || true;
+				if is::custom_shim; then {
+					try_sudo rm -f "$target" || true;
+				} fi
+				try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
+			) & disown;
+			unset KEEP_internal_call CUSTOM_SHIM_SOURCE;
 		} fi
-		(
-			sleep 5 && try_sudo rm -f "$shim_tombstone";
-			try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
-		) & disown;
-		unset KEEP_internal_call CUSTOM_SHIM_SOURCE;
 	}
 
 	# shellcheck disable=SC2120
@@ -102,11 +107,14 @@ function await::create_shim() {
 			return;
 		} fi
 
-		if test -e "$target"; then {
-			log::warn "${FUNCNAME[0]}: $target already exists";
-			return 0;
+		if test -e "$target" || test -e "${CUSTOM_SHIM_SOURCE:-}"; then {
+			# log::warn "${FUNCNAME[0]}: $target already exists";
+			# return 0;
+			try_sudo mkdir -p "$shim_source";
 			if ! is::custom_shim; then {
 				try_sudo mv "$target" "$shim_source";
+			} else {
+				try_sudo mv "$CUSTOM_SHIM_SOURCE" "$shim_source";
 			} fi
 		} fi
 
@@ -149,11 +157,11 @@ function await::create_shim() {
 				# if test "${KEEP_internal_call:-}" == false; then set -x; fi
 
 				# Refer to revert_shim for this if-code-block
-				if is::custom_shim; then {
-					: "$target";
-				} else {
+				# if is::custom_shim; then {
+				#	: "$target";
+				# } else {
 					: "$shim_source";
-				} fi
+				# } fi
 
 				local checkf="$_";
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%26543 () 
+main@bashbox%7741 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%26543 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%26543';
+    ___MAIN_FUNCNAME='main@bashbox%7741';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1090,24 +1090,30 @@ main@bashbox%26543 ()
         };
         function revert_shim () 
         { 
-            try_sudo touch "$shim_tombstone";
-            if ! is::custom_shim; then
+            if test -e "$shim_source"; then
                 { 
-                    if test -e "$shim_source"; then
+                    try_sudo touch "$shim_tombstone";
+                    if ! is::custom_shim; then
                         { 
                             try_sudo mv "$shim_source" "$target"
                         };
-                    fi
+                    else
+                        { 
+                            try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
+                            try_sudo ln -sf "$CUSTOM_SHIM_SOURCE" "$target"
+                        };
+                    fi;
+                    ( sleep 3;
+                    try_sudo rm -f "$shim_tombstone" || true;
+                    if is::custom_shim; then
+                        { 
+                            try_sudo rm -f "$target" || true
+                        };
+                    fi;
+                    try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown;
+                    unset KEEP_internal_call CUSTOM_SHIM_SOURCE
                 };
-            else
-                { 
-                    try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
-                    try_sudo rm "$target"
-                };
-            fi;
-            ( sleep 5 && try_sudo rm -f "$shim_tombstone";
-            try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown;
-            unset KEEP_internal_call CUSTOM_SHIM_SOURCE
+            fi
         };
         function create_self () 
         { 
@@ -1151,13 +1157,16 @@ main@bashbox%26543 ()
                         return
                     };
                 fi;
-                if test -e "$target"; then
+                if test -e "$target" || test -e "${CUSTOM_SHIM_SOURCE:-}"; then
                     { 
-                        log::warn "${FUNCNAME[0]}: $target already exists";
-                        return 0;
+                        try_sudo mkdir -p "$shim_source";
                         if ! is::custom_shim; then
                             { 
                                 try_sudo mv "$target" "$shim_source"
+                            };
+                        else
+                            { 
+                                try_sudo mv "$CUSTOM_SHIM_SOURCE" "$shim_source"
                             };
                         fi
                     };
@@ -1188,15 +1197,7 @@ main@bashbox%26543 ()
                     };
                     function await_while_shim_exists () 
                     { 
-                        if is::custom_shim; then
-                            { 
-                                : "$target"
-                            };
-                        else
-                            { 
-                                : "$shim_source"
-                            };
-                        fi;
+                        : "$shim_source";
                         local checkf="$_";
                         for _i in {1..3};
                         do
@@ -1948,4 +1949,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%26543 "$@";
+main@bashbox%7741 "$@";
