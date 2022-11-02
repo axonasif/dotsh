@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%7741 () 
+main@bashbox%3547 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,12 +55,12 @@ main@bashbox%7741 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%7741';
+    ___MAIN_FUNCNAME='main@bashbox%3547';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::193c820);
+    ___self_DEPENDENCIES=(std::15dc26b);
     ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -136,13 +136,15 @@ main@bashbox%7741 ()
             docker_args+=(-it "$container_image");
             function startup_command () 
             { 
+                export PATH="$HOME/.nix-profile/bin:$PATH";
                 local logfile="$HOME/.dotfiles.log";
-                local tail_cmd="less -S -XR +F $logfile";
+                local tail_cmd="tail -f $logfile";
                 eval "$(gp env -e)";
                 set +m;
                 { 
                     "$HOME/.dotfiles/install.sh" 2>&1
                 } > "$logfile" 2>&1 & disown;
+                set -m;
                 ( until tmux has-session 2> /dev/null; do
                     sleep 1;
                 done;
@@ -152,8 +154,6 @@ main@bashbox%7741 ()
                     sleep 1;
                 done;
                 printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
-                set -m;
-                export PATH="$HOME/.nix-profile/bin:$PATH";
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         $tail_cmd;
@@ -315,24 +315,35 @@ main@bashbox%7741 ()
         lock_file="$(get_temp::dir)/.${name}.lock";
         if test -e "$lock_file"; then
             { 
+                if ! { 
+                    kill -0 "$(< "$lock_file")"
+                }; then
+                    { 
+                        rm "$lock_file" 2> /dev/null || :
+                    };
+                fi;
                 log::info "Awaiting for another ${name} job to finish"
             };
         fi;
-        while { 
-            kill -0 "$(< "$lock_file")"
-        } 2> /dev/null; do
+        for _ in {1..5};
+        do
             { 
-                sleep 0.5
+                while { 
+                    kill -0 "$(< "$lock_file")"
+                }; do
+                    { 
+                        sleep 0.5
+                    };
+                done
             };
         done;
-        until ( set -o noclobber;
-        printf '%s\n' "$$" > "$lock_file" ) 2> /dev/null; do
+        until ( set -o noclobber && printf '%s\n' "$$" > "$lock_file" ); do
             { 
                 sleep 0.5
             };
         done;
         trap::append "rm -f '$lock_file' 2>/dev/null" ${SIGNALS:-EXIT}
-    };
+    } 2> /dev/null;
     function std::sys::info::cache_uname () 
     { 
         if test -v kernel_name; then
@@ -409,6 +420,42 @@ main@bashbox%7741 ()
                 return 1
             ;;
         esac
+    };
+    function std::sys::info::os::is_android () 
+    { 
+        std::sys::info::cache_distro;
+        [[ "${distro}" == "Android"* ]]
+    };
+    function std::sys::info::os::is_linux () 
+    { 
+        std::sys::info::cache_os;
+        test "${os:-}" == "Linux"
+    };
+    function std::sys::info::os::is_darwin () 
+    { 
+        std::sys::info::cache_uname;
+        [[ "${kernel_name:-}" == "Darwin"* ]]
+    };
+    function std::sys::info::os::is_windows () 
+    { 
+        std::sys::info::cache_os;
+        test "${os:-}" == "Windows"
+    };
+    function os::is_android () 
+    { 
+        std::sys::info::os::is_android "$@"
+    };
+    function os::is_linux () 
+    { 
+        std::sys::info::os::is_linux "$@"
+    };
+    function os::is_darwin () 
+    { 
+        std::sys::info::os::is_darwin "$@"
+    };
+    function os::is_windows () 
+    { 
+        std::sys::info::os::is_windows "$@"
     };
     function trim_leading_trailing () 
     { 
@@ -802,6 +849,10 @@ main@bashbox%7741 ()
         std::sys::info::cache_distro;
         [[ "$distro" == "Ubuntu"* ]]
     };
+    function distro::is_ubuntu () 
+    { 
+        std::sys::info::distro::is_ubuntu "$@"
+    };
     function is::gitpod () 
     { 
         test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT
@@ -822,7 +873,22 @@ main@bashbox%7741 ()
     { 
         function get_tmux_shell () 
         { 
-            tmux start-server\; run-shell '\echo #{default-shell}'
+            local shell;
+            shell="$(tmux start-server\; display -p '#{default-shell}' 2>/dev/null)" || true;
+            if test -z "${shell:-}"; then
+                { 
+                    shell="$(tmux start-server\; run-shell '\echo #{default-shell}' 2>/dev/null)" || true
+                };
+            fi;
+            if test -n "${shell:-}"; then
+                { 
+                    printf '%s\n' "${shell}"
+                };
+            else
+                { 
+                    false
+                };
+            fi
         };
         local custom_shell;
         if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then
@@ -831,7 +897,7 @@ main@bashbox%7741 ()
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         local tmux_shell;
-                        if tmux_shell="$(get_tmux_shell)" && test "$tmux_shell" != "$custom_shell"; then
+                        if tmux_shell="$(get_tmux_shell)" && [ "$tmux_shell" != "$custom_shell" ]; then
                             { 
                                 ( exec 1>&-;
                                 until tmux has-session 2> /dev/null; do
@@ -863,7 +929,7 @@ main@bashbox%7741 ()
                 fi;
             fi;
         fi;
-        printf '%s\n' "$custom_shell"
+        printf '%s\n' "${custom_shell:-/bin/bash}"
     };
     function vscode::add_settings () 
     { 
@@ -902,6 +968,7 @@ main@bashbox%7741 ()
     };
     function dotfiles::initialize () 
     { 
+        await::until_true command -v git > /dev/null;
         local installation_target="${INSTALL_TARGET:-"$HOME"}";
         local last_applied_filelist="$installation_target/.last_applied_dotfiles";
         local dotfiles_repo local_dotfiles_repo_count repo_user repo_name source_dir repo_dir_name check_dir;
@@ -1300,32 +1367,45 @@ main@bashbox%7741 ()
             };
         done
     };
-    syspkgs_level_one=(tmux fish jq);
-    syspkgs_level_two=(fuse);
-    userpkgs_level_one=(tmux fish jq);
-    if std::sys::info::distro::is_ubuntu && is::cde; then
+    if test -e "/nix"; then
         { 
-            userpkgs_level_one=()
+            nixpkgs_level_one=(nixpkgs.tmux nixpkgs.fish nixpkgs.jq);
+            nixpkgs_level_two=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs-unstable.neovim nixpkgs.gnumake nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.coreutils nixpkgs.exa nixpkgs.fzf nixpkgs.gawk nixpkgs.gh nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree);
+            if os::is_darwin; then
+                { 
+                    nixpkgs_level_two+=(nixpkgs.bash nixpkgs.zsh nixpkgs.reattach-to-user-namespace)
+                };
+            fi
         };
+    else
+        if is::cde && distro::is_ubuntu; then
+            { 
+                aptpkgs_level_one=(tmux fish jq);
+                aptpkgs_level_two=(fuse git make)
+            };
+        fi;
     fi;
-    userpkgs_level_two=(lsof shellcheck tree file fzf bat bottom exa fzf gh neofetch neovim p7zip ripgrep shellcheck tree jq zoxide rclone);
     function install::packages () 
     { 
-        log::info "Installing system packages";
-        ( sudo apt-get update;
-        sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-        for level in syspkgs_level_one syspkgs_level_two;
-        do
+        if is::cde && distro::is_ubuntu; then
             { 
-                declare -n ref="$level";
-                if test -n "${ref:-}"; then
+                log::info "Installing system packages";
+                ( sudo apt-get update;
+                sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
+                for level in aptpkgs_level_one aptpkgs_level_two;
+                do
                     { 
-                        sudo apt-get install -yq --no-install-recommends "${ref[@]}"
+                        declare -n ref="$level";
+                        if test -n "${ref:-}"; then
+                            { 
+                                sudo apt-get install -yq --no-install-recommends "${ref[@]}"
+                            };
+                        fi
                     };
-                fi
+                done;
+                sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline' ) > /dev/null & disown
             };
-        done;
-        sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline' ) > /dev/null & disown;
+        fi;
         log::info "Installing userland packages";
         ( USER="$(id -u -n)" && export USER;
         if test ! -e /nix; then
@@ -1336,17 +1416,22 @@ main@bashbox%7741 ()
             };
         fi;
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
-        for level in userpkgs_level_one userpkgs_level_two;
-        do
+        function nix-install () 
+        { 
+            command nix-env -iA "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
+        };
+        if test -n "${nixpkgs_level_one:-}"; then
             { 
-                declare -n ref="$level";
-                if test -n "${ref:-}"; then
-                    { 
-                        nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
-                    };
-                fi
+                nix-install "${nixpkgs_level_one[@]}"
             };
-        done ) & disown
+        fi;
+        nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs-unstable;
+        nix-channel --update;
+        if test -n "${nixpkgs_level_two:-}"; then
+            { 
+                nix-install "${nixpkgs_level_two[@]}"
+            };
+        fi ) & disown
     };
     function install::misc () 
     { 
@@ -1621,7 +1706,7 @@ CMDC
         log::info "Setting up tmux";
         if is::cde; then
             { 
-                KEEP="true" await::create_shim "$tmux_exec_path"
+                KEEP="true" CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/tmux" await::create_shim "$tmux_exec_path"
             };
         else
             { 
@@ -1871,6 +1956,7 @@ EOF
                 await::until_true command -v nvim > /dev/null
             };
         fi;
+        await::until_true command -v git > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
                 curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
@@ -1949,4 +2035,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%7741 "$@";
+main@bashbox%3547 "$@";

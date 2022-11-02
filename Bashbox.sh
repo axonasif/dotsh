@@ -5,7 +5,7 @@ CODENAME="dotfiles"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
-	std::193c820
+	std::15dc26b
 )
 REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"
@@ -149,12 +149,14 @@ live() (
 		)
 
 		function startup_command() {
+			export PATH="$HOME/.nix-profile/bin:$PATH";
 			local logfile="$HOME/.dotfiles.log";
-			local tail_cmd="less -S -XR +F $logfile";
-			# local tail_cmd="tail -f $logfile"
+			# local tail_cmd="less -S -XR +F $logfile";
+			local tail_cmd="tail -f $logfile"
 			eval "$(gp env -e)";
 			set +m; # Temporarily disable job control
 			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & disown;
+			set -m;
 
 			(
 				until tmux has-session 2>/dev/null; do sleep 1; done;
@@ -166,9 +168,7 @@ live() (
 					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
 			) & disown;
-			set -m;
 
-			export PATH="$HOME/.nix-profile/bin:$PATH";
 			if test "${DOTFILES_TMUX:-true}" == true; then {
 				$tail_cmd;
 				AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;

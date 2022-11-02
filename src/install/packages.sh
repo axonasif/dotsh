@@ -1,91 +1,100 @@
-# =================================================
-# = system packages                               =
-# =================================================
 
 # shellcheck disable=SC2034
-# It is adviced to add very less packages in this array
-# Things that you need immediately should be added here
-syspkgs_level_one=(
-    tmux
-    fish
-    jq
-)
 
-# shellcheck disable=SC2034
-syspkgs_level_two=(
-    # Add big packages in this array
-    fuse
-)
+if test -e "/nix"; then {
+    # =================================================
+    # = userland packages                             =
+    # =================================================
 
-# =================================================
-# = userland packages                             =
-# =================================================
+    ## Install from nix when it's immediately available,
+    ## otherwise fallback to apt for faster response.
+    ## You can find packages at https://search.nixos.org/packages
 
-## You can find packages at https://search.nixos.org/packages
-# It is adviced to add very less packages in this array
-# Things that you need immediately should be added here
-userpkgs_level_one=(
-    tmux
-    fish
-    jq
-)
-# Empty userpkgs_level_one when the system is ubuntu and cde
-### And so, install from [syspkgs_level_one] instead
-if std::sys::info::distro::is_ubuntu && is::cde; then {
-    userpkgs_level_one=(); 
+    # It is adviced to add very less packages in this array.
+    # Things that you need immediately should be added here.
+    nixpkgs_level_one=(
+        nixpkgs.tmux
+        nixpkgs.fish
+        nixpkgs.jq
+    )
+
+    # Big packages here.
+    nixpkgs_level_two=(
+        nixpkgs.rclone
+        nixpkgs.zoxide
+        nixpkgs.git
+        nixpkgs-unstable.neovim
+        nixpkgs.gnumake
+        nixpkgs.shellcheck
+        nixpkgs.tree
+        nixpkgs.file
+        nixpkgs.fzf
+        nixpkgs.bat
+        nixpkgs.bottom
+        nixpkgs.coreutils
+        nixpkgs.exa
+        nixpkgs.fzf
+        nixpkgs.gawk
+        nixpkgs.gh
+        nixpkgs.htop
+        nixpkgs.lsof
+        # iftop
+        nixpkgs.neofetch
+        nixpkgs.p7zip
+        nixpkgs.ripgrep
+        nixpkgs.shellcheck
+        nixpkgs.tree
+        # yq
+    )
+
+    # Packages specific to MacOS
+    if os::is_darwin; then {
+        # Add to array
+        nixpkgs_level_two+=(
+            nixpkgs.bash
+            nixpkgs.zsh
+            nixpkgs.reattach-to-user-namespace
+        )
+    } fi
+
+} elif is::cde && distro::is_ubuntu; then {
+    # =================================================
+    # = system packages                               =
+    # =================================================
+
+    # It is adviced to add very less packages in this array.
+    # Things that you need immediately should be added here.
+    aptpkgs_level_one=(
+        tmux
+        fish
+        jq
+    )
+
+    # Big packages here.
+    aptpkgs_level_two=(
+        fuse
+        git
+        make
+    )
 } fi
-
-# shellcheck disable=SC2034
-userpkgs_level_two=(
-    lsof
-    shellcheck
-    # rsync
-    tree
-    file
-    fzf
-    # bash
-    bat
-    bottom
-    # coreutils
-    exa
-    # ffmpeg
-    # fish
-    fzf
-    # gawk
-    gh
-    # htop
-    # iftop
-    # jq
-    neofetch
-    neovim
-    p7zip
-    # ranger
-    # reattach-to-user-namespace
-    ripgrep
-    shellcheck
-    tree
-    # yq
-    jq
-    zoxide
-    rclone
-    # zsh
-)
 
 function install::packages {
 
-    # return # DEBUG
-    log::info "Installing system packages";
-    (
-        sudo apt-get update;
-        sudo debconf-set-selections <<<'debconf debconf/frontend select Noninteractive';
-        for level in syspkgs_level_one syspkgs_level_two; do {
-            declare -n ref="$level";
-            if test -n "${ref:-}"; then {
-                sudo apt-get install -yq --no-install-recommends "${ref[@]}";
-            } fi
-        } done
-        sudo debconf-set-selections <<<'debconf debconf/frontend select Readline';
-    ) 1>/dev/null & disown;
+    # Only install from APT when it's CDE and Ubuntu
+    if is::cde && distro::is_ubuntu; then {
+        log::info "Installing system packages";
+        (
+            sudo apt-get update;
+            sudo debconf-set-selections <<<'debconf debconf/frontend select Noninteractive';
+            for level in aptpkgs_level_one aptpkgs_level_two; do {
+                declare -n ref="$level";
+                if test -n "${ref:-}"; then {
+                    sudo apt-get install -yq --no-install-recommends "${ref[@]}";
+                } fi
+            } done
+            sudo debconf-set-selections <<<'debconf debconf/frontend select Readline';
+        ) 1>/dev/null & disown;
+    } fi
 
     log::info "Installing userland packages";
     (
@@ -98,12 +107,20 @@ function install::packages {
         } fi
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
 
-        # return # DEBUG
-        for level in userpkgs_level_one userpkgs_level_two; do {
-            declare -n ref="$level";
-            if test -n "${ref:-}"; then {
-                nix-env -f channel:nixpkgs-unstable -iA "${ref[@]}" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)';
-            } fi
-        } done
+        function nix-install() {
+            command nix-env -iA "$@" 2>&1 \
+                | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)';
+        }
+
+        if test -n "${nixpkgs_level_one:-}"; then {
+            nix-install "${nixpkgs_level_one[@]}";
+        } fi
+
+        nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs-unstable;
+        nix-channel --update;
+        if test -n "${nixpkgs_level_two:-}"; then {
+            nix-install "${nixpkgs_level_two[@]}";
+        } fi
+
     ) & disown;
 }
