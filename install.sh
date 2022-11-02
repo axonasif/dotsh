@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3547 () 
+main@bashbox%9128 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%3547 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%3547';
+    ___MAIN_FUNCNAME='main@bashbox%9128';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -143,9 +143,9 @@ main@bashbox%3547 ()
                 set +m;
                 { 
                     "$HOME/.dotfiles/install.sh" 2>&1
-                } > "$logfile" 2>&1 & disown;
+                } > "$logfile" 2>&1 & wait;
                 set -m;
-                ( until tmux has-session 2> /dev/null; do
+                ( until tmux has-session; do
                     sleep 1;
                 done;
                 pkill -9 -f "${tail_cmd//+/\\+}" || :;
@@ -891,6 +891,11 @@ main@bashbox%3547 ()
             fi
         };
         local custom_shell;
+        if test "${DOTFILES_TMUX:-true}" == true; then
+            { 
+                await::signal get config_tmux
+            };
+        fi;
         if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then
             { 
                 custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
@@ -914,7 +919,6 @@ main@bashbox%3547 ()
         else
             if test "${DOTFILES_TMUX:-true}" == true; then
                 { 
-                    await::signal get config_tmux;
                     if custom_shell="$(get_tmux_shell)" && [ "${custom_shell}" == "/bin/sh" ]; then
                         { 
                             custom_shell="$(command -v bash)"
@@ -1151,9 +1155,10 @@ main@bashbox%3547 ()
     };
     function await::create_shim () 
     { 
+        local vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
         function is::custom_shim () 
         { 
-            test -v CUSTOM_SHIM_SOURCE
+            test -v SHIM_MIRROR
         };
         function revert_shim () 
         { 
@@ -1166,19 +1171,14 @@ main@bashbox%3547 ()
                         };
                     else
                         { 
-                            try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
-                            try_sudo ln -sf "$CUSTOM_SHIM_SOURCE" "$target"
+                            try_sudo mv "$shim_source" "$SHIM_MIRROR";
+                            try_sudo ln -sf "$SHIM_MIRROR" "$target"
                         };
                     fi;
                     ( sleep 3;
                     try_sudo rm -f "$shim_tombstone" || true;
-                    if is::custom_shim; then
-                        { 
-                            try_sudo rm -f "$target" || true
-                        };
-                    fi;
                     try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown;
-                    unset KEEP_internal_call CUSTOM_SHIM_SOURCE
+                    unset "${vars_to_unset[@]}"
                 };
             fi
         };
@@ -1199,173 +1199,181 @@ main@bashbox%3547 ()
             fi
         };
         local target shim_source;
-        if test -v CUSTOM_SHIM_SOURCE; then
-            export CUSTOM_SHIM_SOURCE="${CUSTOM_SHIM_SOURCE:-}";
+        if test -v SHIM_MIRROR; then
+            export SHIM_MIRROR="${SHIM_MIRROR:-}";
         fi;
         local shim_dir shim_source shim_tombstone;
-        for target in "$@";
-        do
+        local target="$1";
+        if ! is::custom_shim; then
             { 
+                shim_dir="${target%/*}/.ashim";
+                shim_source="${shim_dir}/${target##*/}"
+            };
+        else
+            { 
+                shim_dir="${SHIM_MIRROR%/*}/.cshim";
+                shim_source="$shim_dir/${SHIM_MIRROR##*/}"
+            };
+        fi;
+        shim_tombstone="${shim_source}.tombstone";
+        if test -v KEEP; then
+            { 
+                export SHIM_SOURCE="$shim_source"
+            };
+        fi;
+        if test -v CLOSE; then
+            { 
+                if shift; then
+                    { 
+                        ( unset "${vars_to_unset[@]}";
+                        export PATH="$shim_dir:$PATH";
+                        "$@" )
+                    };
+                fi;
+                revert_shim;
+                return
+            };
+        fi;
+        if test -e "$target" || test -e "${SHIM_MIRROR:-}"; then
+            { 
+                try_sudo mkdir -p "$shim_dir";
                 if ! is::custom_shim; then
                     { 
-                        shim_dir="${target%/*}/.ashim";
-                        shim_source="${shim_dir}/${target##*/}"
+                        try_sudo mv "$target" "$shim_source"
                     };
                 else
                     { 
-                        shim_dir="${CUSTOM_SHIM_SOURCE%/*}/.cshim";
-                        shim_source="$shim_dir/${CUSTOM_SHIM_SOURCE##*/}"
+                        try_sudo mv "$SHIM_MIRROR" "$shim_source"
                     };
-                fi;
-                shim_tombstone="${shim_source}.tombstone";
-                if test -v CLOSE; then
-                    { 
-                        revert_shim;
-                        return
-                    };
-                fi;
-                if test -e "$target" || test -e "${CUSTOM_SHIM_SOURCE:-}"; then
-                    { 
-                        try_sudo mkdir -p "$shim_source";
-                        if ! is::custom_shim; then
-                            { 
-                                try_sudo mv "$target" "$shim_source"
-                            };
-                        else
-                            { 
-                                try_sudo mv "$CUSTOM_SHIM_SOURCE" "$shim_source"
-                            };
-                        fi
-                    };
-                fi;
-                local USER && USER="$(id -u -n)";
-                try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
-                function async_wrapper () 
+                fi
+            };
+        fi;
+        local USER && USER="$(id -u -n)";
+        try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
+        function async_wrapper () 
+        { 
+            set -eu;
+            diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+            if test ! -e "$diff_target"; then
                 { 
-                    set -eu;
-                    diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-                    if test ! -e "$diff_target"; then
+                    create_self "$diff_target"
+                };
+            fi;
+            function await_for_no_open_writes () 
+            { 
+                while lsof -F 'f' -- "$1" 2> /dev/null | grep -q '^f.*w$'; do
+                    sleep 0.5${RANDOM};
+                done
+            };
+            function exec_bin () 
+            { 
+                local args=("$@");
+                local bin="${args[0]}";
+                await::until_true test -x "$bin";
+                exec "${args[@]}"
+            };
+            function await_while_shim_exists () 
+            { 
+                : "$shim_source";
+                local checkf="$_";
+                for _i in {1..3};
+                do
+                    { 
+                        sleep 0.2${RANDOM};
+                        TIME="0.5${RANDOM}" await::while_true test -e "$checkf"
+                    };
+                done
+            };
+            if test -v AWAIT_SHIM_PRINT_INDICATOR; then
+                { 
+                    printf 'info[shim]: Loading %s\n' "$target"
+                };
+            fi;
+            if test -e "$shim_source"; then
+                { 
+                    if test "${KEEP_internal_call:-}" == true; then
                         { 
-                            create_self "$diff_target"
+                            exec_bin "$shim_source" "$@"
                         };
-                    fi;
-                    function await_for_no_open_writes () 
-                    { 
-                        while lsof -F 'f' -- "$1" 2> /dev/null | grep -q '^f.*w$'; do
-                            sleep 0.5${RANDOM};
-                        done
-                    };
-                    function exec_bin () 
-                    { 
-                        local args=("$@");
-                        local bin="${args[0]}";
-                        await::until_true test -x "$bin";
-                        exec "${args[@]}"
-                    };
-                    function await_while_shim_exists () 
-                    { 
-                        : "$shim_source";
-                        local checkf="$_";
-                        for _i in {1..3};
-                        do
-                            { 
-                                sleep 0.2${RANDOM};
-                                TIME="0.5${RANDOM}" await::while_true test -e "$checkf"
-                            };
-                        done
-                    };
-                    if test -v AWAIT_SHIM_PRINT_INDICATOR; then
+                    else
                         { 
-                            printf 'info[shim]: Loading %s\n' "$target"
+                            await_while_shim_exists
                         };
-                    fi;
-                    if test -e "$shim_source"; then
+                    fi
+                };
+            else
+                if ! is::custom_shim; then
+                    { 
+                        TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+                        rm -f "$diff_target" 2> /dev/null || :;
+                        TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
+                    };
+                else
+                    { 
+                        TIME="0.5${RANDOM}" await::for_file_existence "$SHIM_MIRROR";
+                        await_for_no_open_writes "$SHIM_MIRROR"
+                    };
+                fi;
+            fi;
+            if test -v KEEP_internal_call; then
+                { 
+                    if test "${KEEP_internal_call:-}" == true; then
                         { 
-                            if test "${KEEP_internal_call:-}" == true; then
+                            if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then
+                                { 
+                                    try_sudo mkdir -p "${shim_source%/*}";
+                                    if ! is::custom_shim; then
+                                        { 
+                                            try_sudo mv "$target" "$shim_source";
+                                            try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target'
+                                        };
+                                    else
+                                        { 
+                                            try_sudo mv "${SHIM_MIRROR}" "$shim_source"
+                                        };
+                                    fi
+                                };
+                            fi;
+                            if test -e "$shim_source"; then
                                 { 
                                     exec_bin "$shim_source" "$@"
-                                };
-                            else
-                                { 
-                                    await_while_shim_exists
                                 };
                             fi
                         };
                     else
-                        if ! is::custom_shim; then
-                            { 
-                                TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
-                                rm -f "$diff_target" 2> /dev/null || :;
-                                TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
-                            };
-                        else
-                            { 
-                                TIME="0.5${RANDOM}" await::for_file_existence "$CUSTOM_SHIM_SOURCE";
-                                await_for_no_open_writes "$CUSTOM_SHIM_SOURCE"
-                            };
-                        fi;
-                    fi;
-                    if test -v KEEP_internal_call; then
                         { 
-                            if test "${KEEP_internal_call:-}" == true; then
-                                { 
-                                    if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then
-                                        { 
-                                            try_sudo mkdir -p "${shim_source%/*}";
-                                            if ! is::custom_shim; then
-                                                { 
-                                                    try_sudo mv "$target" "$shim_source";
-                                                    try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target'
-                                                };
-                                            else
-                                                { 
-                                                    try_sudo mv "${CUSTOM_SHIM_SOURCE}" "$shim_source"
-                                                };
-                                            fi
-                                        };
-                                    fi;
-                                    if test -e "$shim_source"; then
-                                        { 
-                                            exec_bin "$shim_source" "$@"
-                                        };
-                                    fi
-                                };
-                            else
-                                { 
-                                    await_while_shim_exists
-                                };
-                            fi
+                            await_while_shim_exists
                         };
-                    fi;
-                    if is::custom_shim; then
-                        { 
-                            target="$CUSTOM_SHIM_SOURCE"
-                        };
-                    fi;
-                    exec_bin "$target" "$@"
+                    fi
                 };
+            fi;
+            if is::custom_shim; then
                 { 
-                    printf 'function main() {\n';
-                    printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir";
-                    if test -v CUSTOM_SHIM_SOURCE; then
-                        { 
-                            printf '%s="%s"\n' CUSTOM_SHIM_SOURCE "$CUSTOM_SHIM_SOURCE"
-                        };
-                    fi;
-                    if test -v KEEP; then
-                        { 
-                            printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone";
-                            export KEEP_internal_call=true
-                        };
-                    fi;
-                    printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
-                    printf '%s\n' 'async_wrapper "$@"; }'
-                } > "$target";
-                ( source "$target";
-                create_self "$target" );
-                chmod +x "$target"
-            };
-        done
+                    target="$SHIM_MIRROR"
+                };
+            fi;
+            exec_bin "$target" "$@"
+        };
+        { 
+            printf 'function main() {\n';
+            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir";
+            if test -v SHIM_MIRROR; then
+                { 
+                    printf '%s="%s"\n' SHIM_MIRROR "$SHIM_MIRROR"
+                };
+            fi;
+            if test -v KEEP; then
+                { 
+                    printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone";
+                    export KEEP_internal_call=true
+                };
+            fi;
+            printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
+            printf '%s\n' 'async_wrapper "$@"; }'
+        } > "$target";
+        ( source "$target";
+        create_self "$target" );
+        chmod +x "$target"
     };
     if test -e "/nix"; then
         { 
@@ -1418,7 +1426,7 @@ main@bashbox%3547 ()
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
         function nix-install () 
         { 
-            command nix-env -iA "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
+            command nix-env -iAP "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
         };
         if test -n "${nixpkgs_level_one:-}"; then
             { 
@@ -1702,11 +1710,22 @@ CMDC
                 return
             };
         fi;
-        local tmux_exec_path="/usr/bin/tmux";
         log::info "Setting up tmux";
         if is::cde; then
             { 
-                KEEP="true" CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/tmux" await::create_shim "$tmux_exec_path"
+                local check_file=(/nix/store/*-tmux-*/bin/tmux);
+                local tmux_exec_path;
+                if test -n "${check_file:-}"; then
+                    { 
+                        tmux_exec_path="${check_file[0]}";
+                        KEEP=true await::create_shim "$tmux_exec_path"
+                    };
+                else
+                    { 
+                        tmux_exec_path="/usr/bin/tmux";
+                        KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" await::create_shim "$tmux_exec_path"
+                    };
+                fi
             };
         else
             { 
@@ -1732,13 +1751,13 @@ CMDC
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
                 };
             fi;
-            CLOSE=true await::create_shim "$tmux_exec_path";
             await::signal send config_tmux;
             if is::cde; then
                 { 
-                    tmux::create_session
+                    CLOSE=true await::create_shim "$tmux_exec_path" tmux::create_session
                 };
             fi;
+            await::signal send config_tmux_session;
             ( if is::gitpod; then
                 { 
                     if test -n "${GITPOD_TASKS:-}"; then
@@ -1947,16 +1966,8 @@ EOF
     function config::neovim () 
     { 
         log::info "Setting up Neovim";
-        if is::cde; then
-            { 
-                CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/nvim" await::create_shim "/usr/bin/nvim"
-            };
-        else
-            { 
-                await::until_true command -v nvim > /dev/null
-            };
-        fi;
         await::until_true command -v git > /dev/null;
+        await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
                 curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
@@ -1964,7 +1975,7 @@ EOF
         fi;
         if is::cde; then
             { 
-                await::signal get config_tmux;
+                await::signal get config_tmux_session;
                 tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "lvim" Enter
             };
         fi
@@ -2035,4 +2046,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%3547 "$@";
+main@bashbox%9128 "$@";

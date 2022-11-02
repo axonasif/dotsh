@@ -329,8 +329,8 @@ source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles
 # This command will eventually install a symlink to `tmux` at $HOME/.nix-profile/bin
 nix-env -iA nixpkgs.tmux & disown;
 
-# Notice the CUSTOM_SHIM_SOURCE value
-KEEP=true CUSTOM_SHIM_SOURCE=$HOME/.nix-profile/bin/tmux await::create_shim /usr/bin/tmux;
+# Notice the SHIM_MIRROR value
+KEEP=true SHIM_MIRROR=$HOME/.nix-profile/bin/tmux await::create_shim /usr/bin/tmux;
 
 ## Extra tmux customization/configuration part
 git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm";

@@ -155,11 +155,11 @@ live() (
 			local tail_cmd="tail -f $logfile"
 			eval "$(gp env -e)";
 			set +m; # Temporarily disable job control
-			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & disown;
+			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & wait;
 			set -m;
 
 			(
-				until tmux has-session 2>/dev/null; do sleep 1; done;
+				until tmux has-session; do sleep 1; done;
 				pkill -9 -f "${tail_cmd//+/\\+}" || :;
 				tmux setw -g mouse on;
 				until test -n "$(tmux list-clients)"; do sleep 1; done;

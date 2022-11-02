@@ -3,13 +3,17 @@ function config::neovim() {
 	log::info "Setting up Neovim";
 
 	# Wait for nix to complete installing neovim at userland_tools.sh:leveltwo_pkgs
-	if is::cde; then {
-		CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/nvim" await::create_shim "/usr/bin/nvim";
-	} else {
-		await::until_true command -v nvim 1>/dev/null;
-	} fi
+	# if is::cde; then {
+	# 	local check_file=(/nix/store/*-neovim-*/bin/nvim);
+	# 	if test -n "${check_file:-}"; then {
+	# 		await::create_shim "${check_file[1]}";
+	# 	} else {
+	# 		SHIM_MIRROR="$HOME/.nix-profile/bin/nvim" await::create_shim "/usr/bin/nvim";
+	# 	} fi
+	# } fi
 
 	await::until_true command -v git 1>/dev/null;
+	await::until_true command -v $HOME/.nix-profile/bin/nvim 1>/dev/null;
 
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {
@@ -23,7 +27,7 @@ function config::neovim() {
 
 	if is::cde; then {
 		# Wait for tmux to start
-		await::signal get config_tmux;
+		await::signal get config_tmux_session;
 
 		# Run 'nvim --version' on tmux first window
 		tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "lvim" Enter;

@@ -124,13 +124,21 @@ function config::tmux() {
 		return;
 	} fi
 
-	local tmux_exec_path="/usr/bin/tmux";
 	log::info "Setting up tmux";
 
 	if is::cde; then {
 		# Lock on tmux binary
-		KEEP="true" CUSTOM_SHIM_SOURCE="$HOME/.nix-profile/bin/tmux" \
-			await::create_shim "$tmux_exec_path";
+		local check_file=(/nix/store/*-tmux-*/bin/tmux);
+		local tmux_exec_path;
+
+		if test -n "${check_file:-}"; then {
+			tmux_exec_path="${check_file[0]}";
+			KEEP=true await::create_shim "$tmux_exec_path";
+		} else {
+			tmux_exec_path="/usr/bin/tmux";
+			KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
+				await::create_shim "$tmux_exec_path";
+		} fi
 	} else {
 		await::until_true command -v tmux 1>/dev/null;
 	} fi
@@ -151,12 +159,13 @@ function config::tmux() {
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
 		} fi
 
-		CLOSE=true await::create_shim "$tmux_exec_path";
 		await::signal send config_tmux;
 
 		if is::cde; then {
-			tmux::create_session;
+			CLOSE=true await::create_shim "$tmux_exec_path" tmux::create_session;
 		} fi
+
+		await::signal send config_tmux_session;
 		
 		(
 			if is::gitpod; then {

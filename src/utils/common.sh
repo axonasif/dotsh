@@ -32,6 +32,9 @@ function get::default_shell() {
 	}
 
 	local custom_shell;
+	if test "${DOTFILES_TMUX:-true}" == true; then {
+		await::signal get config_tmux;
+	} fi
 
 	if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then {
 		custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
@@ -51,7 +54,6 @@ function get::default_shell() {
 		} fi
 
 	} elif test "${DOTFILES_TMUX:-true}" == true; then {
-		await::signal get config_tmux;
 		if custom_shell="$(get_tmux_shell)" \
 		&& [ "${custom_shell}" == "/bin/sh" ]; then {
 			custom_shell="$(command -v bash)";

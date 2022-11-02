@@ -43,11 +43,11 @@ function await::signal() {
 }
 
 function await::create_shim() {
-	
+	local vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {
-		test -v CUSTOM_SHIM_SOURCE;
+		test -v SHIM_MIRROR;
 	}
 
 	function revert_shim() {
@@ -58,18 +58,19 @@ function await::create_shim() {
 			if ! is::custom_shim; then {
 				try_sudo mv "$shim_source" "$target";
 			} else {
-				try_sudo mv "$shim_source" "$CUSTOM_SHIM_SOURCE";
-				try_sudo ln -sf "$CUSTOM_SHIM_SOURCE" "$target";
+				try_sudo mv "$shim_source" "$SHIM_MIRROR";
+				try_sudo ln -sf "$SHIM_MIRROR" "$target";
+
 			} fi
 			(
 				sleep 3;
 				try_sudo rm -f "$shim_tombstone" || true;
-				if is::custom_shim; then {
-					try_sudo rm -f "$target" || true;
-				} fi
+				# if is::custom_shim; then {
+				# 	try_sudo rm -f "$target" || true;
+				# } fi
 				try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
 			) & disown;
-			unset KEEP_internal_call CUSTOM_SHIM_SOURCE;
+			unset "${vars_to_unset[@]}";
 		} fi
 	}
 
@@ -86,193 +87,204 @@ function await::create_shim() {
 	}
 
 	local target shim_source;
-	if test -v CUSTOM_SHIM_SOURCE; then
-		export CUSTOM_SHIM_SOURCE="${CUSTOM_SHIM_SOURCE:-}"; # Reuse previoulsy exported CUSTOM_SHIM_SOURCE before CLOSE'ing
+	if test -v SHIM_MIRROR; then
+		export SHIM_MIRROR="${SHIM_MIRROR:-}"; # Reuse previoulsy exported SHIM_MIRROR before CLOSE'ing
 	fi
 
 	local shim_dir shim_source shim_tombstone;
-	for target in "$@"; do {
+	local target="$1";
 
+	if ! is::custom_shim; then {
+		shim_dir="${target%/*}/.ashim";
+		shim_source="${shim_dir}/${target##*/}";
+	} else {
+		shim_dir="${SHIM_MIRROR%/*}/.cshim";
+		shim_source="$shim_dir/${SHIM_MIRROR##*/}";
+	} fi
+	shim_tombstone="${shim_source}.tombstone";
+
+	if test -v KEEP; then {
+		export SHIM_SOURCE="$shim_source";
+	} fi
+
+	if test -v CLOSE; then {
+		# For pre-cmd.
+		if shift; then {
+			(
+				unset "${vars_to_unset[@]}";
+				export PATH="$shim_dir:$PATH";
+				"$@";
+			)
+		} fi
+		revert_shim;
+		return;
+	} fi
+
+	if test -e "$target" || test -e "${SHIM_MIRROR:-}"; then {
+		# log::warn "${FUNCNAME[0]}: $target already exists";
+		# return 0;
+		try_sudo mkdir -p "$shim_dir";
 		if ! is::custom_shim; then {
-			shim_dir="${target%/*}/.ashim";
-			shim_source="${shim_dir}/${target##*/}";
+			try_sudo mv "$target" "$shim_source";
 		} else {
-			shim_dir="${CUSTOM_SHIM_SOURCE%/*}/.cshim";
-			shim_source="$shim_dir/${CUSTOM_SHIM_SOURCE##*/}";
+			try_sudo mv "$SHIM_MIRROR" "$shim_source";
 		} fi
-		shim_tombstone="${shim_source}.tombstone";
+	} fi
 
-		if test -v CLOSE; then {
-			revert_shim;
-			return;
+	local USER && USER="$(id -u -n)";
+	try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
+
+	# Embedded script
+	function async_wrapper() {
+		# DEBUG
+		# if test -v DEBUG_TUX; then
+		# 	set -x;
+		# fi
+		set -eu;
+
+		# DEBUG
+		# if test "${KEEP_internal_call:-}" == false; then {
+		# 	trap 'printf "[%s]: %s\n" "${LINENO}" "$BASH_COMMAND" >> /tmp/log' DEBUG;
+		# } fi
+
+		diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+		if test ! -e "$diff_target"; then {
+			create_self "$diff_target";
 		} fi
 
-		if test -e "$target" || test -e "${CUSTOM_SHIM_SOURCE:-}"; then {
-			# log::warn "${FUNCNAME[0]}: $target already exists";
-			# return 0;
-			try_sudo mkdir -p "$shim_source";
-			if ! is::custom_shim; then {
-				try_sudo mv "$target" "$shim_source";
-			} else {
-				try_sudo mv "$CUSTOM_SHIM_SOURCE" "$shim_source";
-			} fi
-		} fi
-
-		local USER && USER="$(id -u -n)";
-		try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
-
-		# Embedded script
-		function async_wrapper() {
-			# DEBUG
-			# if test -v DEBUG_TUX; then
-			# 	set -x;
-			# fi
-			set -eu;
-
-			# DEBUG
-			# if test "${KEEP_internal_call:-}" == false; then {
-			# 	trap 'printf "[%s]: %s\n" "${LINENO}" "$BASH_COMMAND" >> /tmp/log' DEBUG;
-			# } fi
-
-			diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-			if test ! -e "$diff_target"; then {
-				create_self "$diff_target";
-			} fi
-
-			await_for_no_open_writes() {
-				while lsof -F 'f' -- "$1" 2>/dev/null | grep -q '^f.*w$'; do
-					sleep 0.5${RANDOM};
-				done
-			}
-
-			exec_bin() {
-				local args=("$@");
-				local bin="${args[0]}";
-				await::until_true test -x "$bin";
-				exec "${args[@]}";
-			}
-
-			await_while_shim_exists() {
-				# DEBUG
-				# if test "${KEEP_internal_call:-}" == false; then set -x; fi
-
-				# Refer to revert_shim for this if-code-block
-				# if is::custom_shim; then {
-				#	: "$target";
-				# } else {
-					: "$shim_source";
-				# } fi
-
-				local checkf="$_";
-
-				for _i in {1..3}; do {
-					sleep 0.2${RANDOM};
-					TIME="0.5${RANDOM}" await::while_true test -e "$checkf";
-					# DEBUG
-					# while test -e "$checkf"; do {
-						# if test "${KEEP_internal_call:-}" == false; then
-						# 	printf '============ %s\n' "CHEKF=$checkf" "$(ls "$target" ||:;)" "$(ls "$shim_source" ||:;)"
-						# fi
-						# sleep 0.5$RANDOM;
-					# } done
-					
-				} done
-
-			}
-
-			if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
-				printf 'info[shim]: Loading %s\n' "$target";
-			} fi
-
-			# Initial loop for detecting $target modifications
-			## For KEEP=
-			if test -e "$shim_source"; then {
-				if test "${KEEP_internal_call:-}" == true; then {
-					# When it's not the first time it was called, basically (2nd)
-					exec_bin "$shim_source" "$@";
-				} else {
-					## For KEEP=
-					# For external calls (2nd)
-					await_while_shim_exists;
-				} fi
-			} elif ! is::custom_shim; then {
-				TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
-				rm -f "$diff_target" 2>/dev/null || :;
-				TIME="0.5${RANDOM}" await_for_no_open_writes "$target";
-			} else {
-				TIME="0.5${RANDOM}" await::for_file_existence "$CUSTOM_SHIM_SOURCE";
-				await_for_no_open_writes "$CUSTOM_SHIM_SOURCE";
-			} fi
-
-
-			# For KEEP=
-			if test -v KEEP_internal_call; then {
-				# Create shim
-				if test "${KEEP_internal_call:-}" == true; then {
-
-					# For internal calls
-					if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then {
-							try_sudo mkdir -p "${shim_source%/*}";
-
-							if ! is::custom_shim; then {
-								try_sudo mv "$target" "$shim_source";
-								try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
-							} else {
-								try_sudo mv "${CUSTOM_SHIM_SOURCE}" "$shim_source";
-							} fi
-					} fi
-
-					if test -e "$shim_source"; then {
-						exec_bin "$shim_source" "$@";
-					} fi
-
-				} else {
-					# For external calls
-					await_while_shim_exists;
-				} fi
-
-			} fi
-
-			# At this point it's not not an KEEP_internal_call=true thing
-			if is::custom_shim; then {
-				# We need to revert some magic manually here for external calls when KEEP= wasn't used
-				# if ! test -v KEEP_internal_call; then
-				# 	revert_shim;
-				# fi
-				target="$CUSTOM_SHIM_SOURCE"; # Set target to CUSTOM_SHIM_SOURCE
-			} fi
-
-			exec_bin "$target" "$@";
+		await_for_no_open_writes() {
+			while lsof -F 'f' -- "$1" 2>/dev/null | grep -q '^f.*w$'; do
+				sleep 0.5${RANDOM};
+			done
 		}
 
+		exec_bin() {
+			local args=("$@");
+			local bin="${args[0]}";
+			await::until_true test -x "$bin";
+			exec "${args[@]}";
+		}
 
-		# Async shim script creation
-		{
-			printf 'function main() {\n';
+		await_while_shim_exists() {
+			# DEBUG
+			# if test "${KEEP_internal_call:-}" == false; then set -x; fi
+
+			# Refer to revert_shim for this if-code-block
+			# if is::custom_shim; then {
+			#	: "$target";
+			# } else {
+				: "$shim_source";
+			# } fi
+
+			local checkf="$_";
+
+			for _i in {1..3}; do {
+				sleep 0.2${RANDOM};
+				TIME="0.5${RANDOM}" await::while_true test -e "$checkf";
+				# DEBUG
+				# while test -e "$checkf"; do {
+					# if test "${KEEP_internal_call:-}" == false; then
+					# 	printf '============ %s\n' "CHEKF=$checkf" "$(ls "$target" ||:;)" "$(ls "$shim_source" ||:;)"
+					# fi
+					# sleep 0.5$RANDOM;
+				# } done
+				
+			} done
+
+		}
+
+		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
+			printf 'info[shim]: Loading %s\n' "$target";
+		} fi
+
+		# Initial loop for detecting $target modifications
+		## For KEEP=
+		if test -e "$shim_source"; then {
+			if test "${KEEP_internal_call:-}" == true; then {
+				# When it's not the first time it was called, basically (2nd)
+				exec_bin "$shim_source" "$@";
+			} else {
+				## For KEEP=
+				# For external calls (2nd)
+				await_while_shim_exists;
+			} fi
+		} elif ! is::custom_shim; then {
+			TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+			rm -f "$diff_target" 2>/dev/null || :;
+			TIME="0.5${RANDOM}" await_for_no_open_writes "$target";
+		} else {
+			TIME="0.5${RANDOM}" await::for_file_existence "$SHIM_MIRROR";
+			await_for_no_open_writes "$SHIM_MIRROR";
+		} fi
+
+
+		# For KEEP=
+		if test -v KEEP_internal_call; then {
+			# Create shim
+			if test "${KEEP_internal_call:-}" == true; then {
+
+				# For internal calls
+				if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then {
+						try_sudo mkdir -p "${shim_source%/*}";
+
+						if ! is::custom_shim; then {
+							try_sudo mv "$target" "$shim_source";
+							try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+						} else {
+							try_sudo mv "${SHIM_MIRROR}" "$shim_source";
+						} fi
+				} fi
+
+				if test -e "$shim_source"; then {
+					exec_bin "$shim_source" "$@";
+				} fi
+
+			} else {
+				# For external calls
+				await_while_shim_exists;
+			} fi
+
+		} fi
+
+		# At this point it's not not an KEEP_internal_call=true thing
+		if is::custom_shim; then {
+			# We need to revert some magic manually here for external calls when KEEP= wasn't used
+			# if ! test -v KEEP_internal_call; then
+			# 	revert_shim;
+			# fi
+			target="$SHIM_MIRROR"; # Set target to SHIM_MIRROR
+		} fi
+
+		exec_bin "$target" "$@";
+	}
+
+
+	# Async shim script creation
+	{
+		printf 'function main() {\n';
+		printf '%s="%s"\n' \
+							target "$target" \
+							shim_source "$shim_source" \
+							shim_dir "$shim_dir";
+		if test -v SHIM_MIRROR; then {
+			printf '%s="%s"\n' SHIM_MIRROR "$SHIM_MIRROR";
+		} fi
+		# For KEEP=
+		if test -v KEEP; then {
 			printf '%s="%s"\n' \
-								target "$target" \
-								shim_source "$shim_source" \
-								shim_dir "$shim_dir";
-			if test -v CUSTOM_SHIM_SOURCE; then {
-				printf '%s="%s"\n' CUSTOM_SHIM_SOURCE "$CUSTOM_SHIM_SOURCE";
-			} fi
-			# For KEEP=
-			if test -v KEEP; then {
-				printf '%s="%s"\n' \
-									"KEEP_internal_call" '${KEEP_internal_call:-false}' \
-									shim_tombstone "$shim_tombstone";
-				export KEEP_internal_call=true;
-			} fi
+								"KEEP_internal_call" '${KEEP_internal_call:-false}' \
+								shim_tombstone "$shim_tombstone";
+			export KEEP_internal_call=true;
+		} fi
 
-			printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
-			printf '%s\n' 'async_wrapper "$@"; }';
-		} > "$target";
+		printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
+		printf '%s\n' 'async_wrapper "$@"; }';
+	} > "$target";
 
-		(
-			source "$target";
-			create_self "$target";
-		)
+	(
+		source "$target";
+		create_self "$target";
+	)
 
-		chmod +x "$target";
-	} done
+	chmod +x "$target";
 }

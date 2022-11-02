@@ -108,7 +108,7 @@ function install::packages {
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
 
         function nix-install() {
-            command nix-env -iA "$@" 2>&1 \
+            command nix-env -iAP "$@" 2>&1 \
                 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)';
         }
 
