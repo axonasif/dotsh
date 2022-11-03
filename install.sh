@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2416 () 
+main@bashbox%23422 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%2416 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%2416';
+    ___MAIN_FUNCNAME='main@bashbox%23422';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -139,7 +139,7 @@ main@bashbox%2416 ()
             { 
                 export PATH="$HOME/.nix-profile/bin:$PATH";
                 local logfile="$HOME/.dotfiles.log";
-                local tail_cmd="tail -f $logfile";
+                local tail_cmd="tail -n +0 -f $logfile";
                 eval "$(gp env -e)";
                 set +m;
                 { 
@@ -154,10 +154,7 @@ main@bashbox%2416 ()
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
-                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile";
-                tmux select-window -t :1;
-                sleep 2;
-                tmux detach-client ) & disown;
+                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         $tail_cmd;
@@ -166,6 +163,13 @@ main@bashbox%2416 ()
                 else
                     { 
                         ( sleep 2 && $tail_cmd ) & exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li
+                    };
+                fi;
+                if test $? != 0; then
+                    { 
+                        printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+                        printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
+                        exec bash -li
                     };
                 fi
             };
@@ -1446,7 +1450,7 @@ main@bashbox%2416 ()
         function nix-install () 
         { 
             command nix-env -iAP "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
-        } > /dev/null;
+        };
         if test -n "${nixpkgs_level_one:-}"; then
             { 
                 nix-install "${nixpkgs_level_one[@]}"
@@ -1990,7 +1994,7 @@ EOF
         await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null
+                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
             };
         fi;
         if is::cde; then
@@ -2066,4 +2070,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%2416 "$@";
+main@bashbox%23422 "$@";

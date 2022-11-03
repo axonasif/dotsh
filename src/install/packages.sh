@@ -110,7 +110,7 @@ function install::packages {
         function nix-install() {
             command nix-env -iAP "$@" 2>&1 \
                 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)';
-        } 1>/dev/null
+        }
 
         if test -n "${nixpkgs_level_one:-}"; then {
             nix-install "${nixpkgs_level_one[@]}";

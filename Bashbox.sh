@@ -154,7 +154,7 @@ live() (
 			export PATH="$HOME/.nix-profile/bin:$PATH";
 			local logfile="$HOME/.dotfiles.log";
 			# local tail_cmd="less -S -XR +F $logfile";
-			local tail_cmd="tail -f $logfile"
+			local tail_cmd="tail -n +0 -f $logfile";
 			eval "$(gp env -e)";
 			set +m; # Temporarily disable job control
 			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & wait;
@@ -169,9 +169,9 @@ live() (
 					"Run 'tmux detach' to exit from here" \
 					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
-				tmux select-window -t :1;
-				sleep 2;
-				tmux detach-client;
+				# tmux select-window -t :1;
+				# sleep 2;
+				# tmux detach-client;
 			) & disown;
 
 			if test "${DOTFILES_TMUX:-true}" == true; then {
@@ -182,12 +182,12 @@ live() (
 				exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li;
 			} fi
 
-			# # Fallback
-			# if test $? != 0; then {
-			# 	printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
-			# 	printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
-			# 	exec bash -li;
-			# } fi
+			# Fallback
+			if test $? != 0; then {
+				printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+				printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
+				exec bash -li;
+			} fi
 		}
 
 		if is::gitpod; then {

@@ -18,7 +18,7 @@ function config::neovim() {
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {
 		# git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" >/dev/null 2>&1;
-		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
+		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y;
 	} fi
 
 	# for _t in {1..2}; do {
