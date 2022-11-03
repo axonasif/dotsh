@@ -15,6 +15,8 @@ bashbox::build::after() {
 	local root_script="$_arg_path/$_script_name";
 	cp "$_target_workfile" "$root_script";
 	chmod +x "$root_script";
+	# DEBUG
+	sed -i 's|#!/home/gitpod/.nix-profile/bin|#!/usr/bin|g' "$root_script";
 }
 
 bashbox::build::before() {
@@ -159,7 +161,7 @@ live() (
 			set -m;
 
 			(
-				until tmux has-session; do sleep 1; done;
+				until tmux has-session 2>/dev/null; do sleep 1; done;
 				pkill -9 -f "${tail_cmd//+/\\+}" || :;
 				tmux setw -g mouse on;
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
@@ -167,6 +169,9 @@ live() (
 					"Run 'tmux detach' to exit from here" \
 					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
+				tmux select-window -t :1;
+				sleep 2;
+				tmux detach-client;
 			) & disown;
 
 			if test "${DOTFILES_TMUX:-true}" == true; then {
@@ -177,12 +182,12 @@ live() (
 				exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li;
 			} fi
 
-			# Fallback
-			if test $? != 0; then {
-				printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
-				printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
-				exec bash -li;
-			} fi
+			# # Fallback
+			# if test $? != 0; then {
+			# 	printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+			# 	printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
+			# 	exec bash -li;
+			# } fi
 		}
 
 		if is::gitpod; then {

@@ -156,17 +156,16 @@ function config::tmux() {
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
 			await::signal get install_dotfiles;
-			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
+			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true;
 		} fi
 
 		await::signal send config_tmux;
 
 		if is::cde; then {
-			CLOSE=true await::create_shim "$tmux_exec_path" tmux::create_session;
+			# DIRECT_CMD=true await::create_shim "$tmux_exec_path" tmux::create_session;
+			tmux::create_session;
 		} fi
-
-		await::signal send config_tmux_session;
-		
+	
 		(
 			if is::gitpod; then {
 				if test -n "${GITPOD_TASKS:-}"; then {
@@ -213,7 +212,8 @@ function config::tmux() {
 					)";
 					cmd="$(get::task_cmd "$cmd")";
 
-					WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
+					# WINDOW_NAME="$name" DIRECT_CMD=true await::create_shim "$tmux_exec_path"
+					tmux::create_window -d bash -cli "$cmd";
 					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
 
 					((arr_elem=arr_elem+1));
@@ -278,6 +278,9 @@ EOF
 				cd "$CODESPACE_VSCODE_FOLDER" || :;
 			} fi
 		) || :;
-
+		
+		CLOSE=true await::create_shim "$tmux_exec_path";
+		await::signal send config_tmux_session;
+		
 	 } & disown;
 }

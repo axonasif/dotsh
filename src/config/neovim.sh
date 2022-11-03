@@ -18,7 +18,7 @@ function config::neovim() {
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {
 		# git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" >/dev/null 2>&1;
-		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y;
+		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
 	} fi
 
 	# for _t in {1..2}; do {
@@ -29,7 +29,8 @@ function config::neovim() {
 		# Wait for tmux to start
 		await::signal get config_tmux_session;
 
-		# Run 'nvim --version' on tmux first window
+		# # Run 'nvim --version' on tmux first window
+		# until pgrep lvim 1>/dev/null; do
 		tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "lvim" Enter;
 	} fi
 }

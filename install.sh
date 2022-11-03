@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21634 () 
+main@bashbox%24493 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21634 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21634';
+    ___MAIN_FUNCNAME='main@bashbox%24493';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -68,7 +68,8 @@ main@bashbox%21634 ()
         local _script_name='install.sh';
         local root_script="$_arg_path/$_script_name";
         cp "$_target_workfile" "$root_script";
-        chmod +x "$root_script"
+        chmod +x "$root_script";
+        sed -i 's|#!/usr/bin|#!/usr/bin|g' "$root_script"
     };
     function bashbox::build::before () 
     { 
@@ -145,7 +146,7 @@ main@bashbox%21634 ()
                     "$HOME/.dotfiles/install.sh" 2>&1
                 } > "$logfile" 2>&1 & wait;
                 set -m;
-                ( until tmux has-session; do
+                ( until tmux has-session 2> /dev/null; do
                     sleep 1;
                 done;
                 pkill -9 -f "${tail_cmd//+/\\+}" || :;
@@ -153,7 +154,10 @@ main@bashbox%21634 ()
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
-                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
+                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile";
+                tmux select-window -t :1;
+                sleep 2;
+                tmux detach-client ) & disown;
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         $tail_cmd;
@@ -162,13 +166,6 @@ main@bashbox%21634 ()
                 else
                     { 
                         ( sleep 2 && $tail_cmd ) & exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li
-                    };
-                fi;
-                if test $? != 0; then
-                    { 
-                        printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
-                        printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
-                        exec bash -li
                     };
                 fi
             };
@@ -1216,12 +1213,17 @@ main@bashbox%21634 ()
             };
         fi;
         shim_tombstone="${shim_source}.tombstone";
+        if ! [[ "$PATH" =~ "$shim_dir" ]]; then
+            { 
+                export PATH="$shim_dir:$PATH"
+            };
+        fi;
         if test -v KEEP; then
             { 
                 export SHIM_SOURCE="$shim_source"
             };
         fi;
-        if test -v CLOSE; then
+        if test -v DIRECT_CMD; then
             { 
                 if shift; then
                     { 
@@ -1230,6 +1232,11 @@ main@bashbox%21634 ()
                         "$@" )
                     };
                 fi;
+                return
+            };
+        fi;
+        if test -v CLOSE; then
+            { 
                 revert_shim;
                 return
             };
@@ -1364,8 +1371,7 @@ main@bashbox%21634 ()
             fi;
             if test -v KEEP; then
                 { 
-                    printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone";
-                    export KEEP_internal_call=true
+                    printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone"
                 };
             fi;
             printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
@@ -1427,7 +1433,7 @@ main@bashbox%21634 ()
         function nix-install () 
         { 
             command nix-env -iAP "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
-        };
+        } > /dev/null;
         if test -n "${nixpkgs_level_one:-}"; then
             { 
                 nix-install "${nixpkgs_level_one[@]}"
@@ -1748,16 +1754,15 @@ CMDC
                 { 
                     git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
                     await::signal get install_dotfiles;
-                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || :
+                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true
                 };
             fi;
             await::signal send config_tmux;
             if is::cde; then
                 { 
-                    CLOSE=true await::create_shim "$tmux_exec_path" tmux::create_session
+                    tmux::create_session
                 };
             fi;
-            await::signal send config_tmux_session;
             ( if is::gitpod; then
                 { 
                     if test -n "${GITPOD_TASKS:-}"; then
@@ -1812,7 +1817,7 @@ CMDC
 						} fi
 					)";
                             cmd="$(get::task_cmd "$cmd")";
-                            WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
+                            tmux::create_window -d bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
                     done;
@@ -1870,7 +1875,9 @@ EOF
                         cd "$CODESPACE_VSCODE_FOLDER" || :
                     };
                 fi;
-            fi ) || :
+            fi ) || :;
+            CLOSE=true await::create_shim "$tmux_exec_path";
+            await::signal send config_tmux_session
         } & disown
     };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
@@ -1970,7 +1977,7 @@ EOF
         await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
+                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null
             };
         fi;
         if is::cde; then
@@ -2046,4 +2053,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%21634 "$@";
+main@bashbox%24493 "$@";

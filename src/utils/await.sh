@@ -102,13 +102,18 @@ function await::create_shim() {
 		shim_source="$shim_dir/${SHIM_MIRROR##*/}";
 	} fi
 	shim_tombstone="${shim_source}.tombstone";
+	
+	if ! [[ "$PATH" =~ "$shim_dir" ]]; then {
+		export PATH="$shim_dir:$PATH";
+	} fi
 
 	if test -v KEEP; then {
 		export SHIM_SOURCE="$shim_source";
+		# export KEEP_internal_call=true;
 	} fi
 
-	if test -v CLOSE; then {
-		# For pre-cmd.
+	# For pre-cmd.
+	if test -v DIRECT_CMD; then {
 		if shift; then {
 			(
 				unset "${vars_to_unset[@]}";
@@ -116,6 +121,10 @@ function await::create_shim() {
 				"$@";
 			)
 		} fi
+		return;
+	} fi
+
+	if test -v CLOSE; then {
 		revert_shim;
 		return;
 	} fi
@@ -147,6 +156,7 @@ function await::create_shim() {
 		# 	trap 'printf "[%s]: %s\n" "${LINENO}" "$BASH_COMMAND" >> /tmp/log' DEBUG;
 		# } fi
 
+		# TODO: Improve this, too many garbage left behind
 		diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
 		if test ! -e "$diff_target"; then {
 			create_self "$diff_target";
@@ -274,7 +284,6 @@ function await::create_shim() {
 			printf '%s="%s"\n' \
 								"KEEP_internal_call" '${KEEP_internal_call:-false}' \
 								shim_tombstone "$shim_tombstone";
-			export KEEP_internal_call=true;
 		} fi
 
 		printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
