@@ -43,7 +43,9 @@ function await::signal() {
 }
 
 function await::create_shim() {
-	local vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
+	declare -a vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
+	declare +x CLOSE KEEP DIRECT_CMD; # Keep local, do not export into env
+	declare -x SHIM_MIRROR; # Keep SHIM_MIRROR exported until CLOSE'ed
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {
@@ -52,6 +54,9 @@ function await::create_shim() {
 
 	function revert_shim() {
 		if test -e "$shim_source"; then {
+			unset "${vars_to_unset[@]}";
+			unset -f "$target_name";
+			export PATH="${PATH//"${shim_dir}:"/}";
 			
 			try_sudo touch "$shim_tombstone";
 
@@ -70,12 +75,12 @@ function await::create_shim() {
 				# } fi
 				try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
 			) & disown;
-			unset "${vars_to_unset[@]}";
 		} fi
 	}
 
 	# shellcheck disable=SC2120
 	function create_self() {
+		declare +x NO_PRINT;
 		cmd() {
 			printf '%s\n' '#!/usr/bin/env bash' "$(declare -f main)" 'main "$@"'
 		}
@@ -86,14 +91,8 @@ function await::create_shim() {
 		} fi
 	}
 
-	local target shim_source;
-	if test -v SHIM_MIRROR; then
-		export SHIM_MIRROR="${SHIM_MIRROR:-}"; # Reuse previoulsy exported SHIM_MIRROR before CLOSE'ing
-	fi
-
-	local shim_dir shim_source shim_tombstone;
-	local target="$1";
-
+	declare shim_dir shim_source shim_tombstone target="$1";
+	declare target_name="${target##*/}";
 	if ! is::custom_shim; then {
 		shim_dir="${target%/*}/.ashim";
 		shim_source="${shim_dir}/${target##*/}";
@@ -102,30 +101,38 @@ function await::create_shim() {
 		shim_source="$shim_dir/${SHIM_MIRROR##*/}";
 	} fi
 	shim_tombstone="${shim_source}.tombstone";
-	
-	if ! [[ "$PATH" =~ "$shim_dir" ]]; then {
-		export PATH="$shim_dir:$PATH";
-	} fi
-
-	if test -v KEEP; then {
-		export SHIM_SOURCE="$shim_source";
-		# export KEEP_internal_call=true;
-	} fi
-
-	# For pre-cmd.
-	if test -v DIRECT_CMD; then {
-		if shift; then {
-			(
-				unset "${vars_to_unset[@]}";
-				export PATH="$shim_dir:$PATH";
-				"$@";
-			)
-		} fi
-		return;
-	} fi
 
 	if test -v CLOSE; then {
 		revert_shim;
+		return;
+	} fi
+	
+	if test -v KEEP && test ! -v KEEP_internal_call; then {
+		export SHIM_SOURCE="$shim_source";
+		export KEEP_internal_call=true;
+	} fi
+
+	if ! [[ "$PATH" =~ "$shim_dir" ]]; then {
+		export PATH="$shim_dir:$PATH";
+		fn="$(
+			cat <<-EOF
+			function $target_name() {
+				if test -x "$shim_source"; then {
+					declare +x ${vars_to_unset[@]};
+					command "$shim_source" "\$@";
+				} else {
+					command "$target" "\$@";
+				} fi
+			}
+			EOF
+		)" && eval "$fn" && unset fn && export -f "${target_name}";
+	} fi
+	
+	if test -v DIRECT_CMD; then {
+		if shift; then {
+			declare +x "${vars_to_unset[@]}";
+			"$@";
+		} fi
 		return;
 	} fi
 
@@ -140,7 +147,7 @@ function await::create_shim() {
 		} fi
 	} fi
 
-	local USER && USER="$(id -u -n)";
+	declare USER && USER="$(id -u -n)";
 	try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
 
 	# Embedded script
@@ -267,7 +274,6 @@ function await::create_shim() {
 
 		exec_bin "$target" "$@";
 	}
-
 
 	# Async shim script creation
 	{

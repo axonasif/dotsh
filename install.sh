@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%24493 () 
+main@bashbox%2416 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%24493 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%24493';
+    ___MAIN_FUNCNAME='main@bashbox%2416';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1152,7 +1152,9 @@ main@bashbox%24493 ()
     };
     function await::create_shim () 
     { 
-        local vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
+        declare -a vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
+        declare +x CLOSE KEEP DIRECT_CMD;
+        declare -x SHIM_MIRROR;
         function is::custom_shim () 
         { 
             test -v SHIM_MIRROR
@@ -1161,6 +1163,9 @@ main@bashbox%24493 ()
         { 
             if test -e "$shim_source"; then
                 { 
+                    unset "${vars_to_unset[@]}";
+                    unset -f "$target_name";
+                    export PATH="${PATH//"${shim_dir}:"/}";
                     try_sudo touch "$shim_tombstone";
                     if ! is::custom_shim; then
                         { 
@@ -1174,13 +1179,13 @@ main@bashbox%24493 ()
                     fi;
                     ( sleep 3;
                     try_sudo rm -f "$shim_tombstone" || true;
-                    try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown;
-                    unset "${vars_to_unset[@]}"
+                    try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown
                 };
             fi
         };
         function create_self () 
         { 
+            declare +x NO_PRINT;
             function cmd () 
             { 
                 printf '%s\n' '#!/usr/bin/env bash' "$(declare -f main)" 'main "$@"'
@@ -1195,12 +1200,8 @@ main@bashbox%24493 ()
                 };
             fi
         };
-        local target shim_source;
-        if test -v SHIM_MIRROR; then
-            export SHIM_MIRROR="${SHIM_MIRROR:-}";
-        fi;
-        local shim_dir shim_source shim_tombstone;
-        local target="$1";
+        declare shim_dir shim_source shim_tombstone target="$1";
+        declare target_name="${target##*/}";
         if ! is::custom_shim; then
             { 
                 shim_dir="${target%/*}/.ashim";
@@ -1213,31 +1214,43 @@ main@bashbox%24493 ()
             };
         fi;
         shim_tombstone="${shim_source}.tombstone";
-        if ! [[ "$PATH" =~ "$shim_dir" ]]; then
+        if test -v CLOSE; then
             { 
-                export PATH="$shim_dir:$PATH"
+                revert_shim;
+                return
             };
         fi;
-        if test -v KEEP; then
+        if test -v KEEP && test ! -v KEEP_internal_call; then
             { 
-                export SHIM_SOURCE="$shim_source"
+                export SHIM_SOURCE="$shim_source";
+                export KEEP_internal_call=true
+            };
+        fi;
+        if ! [[ "$PATH" =~ "$shim_dir" ]]; then
+            { 
+                export PATH="$shim_dir:$PATH";
+                fn="$(
+			cat <<-EOF
+			function $target_name() {
+				if test -x "$shim_source"; then {
+					declare +x ${vars_to_unset[@]};
+					command "$shim_source" "\$@";
+				} else {
+					command "$target" "\$@";
+				} fi
+			}
+			EOF
+		)" && eval "$fn" && unset fn && export -f "${target_name}"
             };
         fi;
         if test -v DIRECT_CMD; then
             { 
                 if shift; then
                     { 
-                        ( unset "${vars_to_unset[@]}";
-                        export PATH="$shim_dir:$PATH";
-                        "$@" )
+                        declare +x "${vars_to_unset[@]}";
+                        "$@"
                     };
                 fi;
-                return
-            };
-        fi;
-        if test -v CLOSE; then
-            { 
-                revert_shim;
                 return
             };
         fi;
@@ -1255,7 +1268,7 @@ main@bashbox%24493 ()
                 fi
             };
         fi;
-        local USER && USER="$(id -u -n)";
+        declare USER && USER="$(id -u -n)";
         try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
         function async_wrapper () 
         { 
@@ -1817,7 +1830,7 @@ CMDC
 						} fi
 					)";
                             cmd="$(get::task_cmd "$cmd")";
-                            tmux::create_window -d bash -cli "$cmd";
+                            WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
                     done;
@@ -2053,4 +2066,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%24493 "$@";
+main@bashbox%2416 "$@";

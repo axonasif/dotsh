@@ -162,7 +162,6 @@ function config::tmux() {
 		await::signal send config_tmux;
 
 		if is::cde; then {
-			# DIRECT_CMD=true await::create_shim "$tmux_exec_path" tmux::create_session;
 			tmux::create_session;
 		} fi
 	
@@ -212,13 +211,10 @@ function config::tmux() {
 					)";
 					cmd="$(get::task_cmd "$cmd")";
 
-					# WINDOW_NAME="$name" DIRECT_CMD=true await::create_shim "$tmux_exec_path"
-					tmux::create_window -d bash -cli "$cmd";
-					# tmux send-keys -t "${tmux_first_session_name}:${win_i}" Enter "trap 'exec $tmux_default_shell -l' EXIT; cat /workspace/.gitpod/prebuild-log-${arr_elem} 2>/dev/null && exit; ${cmd%;}; exit";
+					WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
 
 					((arr_elem=arr_elem+1));
 				} done
-
 
 			# Install gitpod specific ephemeral plugins
 			## Dotfiles loading indicator (spinner)
