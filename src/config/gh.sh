@@ -6,8 +6,9 @@ function config::gh() {
 
 	# Login into gh
 	await::for_vscode_ide_start;
-	if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then {
-		local token="${BASH_REMATCH[1]}";
+	# if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then {
+	local token && if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then {
+		# local token="${BASH_REMATCH[1]}";
 		local tries=1;
 		until printf '%s\n' "$token" | gh auth login --with-token >/dev/null 2>&1; do {
 			if test $tries -gt 5; then {

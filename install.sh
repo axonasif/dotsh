@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23422 () 
+main@bashbox%2356 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,12 +55,12 @@ main@bashbox%23422 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23422';
+    ___MAIN_FUNCNAME='main@bashbox%2356';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::15dc26b);
+    ___self_DEPENDENCIES=(std::2a98a57);
     ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -68,8 +68,7 @@ main@bashbox%23422 ()
         local _script_name='install.sh';
         local root_script="$_arg_path/$_script_name";
         cp "$_target_workfile" "$root_script";
-        chmod +x "$root_script";
-        sed -i 's|#!/usr/bin|#!/usr/bin|g' "$root_script"
+        chmod +x "$root_script"
     };
     function bashbox::build::before () 
     { 
@@ -854,6 +853,26 @@ main@bashbox%23422 ()
     { 
         std::sys::info::distro::is_ubuntu "$@"
     };
+    function process::preserve_sudo () 
+    { 
+        if test "$EUID" -ne 0; then
+            { 
+                if ! sudo -nv 2> /dev/null; then
+                    { 
+                        log::warn "$___self_NAME needs root for some operations, reqesting root...";
+                        sudo -v;
+                        ( while sleep 30 && { 
+                            kill -0 "$___self_PID"
+                        } 2> /dev/null; do
+                            { 
+                                sudo -v
+                            };
+                        done ) & disown
+                    };
+                fi
+            };
+        fi
+    };
     function is::gitpod () 
     { 
         test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT
@@ -1398,32 +1417,37 @@ main@bashbox%23422 ()
         create_self "$target" );
         chmod +x "$target"
     };
-    if test -e "/nix"; then
-        { 
-            nixpkgs_level_one=(nixpkgs.tmux nixpkgs.fish nixpkgs.jq);
-            nixpkgs_level_two=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs-unstable.neovim nixpkgs.gnumake nixpkgs.shellcheck nixpkgs.tree nixpkgs.file nixpkgs.fzf nixpkgs.bat nixpkgs.bottom nixpkgs.coreutils nixpkgs.exa nixpkgs.fzf nixpkgs.gawk nixpkgs.gh nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.shellcheck nixpkgs.tree);
-            if os::is_darwin; then
-                { 
-                    nixpkgs_level_two+=(nixpkgs.bash nixpkgs.zsh nixpkgs.reattach-to-user-namespace)
-                };
-            fi
-        };
-    else
-        if is::cde && distro::is_ubuntu; then
-            { 
-                aptpkgs_level_one=(tmux fish jq);
-                aptpkgs_level_two=(fuse git make)
-            };
-        fi;
-    fi;
     function install::packages () 
     { 
-        if is::cde && distro::is_ubuntu; then
+        declare shell="${DOTFILES_DEFAULT_SHELL:-fish}";
+        declare nixpkgs_level_one+=(nixpkgs.tmux "nixpkgs.${shell##*/}" nixpkgs.jq);
+        declare nixpkgs_level_two+=(nixpkgs-unstable.neovim nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs.bat nixpkgs.fzf nixpkgs.exa nixpkgs.gh);
+        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.bottom nixpkgs.coreutils nixpkgs.gawk nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.tree);
+        if os::is_darwin; then
             { 
-                log::info "Installing system packages";
+                declare brewpkgs_level_one+=(bash osxfuse reattach-to-user-namespace);
+                if test ! -e /opt/homebrew/Library/Taps/homebrew/homebrew-core/.git && test ! -e /usr/local/Library/Taps/homebrew/homebrew-core/.git; then
+                    { 
+                        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                    };
+                fi;
+                log::info "Installing userland packages with brew";
+                if ! command -v brew > /dev/null; then
+                    { 
+                        PATH="$PATH:/opt/homebrew/bin:/usr/local/bin";
+                        eval "$(brew shellenv)"
+                    };
+                fi;
+                NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}"
+            };
+        fi;
+        if distro::is_ubuntu; then
+            { 
+                declare aptpkgs+=(fuse);
+                log::info "Installing ubuntu system packages";
                 ( sudo apt-get update;
                 sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-                for level in aptpkgs_level_one aptpkgs_level_two;
+                for level in aptpkgs;
                 do
                     { 
                         declare -n ref="$level";
@@ -1437,7 +1461,7 @@ main@bashbox%23422 ()
                 sudo debconf-set-selections <<< 'debconf debconf/frontend select Readline' ) > /dev/null & disown
             };
         fi;
-        log::info "Installing userland packages";
+        log::info "Installing userland packages with nix";
         ( USER="$(id -u -n)" && export USER;
         if test ! -e /nix; then
             { 
@@ -1461,6 +1485,11 @@ main@bashbox%23422 ()
         if test -n "${nixpkgs_level_two:-}"; then
             { 
                 nix-install "${nixpkgs_level_two[@]}"
+            };
+        fi;
+        if test -n "${nixpkgs_level_three:-}"; then
+            { 
+                nix-install "${nixpkgs_level_three[@]}"
             };
         fi ) & disown
     };
@@ -1546,20 +1575,8 @@ main@bashbox%23422 ()
                 done;
                 log::info "Performing cloud filesync, scoped globally";
                 mkdir -p "${rclone_mount_dir}";
-                rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" & disown;
+                rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" --daemon;
                 local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
-                local times=0;
-                until test -e "$rclone_dotfiles_dir"; do
-                    { 
-                        sleep 1;
-                        if test $times -gt 10; then
-                            { 
-                                break
-                            };
-                        fi;
-                        ((times=times+1))
-                    };
-                done;
                 if test -e "$rclone_dotfiles_dir"; then
                     { 
                         TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_dir"
@@ -1589,15 +1606,16 @@ main@bashbox%23422 ()
     function filesync::save_local () 
     { 
         mkdir -p "$workspace_persist_dir";
-        local _input _persisted_node _persisted_node_dir;
+        local _input _input_dir _persisted_node _persisted_node_dir;
         for _input in "$@";
         do
             { 
                 _persisted_node="${workspace_persist_dir}/${_input}";
                 _persisted_node_dir="${_persisted_node%/*}";
+                _input_dir="${_input%/*}";
                 if test ! -e "$_persisted_node"; then
                     { 
-                        mkdir -p "$_persisted_node_dir";
+                        mkdir -p "$_persisted_node_dir" "$_input_dir";
                         if test ! -d "$_input"; then
                             { 
                                 printf '' > "$_input"
@@ -1951,21 +1969,41 @@ EOF
     };
     function config::fish () 
     { 
+        if is::cde; then
+            { 
+                local check_file=(/nix/store/*-fish-*/bin/fish);
+                local fish_exec_path;
+                if test -n "${check_file:-}"; then
+                    { 
+                        fish_exec_path="${check_file[0]}";
+                        KEEP=true await::create_shim "$fish_exec_path"
+                    };
+                else
+                    { 
+                        fish_exec_path="/usr/bin/fish";
+                        KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/fish" await::create_shim "$fish_exec_path"
+                    };
+                fi
+            };
+        else
+            { 
+                await::until_true command -v $HOME/.nix-profile/bin/fish > /dev/null
+            };
+        fi;
         log::info "Installing fisher and some plugins for fish-shell";
-        await::until_true command -v fish > /dev/null;
         mkdir -p "$fish_confd_dir";
         { 
             fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
-        } > /dev/null 2>&1
+        } > /dev/null 2>&1;
+        CLOSE=true await::create_shim "$fish_exec_path"
     };
     function config::gh () 
     { 
         local tarball_url gp_credentials;
         await::until_true command -v gh > /dev/null;
         await::for_vscode_ide_start;
-        if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then
+        local token && if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then
             { 
-                local token="${BASH_REMATCH[1]}";
                 local tries=1;
                 until printf '%s\n' "$token" | gh auth login --with-token > /dev/null 2>&1; do
                     { 
@@ -1994,7 +2032,7 @@ EOF
         await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y
+                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null
             };
         fi;
         if is::cde; then
@@ -2032,6 +2070,11 @@ EOF
     declare -r rclone_profile_name="cloudsync";
     function main () 
     { 
+        if ! is::cde; then
+            { 
+                process::preserve_sudo
+            };
+        fi;
         if is::codespaces; then
             { 
                 local log_file="$HOME/.dotfiles.log";
@@ -2040,15 +2083,14 @@ EOF
                 exec 2>&1
             };
         fi;
+        install::packages;
+        install::misc & disown;
         install::dotfiles & disown;
         install::filesync & disown;
         config::tmux & config::fish & disown;
-        install::packages & disown;
-        install::misc & disown;
         if is::cde; then
             { 
-                config::shell::set_default_vscode_profile & disown;
-                config::shell::fish::append_hist_from_gitpod_tasks & disown
+                config::shell::set_default_vscode_profile & config::shell::fish::append_hist_from_gitpod_tasks & disown
             };
         fi;
         if is::gitpod; then
@@ -2070,4 +2112,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%23422 "$@";
+main@bashbox%2356 "$@";

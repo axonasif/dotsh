@@ -1,92 +1,88 @@
 
-# shellcheck disable=SC2034
+function install::packages {
+    # shellcheck disable=SC2034
+    declare shell="${DOTFILES_DEFAULT_SHELL:-fish}";
 
-if test -e "/nix"; then {
     # =================================================
     # = userland packages                             =
     # =================================================
 
-    ## Install from nix when it's immediately available,
-    ## otherwise fallback to apt for faster response.
-    ## You can find packages at https://search.nixos.org/packages
-
+    # You can find packages at https://search.nixos.org/packages
     # It is adviced to add very less packages in this array.
     # Things that you need immediately should be added here.
-    nixpkgs_level_one=(
+    declare nixpkgs_level_one+=(
         nixpkgs.tmux
-        nixpkgs.fish
+        "nixpkgs.${shell##*/}"
         nixpkgs.jq
     )
 
-    # Big packages here.
-    nixpkgs_level_two=(
+    # Semi-big packages here. Mostly shell dependencies
+    declare nixpkgs_level_two+=(
+        nixpkgs-unstable.neovim
         nixpkgs.rclone
         nixpkgs.zoxide
         nixpkgs.git
-        nixpkgs-unstable.neovim
-        nixpkgs.gnumake
-        nixpkgs.shellcheck
-        nixpkgs.tree
-        nixpkgs.file
-        nixpkgs.fzf
         nixpkgs.bat
+        nixpkgs.fzf
+        nixpkgs.exa
+        nixpkgs.gh
+    )
+    
+    # Big packages here
+    declare nixpkgs_level_three+=(
+        nixpkgs.gnumake
+        nixpkgs.gcc
+        nixpkgs.shellcheck
+        nixpkgs.file
         nixpkgs.bottom
         nixpkgs.coreutils
-        nixpkgs.exa
-        nixpkgs.fzf
         nixpkgs.gawk
-        nixpkgs.gh
         nixpkgs.htop
         nixpkgs.lsof
-        # iftop
         nixpkgs.neofetch
         nixpkgs.p7zip
         nixpkgs.ripgrep
-        nixpkgs.shellcheck
         nixpkgs.tree
-        # yq
+        # nixpkgs.yq
     )
 
-    # Packages specific to MacOS
     if os::is_darwin; then {
-        # Add to array
-        nixpkgs_level_two+=(
-            nixpkgs.bash
-            nixpkgs.zsh
-            nixpkgs.reattach-to-user-namespace
+        # =================================================
+        # = macos specific brew packages                  =
+        # =================================================
+        declare brewpkgs_level_one+=(
+            bash # macos still stuck with old bash... so...
+            osxfuse
+            reattach-to-user-namespace
         )
+
+        # Install brew if missing
+        if test ! -e /opt/homebrew/Library/Taps/homebrew/homebrew-core/.git \
+        && test ! -e /usr/local/Library/Taps/homebrew/homebrew-core/.git; then {
+            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)";
+        } fi
+
+        log::info "Installing userland packages with brew";
+        if ! command -v brew 1>/dev/null; then {
+            PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"; # Intentionally low-prio
+            eval "$(brew shellenv)";
+        } fi
+        NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}";
     } fi
 
-} elif is::cde && distro::is_ubuntu; then {
-    # =================================================
-    # = system packages                               =
-    # =================================================
+    if distro::is_ubuntu; then {
+        # =================================================
+        # = ubuntu system packages                        =
+        # =================================================
+        declare aptpkgs+=(
+            fuse
+        )
 
-    # It is adviced to add very less packages in this array.
-    # Things that you need immediately should be added here.
-    aptpkgs_level_one=(
-        tmux
-        fish
-        jq
-    )
-
-    # Big packages here.
-    aptpkgs_level_two=(
-        fuse
-        git
-        make
-    )
-} fi
-
-function install::packages {
-
-    # Only install from APT when it's CDE and Ubuntu
-    if is::cde && distro::is_ubuntu; then {
-        log::info "Installing system packages";
+        log::info "Installing ubuntu system packages";
         (
             sudo apt-get update;
             sudo debconf-set-selections <<<'debconf debconf/frontend select Noninteractive';
-            for level in aptpkgs_level_one aptpkgs_level_two; do {
+            for level in aptpkgs; do {
                 declare -n ref="$level";
                 if test -n "${ref:-}"; then {
                     sudo apt-get install -yq --no-install-recommends "${ref[@]}";
@@ -96,7 +92,8 @@ function install::packages {
         ) 1>/dev/null & disown;
     } fi
 
-    log::info "Installing userland packages";
+
+    log::info "Installing userland packages with nix";
     (
         # Install tools with nix
         USER="$(id -u -n)" && export USER;
@@ -122,5 +119,8 @@ function install::packages {
             nix-install "${nixpkgs_level_two[@]}";
         } fi
 
+        if test -n "${nixpkgs_level_three:-}"; then {
+            nix-install "${nixpkgs_level_three[@]}";
+        } fi
     ) & disown;
 }

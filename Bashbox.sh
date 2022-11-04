@@ -5,7 +5,7 @@ CODENAME="dotfiles"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
-	std::15dc26b
+	std::2a98a57
 )
 REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"
@@ -15,8 +15,6 @@ bashbox::build::after() {
 	local root_script="$_arg_path/$_script_name";
 	cp "$_target_workfile" "$root_script";
 	chmod +x "$root_script";
-	# DEBUG
-	sed -i 's|#!/home/gitpod/.nix-profile/bin|#!/usr/bin|g' "$root_script";
 }
 
 bashbox::build::before() {

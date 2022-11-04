@@ -3,6 +3,7 @@ use std::native::sleep;
 use std::async::lockfile;
 use std::sys::info::os;
 use std::sys::info::distro;
+use std::process::preserve_sudo;
 
 use utils;
 use install;
@@ -10,6 +11,10 @@ use config;
 use variables;
 
 function main() {
+	# Ensure and preserve sudo when not CDE
+	if ! is::cde; then {
+		process::preserve_sudo;
+	} fi
 
 	# Special logging case
 	if is::codespaces; then {
@@ -21,6 +26,10 @@ function main() {
 
 	#### "& disown" means some sort of async :P
 
+	# Start installation of system(apt) + userland(nix) packages + misc. things
+	install::packages; # Spawns subprocesses internally as needed, dependant on OS.
+	install::misc & disown;
+
 	# Dotfiles installation, symlinking files bascially
 	install::dotfiles & disown;
 
@@ -31,13 +40,9 @@ function main() {
 	config::tmux &
 	config::fish & disown;
 
-	# Start installation of system(apt) + userland(nix) packages + misc. things
-	install::packages & disown;
-	install::misc & disown;
-
 	# Shell + Fish hacks
 	if is::cde; then {
-		config::shell::set_default_vscode_profile & disown;
+		config::shell::set_default_vscode_profile &
 		config::shell::fish::append_hist_from_gitpod_tasks & disown;
 	} fi
 
