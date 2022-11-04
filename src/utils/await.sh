@@ -148,7 +148,7 @@ function await::create_shim() {
 	} fi
 
 	declare USER && USER="$(id -u -n)";
-	try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
+	try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\"";
 
 	# Embedded script
 	function async_wrapper() {

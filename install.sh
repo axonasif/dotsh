@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2356 () 
+main@bashbox%15108 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%2356 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%2356';
+    ___MAIN_FUNCNAME='main@bashbox%15108';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1292,7 +1292,7 @@ main@bashbox%2356 ()
             };
         fi;
         declare USER && USER="$(id -u -n)";
-        try_sudo sh -c "touch \"$target\" && chown $USER:$USER \"$target\"";
+        try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\"";
         function async_wrapper () 
         { 
             set -eu;
@@ -2028,17 +2028,18 @@ EOF
     function config::neovim () 
     { 
         log::info "Setting up Neovim";
+        if is::cde; then
+            { 
+                ( await::create_shim "$HOME/.local/bin/lvim";
+                await::signal get config_tmux_session;
+                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "AWAIT_SHIM_PRINT_INDICATOR=true lvim" Enter ) &
+            };
+        fi;
         await::until_true command -v git > /dev/null;
         await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
                 curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null
-            };
-        fi;
-        if is::cde; then
-            { 
-                await::signal get config_tmux_session;
-                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "lvim" Enter
             };
         fi
     };
@@ -2112,4 +2113,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%2356 "$@";
+main@bashbox%15108 "$@";
