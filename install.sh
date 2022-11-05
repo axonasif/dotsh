@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%18407 () 
+main@bashbox%32198 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%18407 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%18407';
+    ___MAIN_FUNCNAME='main@bashbox%32198';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1280,14 +1280,15 @@ main@bashbox%18407 ()
         fi;
         if test ! -v NOCLOBBER; then
             { 
-                try_sudo mkdir -p "$shim_dir";
                 if test -e "$target" && ! is::custom_shim; then
                     { 
+                        try_sudo mkdir -p "$shim_dir";
                         try_sudo mv "$target" "$shim_source"
                     };
                 else
                     if test -e "${SHIM_MIRROR:-}" && is::custom_shim; then
                         { 
+                            try_sudo mkdir -p "$shim_dir";
                             try_sudo mv "$SHIM_MIRROR" "$shim_source"
                         };
                     fi;
@@ -1587,8 +1588,20 @@ main@bashbox%18407 ()
                 done;
                 log::info "Performing cloud filesync, scoped globally";
                 mkdir -p "${rclone_mount_dir}";
-                rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" --daemon;
+                rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" & disown;
                 local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
+                local times=0;
+                until test -e "$rclone_dotfiles_dir"; do
+                    { 
+                        sleep 1;
+                        if test $times -gt 10; then
+                            { 
+                                break
+                            };
+                        fi;
+                        ((times=times+1))
+                    };
+                done;
                 if test -e "$rclone_dotfiles_dir"; then
                     { 
                         TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_dir"
@@ -2128,4 +2141,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%18407 "$@";
+main@bashbox%32198 "$@";

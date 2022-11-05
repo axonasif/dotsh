@@ -32,18 +32,18 @@ function install::filesync() {
         log::info "Performing cloud filesync, scoped globally";
         # Mount your cloud provider at $rclone_mount_dir
         mkdir -p "${rclone_mount_dir}";
-        rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" --daemon;
+        rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" & disown;
 
         # Install dotfiles from the cloud provider
         local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
-        # local times=0;
-        # until test -e "$rclone_dotfiles_dir"; do {
-        #     sleep 1;
-        #     if test $times -gt 10; then {
-        #         break;
-        #     } fi
-        #     ((times=times+1));
-        # } done
+        local times=0;
+        until test -e "$rclone_dotfiles_dir"; do {
+            sleep 1;
+            if test $times -gt 10; then {
+                break;
+            } fi
+            ((times=times+1));
+        } done
         if test -e "$rclone_dotfiles_dir"; then {
             #  WHERE-TO          FUNCTION              SOURCE
             TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_dir";

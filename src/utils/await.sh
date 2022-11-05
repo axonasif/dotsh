@@ -143,10 +143,11 @@ function await::create_shim() {
 	} fi
 
 	if test ! -v NOCLOBBER; then {
-		try_sudo mkdir -p "$shim_dir";
 		if test -e "$target" && ! is::custom_shim; then {
+			try_sudo mkdir -p "$shim_dir";
 			try_sudo mv "$target" "$shim_source";
 		} elif test -e "${SHIM_MIRROR:-}" && is::custom_shim; then {
+			try_sudo mkdir -p "$shim_dir";
 			try_sudo mv "$SHIM_MIRROR" "$shim_source";
 		} fi
 	} elif test -v NOCLOBBER && { test -e "$target" || test -e "${SHIM_MIRROR:-}"; }; then {
