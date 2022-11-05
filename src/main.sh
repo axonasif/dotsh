@@ -52,7 +52,7 @@ function main() {
 	} fi
 
 	# Configure neovim
-	config::neovim & disown;
+	config::editor & disown;
 	
 	# Ranger + plugins
 	# install::ranger & disown;

@@ -34,7 +34,7 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="axonasif/dotfiles-testing-min:latest"; # From src/.testing.Dockerfile
+	local container_image="axonasif/dotfiles-testing-full:latest"; # From src/dockerfiles/testing-full.Dockerfile
 	source "$_arg_path/src/utils/common.sh";
 
 	cmd="bashbox build --release";
@@ -140,6 +140,7 @@ live() (
 				## These options below are also available, see README.md for more info
 				# -e DOTFILES_DEFAULT_SHELL=zsh
 				# -e DOTFILES_TMUX=false
+				-e DOTFILES_EDITOR=emacs
 			)
 		} fi
 

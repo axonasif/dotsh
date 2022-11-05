@@ -1,24 +1,39 @@
 
 function install::packages {
     # shellcheck disable=SC2034
+
+    # =================================================
+    # = assign dynamic packages                       =
+    # =================================================
     declare shell="${DOTFILES_DEFAULT_SHELL:-fish}";
+    declare nixpkgs_level_one+=(nixpkgs."${shell##*/}")
+
+    case "${DOTFILES_EDITOR:-neovim}" in
+        "emacs")
+            : "nixpkgs.emacs";
+        ;;
+        "helix")
+            : "nixpkgs.helix";
+        ;;
+        "neovim")
+            : "nixpkgs-unstable.neovim";
+        ;;
+    esac
+    declare nixpkgs_level_two+=("$_")
 
     # =================================================
     # = userland packages                             =
     # =================================================
-
     # You can find packages at https://search.nixos.org/packages
     # It is adviced to add very less packages in this array.
     # Things that you need immediately should be added here.
     declare nixpkgs_level_one+=(
         nixpkgs.tmux
-        "nixpkgs.${shell##*/}"
         nixpkgs.jq
     )
-
+    
     # Semi-big packages here. Mostly shell dependencies
     declare nixpkgs_level_two+=(
-        nixpkgs-unstable.neovim
         nixpkgs.rclone
         nixpkgs.zoxide
         nixpkgs.git
@@ -34,6 +49,7 @@ function install::packages {
         nixpkgs.gcc
         nixpkgs.shellcheck
         nixpkgs.file
+        nixpkgs.fd
         nixpkgs.bottom
         nixpkgs.coreutils
         nixpkgs.gawk

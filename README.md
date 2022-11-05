@@ -1,6 +1,6 @@
 # Introduction
 
-An asynchronous dotfiles _installer_ intended for use on Gitpod and locally. Batteries included!
+A fast asynchronous dotfiles and system configuration installer for use on Gitpod and locally, batteries included.
 
 What's special about it? Nothing. It's compilation of some automation to create consistent terminal-focused dev environment across different systems, that's all. There are no configuration files (such as `.yaml`) for this, it is meant to be edited from the source code and compiled.
 

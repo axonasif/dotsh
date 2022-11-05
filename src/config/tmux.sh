@@ -151,10 +151,11 @@ function config::tmux() {
 			config::tmux::hijack_gitpod_task_terminals &
 		} fi
 
+		await::signal get install_dotfiles;
+
 		local target="$HOME/.tmux/plugins/tpm";
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-			await::signal get install_dotfiles;
 			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true;
 		} fi
 

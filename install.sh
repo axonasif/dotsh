@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%32198 () 
+main@bashbox%318 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%32198 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%32198';
+    ___MAIN_FUNCNAME='main@bashbox%318';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,7 +86,7 @@ main@bashbox%32198 ()
     };
     function live () 
     { 
-        ( local container_image="axonasif/dotfiles-testing-min:latest";
+        ( local container_image="axonasif/dotfiles-testing-full:latest";
         source "$_arg_path/src/utils/common.sh";
         cmd="bashbox build --release";
         log::info "Running $cmd";
@@ -130,7 +130,7 @@ main@bashbox%32198 ()
             fi;
             if is::gitpod; then
                 { 
-                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
+                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -e DOTFILES_EDITOR=emacs)
                 };
             fi;
             docker_args+=(-it "$container_image");
@@ -909,6 +909,7 @@ main@bashbox%32198 ()
                 };
             fi
         };
+        await::signal get install_dotfiles;
         local custom_shell;
         if test "${DOTFILES_TMUX:-true}" == true; then
             { 
@@ -1433,9 +1434,22 @@ main@bashbox%32198 ()
     function install::packages () 
     { 
         declare shell="${DOTFILES_DEFAULT_SHELL:-fish}";
-        declare nixpkgs_level_one+=(nixpkgs.tmux "nixpkgs.${shell##*/}" nixpkgs.jq);
-        declare nixpkgs_level_two+=(nixpkgs-unstable.neovim nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs.bat nixpkgs.fzf nixpkgs.exa nixpkgs.gh);
-        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.bottom nixpkgs.coreutils nixpkgs.gawk nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.tree);
+        declare nixpkgs_level_one+=(nixpkgs."${shell##*/}");
+        case "${DOTFILES_EDITOR:-neovim}" in 
+            "emacs")
+                : "nixpkgs.emacs"
+            ;;
+            "helix")
+                : "nixpkgs.helix"
+            ;;
+            "neovim")
+                : "nixpkgs-unstable.neovim"
+            ;;
+        esac;
+        declare nixpkgs_level_two+=("$_");
+        declare nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
+        declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs.bat nixpkgs.fzf nixpkgs.exa nixpkgs.gh);
+        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.gawk nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.tree);
         if os::is_darwin; then
             { 
                 declare brewpkgs_level_one+=(bash osxfuse reattach-to-user-namespace);
@@ -1809,11 +1823,11 @@ CMDC
                     config::tmux::hijack_gitpod_task_terminals &
                 };
             fi;
+            await::signal get install_dotfiles;
             local target="$HOME/.tmux/plugins/tpm";
             if test ! -e "$target"; then
                 { 
                     git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                    await::signal get install_dotfiles;
                     bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true
                 };
             fi;
@@ -2050,18 +2064,72 @@ EOF
             };
         fi
     };
-    function config::neovim () 
+    function config::editor () 
     { 
-        log::info "Setting up Neovim";
+        log::info "Setting up editor preset";
+        if editor::is "emacs"; then
+            { 
+                case "${DOTFILES_EDITOR_PRESET:-spacemacs}" in 
+                    "spacemacs")
+                        editor::emacs::space
+                    ;;
+                    "doomemacs")
+                        editor::emacs::doom
+                    ;;
+                esac
+            };
+        else
+            if editor::is "neovim"; then
+                { 
+                    case "${DOTFILES_EDITOR_PRESET:-lunarvim}" in 
+                        "lunarvim")
+                            editor::neovim::lunar
+                        ;;
+                        "nvchad")
+                            editor::neovim::nvchad
+                        ;;
+                    esac
+                };
+            fi;
+        fi
+    };
+    function editor::is () 
+    { 
+        local target="$1";
+        test "${DOTFILES_EDITOR:-neovim}" == "$target"
+    };
+    function editor::autorun_in_tmux () 
+    { 
+        ( await::signal get config_tmux_session;
+        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "$@" Enter ) &
+    };
+    function editor::emacs::doom () 
+    { 
+        todo
+    };
+    function editor::emacs::space () 
+    { 
+        declare clone_dir="$HOME/.emacs.d";
+        await::signal get install_dotfiles;
+        if test -e "$clone_dir/.git"; then
+            { 
+                log::warn "$clone_dir already exists, not making any changes";
+                return 0
+            };
+        fi;
+        git clone --depth 1 https://github.com/syl20bnr/spacemacs "$clone_dir" > /dev/null;
+        await::until_true test -x "$HOME/.nix-profile/bin/emacs";
+        editor::autorun_in_tmux "emacs"
+    };
+    function editor::neovim::lunar () 
+    { 
+        local lvim_exec_path="/usr/bin/lvim";
+        editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim";
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                local lvim_exec_path="/usr/bin/lvim";
                 if is::cde; then
                     { 
-                        NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
-                        ( "$lvim_exec_path" -v > /dev/null 2>&1 & disown;
-                        await::signal get config_tmux_session;
-                        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "AWAIT_SHIM_PRINT_INDICATOR=true lvim" Enter ) &
+                        NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path"
                     };
                 fi;
                 await::until_true command -v git > /dev/null;
@@ -2070,6 +2138,10 @@ EOF
                 CLOSE=true await::create_shim "$lvim_exec_path"
             };
         fi
+    };
+    function editor::neovim::nvchad () 
+    { 
+        todo
     };
     export PATH="$PATH:$HOME/.nix-profile/bin";
     declare -r workspace_dir="$(
@@ -2127,7 +2199,7 @@ EOF
                 config::gh & disown
             };
         fi;
-        config::neovim & disown;
+        config::editor & disown;
         log::info "Waiting for background jobs to complete" && jobs -l;
         while test -n "$(jobs -p)" && sleep 0.2; do
             { 
@@ -2141,4 +2213,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%32198 "$@";
+main@bashbox%318 "$@";

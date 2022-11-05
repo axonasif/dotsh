@@ -31,6 +31,8 @@ function get::default_shell() {
 		} fi
 	}
 
+	await::signal get install_dotfiles;
+	
 	local custom_shell;
 	if test "${DOTFILES_TMUX:-true}" == true; then {
 		await::signal get config_tmux;
