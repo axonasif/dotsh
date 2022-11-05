@@ -43,9 +43,9 @@ function await::signal() {
 }
 
 function await::create_shim() {
-	declare -a vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
+	declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call);
 	declare +x CLOSE KEEP DIRECT_CMD; # Keep local, do not export into env
-	declare -x SHIM_MIRROR; # Keep SHIM_MIRROR exported until CLOSE'ed
+	export SHIM_MIRROR; # Reuse previoulsy exported SHIM_MIRROR before CLOSE'ing
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {
@@ -108,7 +108,7 @@ function await::create_shim() {
 	} fi
 	
 	if test -v KEEP && test ! -v KEEP_internal_call; then {
-		export SHIM_SOURCE="$shim_source";
+		export SHIM_SOURCE="$shim_source"; # for internal use
 		export KEEP_internal_call=true;
 	} fi
 
@@ -118,8 +118,10 @@ function await::create_shim() {
 			cat <<-EOF
 			function $target_name() {
 				if test -x "$shim_source"; then {
-					declare +x ${vars_to_unset[@]};
-					command "$shim_source" "\$@";
+					(
+						unset ${vars_to_unset[*]};
+						exec "$shim_source" "\$@";
+					)
 				} else {
 					command "$target" "\$@";
 				} fi
@@ -130,8 +132,10 @@ function await::create_shim() {
 	
 	if test -v DIRECT_CMD; then {
 		if shift; then {
-			declare +x "${vars_to_unset[@]}";
-			"$@";
+			(
+				unset "${vars_to_unset[@]}";
+				"$@";
+			)
 		} fi
 		return;
 	} fi

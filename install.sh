@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%15108 () 
+main@bashbox%4067 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%15108 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%15108';
+    ___MAIN_FUNCNAME='main@bashbox%4067';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1175,9 +1175,9 @@ main@bashbox%15108 ()
     };
     function await::create_shim () 
     { 
-        declare -a vars_to_unset=(SHIM_MIRROR KEEP_internal_call);
+        declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call);
         declare +x CLOSE KEEP DIRECT_CMD;
-        declare -x SHIM_MIRROR;
+        export SHIM_MIRROR;
         function is::custom_shim () 
         { 
             test -v SHIM_MIRROR
@@ -1256,8 +1256,10 @@ main@bashbox%15108 ()
 			cat <<-EOF
 			function $target_name() {
 				if test -x "$shim_source"; then {
-					declare +x ${vars_to_unset[@]};
-					command "$shim_source" "\$@";
+					(
+						unset ${vars_to_unset[*]};
+						exec "$shim_source" "\$@";
+					)
 				} else {
 					command "$target" "\$@";
 				} fi
@@ -1270,8 +1272,8 @@ main@bashbox%15108 ()
             { 
                 if shift; then
                     { 
-                        declare +x "${vars_to_unset[@]}";
-                        "$@"
+                        ( unset "${vars_to_unset[@]}";
+                        "$@" )
                     };
                 fi;
                 return
@@ -2113,4 +2115,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%15108 "$@";
+main@bashbox%4067 "$@";
