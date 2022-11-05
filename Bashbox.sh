@@ -34,7 +34,7 @@ bashbox::build::before() {
 }
 
 live() (
-	local container_image="axonasif/dotfiles-testing:latest"; # From src/.testing.Dockerfile
+	local container_image="axonasif/dotfiles-testing-min:latest"; # From src/.testing.Dockerfile
 	source "$_arg_path/src/utils/common.sh";
 
 	cmd="bashbox build --release";
@@ -161,7 +161,7 @@ live() (
 			(
 				until tmux has-session 2>/dev/null; do sleep 1; done;
 				pkill -9 -f "${tail_cmd//+/\\+}" || :;
-				tmux setw -g mouse on;
+				tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on;
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				printf '====== %% %s\n' \
 					"Run 'tmux detach' to exit from here" \
@@ -172,11 +172,10 @@ live() (
 				# tmux detach-client;
 			) & disown;
 
+			$tail_cmd &
 			if test "${DOTFILES_TMUX:-true}" == true; then {
-				$tail_cmd;
-				AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach;
+				AWAIT_SHIM_PRINT_INDICATOR=true tmux attach;
 			} else {
-				(sleep 2 && $tail_cmd) &
 				exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li;
 			} fi
 
@@ -225,6 +224,3 @@ live() (
 	}
 
 )
-
-
-

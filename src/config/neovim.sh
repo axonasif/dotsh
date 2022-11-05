@@ -12,23 +12,28 @@ function config::neovim() {
 	# 	} fi
 	# } fi
 
-	if is::cde; then {
-		(
-			await::create_shim "$HOME/.local/bin/lvim";
-			# Wait for tmux to start
-			await::signal get config_tmux_session;
-			# until pgrep lvim 1>/dev/null; do
-			tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "AWAIT_SHIM_PRINT_INDICATOR=true lvim" Enter;
-		) &
-	} fi
-
-	await::until_true command -v git 1>/dev/null;
-	await::until_true command -v $HOME/.nix-profile/bin/nvim 1>/dev/null;
 
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {
-		# git clone --filter=tree:0 https://github.com/axonasif/NvChad "$nvim_conf_dir" >/dev/null 2>&1;
+		local lvim_exec_path="/usr/bin/lvim";
+
+		if is::cde; then {
+			NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
+			(
+				"$lvim_exec_path" -v >/dev/null 2>&1 & disown
+				# Wait for tmux to start
+				await::signal get config_tmux_session;
+				# until pgrep lvim 1>/dev/null; do
+				tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "AWAIT_SHIM_PRINT_INDICATOR=true lvim" Enter;
+			) &
+		} fi
+
+		await::until_true command -v git 1>/dev/null;
+		await::until_true command -v $HOME/.nix-profile/bin/nvim 1>/dev/null;
+
 		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
+		
+		CLOSE=true await::create_shim "$lvim_exec_path";
 	} fi
 
 	# for _t in {1..2}; do {

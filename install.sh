@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4067 () 
+main@bashbox%18407 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%4067 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%4067';
+    ___MAIN_FUNCNAME='main@bashbox%18407';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -86,7 +86,7 @@ main@bashbox%4067 ()
     };
     function live () 
     { 
-        ( local container_image="axonasif/dotfiles-testing:latest";
+        ( local container_image="axonasif/dotfiles-testing-min:latest";
         source "$_arg_path/src/utils/common.sh";
         cmd="bashbox build --release";
         log::info "Running $cmd";
@@ -149,19 +149,18 @@ main@bashbox%4067 ()
                     sleep 1;
                 done;
                 pkill -9 -f "${tail_cmd//+/\\+}" || :;
-                tmux setw -g mouse on;
+                tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on;
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
                 printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
-                if test "${DOTFILES_TMUX:-true}" == true; then
+                $tail_cmd & if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
-                        $tail_cmd;
-                        ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux new-window -n ".dotfiles.log" "$tail_cmd" \; attach
+                        ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux attach
                     };
                 else
                     { 
-                        ( sleep 2 && $tail_cmd ) & exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li
+                        exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li
                     };
                 fi;
                 if test $? != 0; then
@@ -1186,9 +1185,6 @@ main@bashbox%4067 ()
         { 
             if test -e "$shim_source"; then
                 { 
-                    unset "${vars_to_unset[@]}";
-                    unset -f "$target_name";
-                    export PATH="${PATH//"${shim_dir}:"/}";
                     try_sudo touch "$shim_tombstone";
                     if ! is::custom_shim; then
                         { 
@@ -1200,6 +1196,9 @@ main@bashbox%4067 ()
                             try_sudo ln -sf "$SHIM_MIRROR" "$target"
                         };
                     fi;
+                    unset "${vars_to_unset[@]}";
+                    unset -f "$target_name";
+                    export PATH="${PATH//"${shim_dir}:"/}";
                     ( sleep 3;
                     try_sudo rm -f "$shim_tombstone" || true;
                     try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown
@@ -1279,19 +1278,30 @@ main@bashbox%4067 ()
                 return
             };
         fi;
-        if test -e "$target" || test -e "${SHIM_MIRROR:-}"; then
+        if test ! -v NOCLOBBER; then
             { 
                 try_sudo mkdir -p "$shim_dir";
-                if ! is::custom_shim; then
+                if test -e "$target" && ! is::custom_shim; then
                     { 
                         try_sudo mv "$target" "$shim_source"
                     };
                 else
-                    { 
-                        try_sudo mv "$SHIM_MIRROR" "$shim_source"
-                    };
+                    if test -e "${SHIM_MIRROR:-}" && is::custom_shim; then
+                        { 
+                            try_sudo mv "$SHIM_MIRROR" "$shim_source"
+                        };
+                    fi;
                 fi
             };
+        else
+            if test -v NOCLOBBER && { 
+                test -e "$target" || test -e "${SHIM_MIRROR:-}"
+            }; then
+                { 
+                    log::warn "${FUNCNAME[0]}: $target already exists";
+                    return 0
+                };
+            fi;
         fi;
         declare USER && USER="$(id -u -n)";
         try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\"";
@@ -2030,18 +2040,21 @@ EOF
     function config::neovim () 
     { 
         log::info "Setting up Neovim";
-        if is::cde; then
-            { 
-                ( await::create_shim "$HOME/.local/bin/lvim";
-                await::signal get config_tmux_session;
-                tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "AWAIT_SHIM_PRINT_INDICATOR=true lvim" Enter ) &
-            };
-        fi;
-        await::until_true command -v git > /dev/null;
-        await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null
+                local lvim_exec_path="/usr/bin/lvim";
+                if is::cde; then
+                    { 
+                        NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
+                        ( "$lvim_exec_path" -v > /dev/null 2>&1 & disown;
+                        await::signal get config_tmux_session;
+                        tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "AWAIT_SHIM_PRINT_INDICATOR=true lvim" Enter ) &
+                    };
+                fi;
+                await::until_true command -v git > /dev/null;
+                await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
+                curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null;
+                CLOSE=true await::create_shim "$lvim_exec_path"
             };
         fi
     };
@@ -2115,4 +2128,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%4067 "$@";
+main@bashbox%18407 "$@";

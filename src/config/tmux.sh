@@ -151,7 +151,6 @@ function config::tmux() {
 			config::tmux::hijack_gitpod_task_terminals &
 		} fi
 
-
 		local target="$HOME/.tmux/plugins/tpm";
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;

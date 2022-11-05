@@ -54,9 +54,6 @@ function await::create_shim() {
 
 	function revert_shim() {
 		if test -e "$shim_source"; then {
-			unset "${vars_to_unset[@]}";
-			unset -f "$target_name";
-			export PATH="${PATH//"${shim_dir}:"/}";
 			
 			try_sudo touch "$shim_tombstone";
 
@@ -67,6 +64,11 @@ function await::create_shim() {
 				try_sudo ln -sf "$SHIM_MIRROR" "$target";
 
 			} fi
+
+			unset "${vars_to_unset[@]}";
+			unset -f "$target_name";
+			export PATH="${PATH//"${shim_dir}:"/}";
+
 			(
 				sleep 3;
 				try_sudo rm -f "$shim_tombstone" || true;
@@ -140,15 +142,16 @@ function await::create_shim() {
 		return;
 	} fi
 
-	if test -e "$target" || test -e "${SHIM_MIRROR:-}"; then {
-		# log::warn "${FUNCNAME[0]}: $target already exists";
-		# return 0;
+	if test ! -v NOCLOBBER; then {
 		try_sudo mkdir -p "$shim_dir";
-		if ! is::custom_shim; then {
+		if test -e "$target" && ! is::custom_shim; then {
 			try_sudo mv "$target" "$shim_source";
-		} else {
+		} elif test -e "${SHIM_MIRROR:-}" && is::custom_shim; then {
 			try_sudo mv "$SHIM_MIRROR" "$shim_source";
 		} fi
+	} elif test -v NOCLOBBER && { test -e "$target" || test -e "${SHIM_MIRROR:-}"; }; then {
+		log::warn "${FUNCNAME[0]}: $target already exists";
+		return 0;
 	} fi
 
 	declare USER && USER="$(id -u -n)";
