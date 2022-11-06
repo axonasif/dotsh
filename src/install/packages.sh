@@ -1,4 +1,3 @@
-
 function install::packages {
     # shellcheck disable=SC2034
 
@@ -47,22 +46,26 @@ function install::packages {
     declare nixpkgs_level_three+=(
         nixpkgs.gnumake
         nixpkgs.gcc
+        nixpkgs.glab
         nixpkgs.shellcheck
         nixpkgs.file
         nixpkgs.fd
         nixpkgs.bottom
         nixpkgs.coreutils
-        nixpkgs.gawk
         nixpkgs.htop
         nixpkgs.lsof
         nixpkgs.neofetch
         nixpkgs.p7zip
         nixpkgs.ripgrep
-        nixpkgs.tree
         # nixpkgs.yq
     )
 
     if os::is_darwin; then {
+        # Extra nix packages for macos
+        nixpkgs_level_three+=(
+            nixpkgs.gawk
+        )
+        
         # =================================================
         # = macos specific brew packages                  =
         # =================================================
