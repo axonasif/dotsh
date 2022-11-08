@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4776 () 
+main@bashbox%28523 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%4776 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%4776';
+    ___MAIN_FUNCNAME='main@bashbox%28523';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1476,7 +1476,7 @@ main@bashbox%4776 ()
         fi;
         if distro::is_ubuntu; then
             { 
-                declare aptpkgs+=(fuse);
+                declare aptpkgs+=();
                 log::info "Installing ubuntu system packages";
                 ( sudo apt-get update;
                 sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
@@ -1601,16 +1601,11 @@ main@bashbox%4776 ()
             { 
                 mkdir -p "${rclone_conf_file%/*}";
                 printf '%s\n' "${RCLONE_DATA}" | base64 -d > "$rclone_conf_file";
-                until { 
-                    command -v rclone && command -v fusermount
-                } > /dev/null; do
-                    { 
-                        sleep 1
-                    };
-                done;
+                await::until_true command -v rclone > /dev/null;
                 log::info "Performing cloud filesync, scoped globally";
+                declare rclone_cmd_args=(--config="$rclone_conf_file" mount --allow-other --async-read --vfs-cache-mode=full "${rclone_profile_name}:" "$rclone_mount_dir");
                 mkdir -p "${rclone_mount_dir}";
-                rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" & disown;
+                sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
                 local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
                 local times=0;
                 until test -e "$rclone_dotfiles_dir"; do
@@ -2230,4 +2225,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%4776 "$@";
+main@bashbox%28523 "$@";

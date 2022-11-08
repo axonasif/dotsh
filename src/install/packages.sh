@@ -101,7 +101,7 @@ function install::packages {
         # = ubuntu system packages                        =
         # =================================================
         declare aptpkgs+=(
-            fuse
+            # fuse
         )
 
         log::info "Installing ubuntu system packages";

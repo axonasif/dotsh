@@ -23,16 +23,20 @@ function install::filesync() {
         printf '%s\n' "${RCLONE_DATA}" | base64 -d > "$rclone_conf_file";
 
         # Wait for rclone to be fully installed
-        until {
-            command -v rclone && command -v fusermount
-        } 1>/dev/null; do {
-            sleep 1;
-        } done
+        await::until_true command -v rclone 1>/dev/null;
 
         log::info "Performing cloud filesync, scoped globally";
         # Mount your cloud provider at $rclone_mount_dir
+        declare rclone_cmd_args=(
+            --config="$rclone_conf_file"
+            mount
+            --allow-other
+            --async-read
+            --vfs-cache-mode=full
+            "${rclone_profile_name}:" "$rclone_mount_dir"
+        )
         mkdir -p "${rclone_mount_dir}";
-        rclone mount --vfs-cache-mode full "${rclone_profile_name}:" "$rclone_mount_dir" & disown;
+        sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
 
         # Install dotfiles from the cloud provider
         local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
