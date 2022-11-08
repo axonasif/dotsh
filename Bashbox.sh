@@ -33,8 +33,12 @@ bashbox::build::before() {
 	} fi
 }
 
-live() (
-	local container_image="axonasif/dotfiles-testing-full:latest"; # From src/dockerfiles/testing-full.Dockerfile
+livetest-min() (
+	CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest" livetest;
+)
+
+livetest() (
+	local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}"; # From src/dockerfiles/testing-full.Dockerfile
 	source "$_arg_path/src/utils/common.sh";
 
 	cmd="bashbox build --release";
@@ -43,19 +47,25 @@ live() (
 
 	local duplicate_workspace_root="/tmp/.mrroot";
 	local workspace_sources;
+
 	if test -n "${GITPOD_REPO_ROOTS:-}"; then {
 		local repo_roots;
 		IFS=',' read -ra workspace_sources <<<"$GITPOD_REPO_ROOTS";
 	} else {
 		workspace_sources=("${_arg_path}");
 	} fi
+	if test -e /workspace/.gitpod; then {
+		workspace_sources+=("/workspace/.gitpod");
+	} fi
 
 	log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && {
-		rm -rf "$duplicate_workspace_root";
-		mkdir -p "$duplicate_workspace_root";
-		cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root";
-		if test -e /workspace/.gitpod; then {
-			cp -ra /workspace/.gitpod "$duplicate_workspace_root";
+		if command -v rsync 1>/dev/null; then {
+			mkdir -p "$duplicate_workspace_root";
+			rsync -ah --info=progress2 --delete "${workspace_sources[@]}" "$duplicate_workspace_root";
+		} else {
+			rm -rf "$duplicate_workspace_root";
+			mkdir -p "$duplicate_workspace_root";
+			cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root";
 		} fi
 	}
 
@@ -97,12 +107,12 @@ live() (
 			)
 		} fi
 		
-		local dotfiles_sh_dir="$HOME/.dotfiles-sh";
-		if test -e "$dotfiles_sh_dir"; then {
-			docker_args+=(
-				-v "$dotfiles_sh_dir:$dotfiles_sh_dir"
-			)
-		} fi
+		# local dotfiles_repos_dir="$HOME/.dotfiles-sh";
+		# if test -e "$dotfiles_repos_dir"; then {
+		# 	docker_args+=(
+		# 		-v "$dotfiles_repos_dir:$dotfiles_repos_dir"
+		# 	)
+		# } fi
 
 		if is::gitpod; then {
 			docker_args+=(
@@ -140,7 +150,7 @@ live() (
 				## These options below are also available, see README.md for more info
 				# -e DOTFILES_DEFAULT_SHELL=zsh
 				# -e DOTFILES_TMUX=false
-				-e DOTFILES_EDITOR=emacs
+				# -e DOTFILES_EDITOR=emacs
 			)
 		} fi
 

@@ -114,23 +114,23 @@ function await::create_shim() {
 		export KEEP_internal_call=true;
 	} fi
 
-	if ! [[ "$PATH" =~ "$shim_dir" ]]; then {
-		export PATH="$shim_dir:$PATH";
-		fn="$(
-			cat <<-EOF
-			function $target_name() {
-				if test -x "$shim_source"; then {
-					(
-						unset ${vars_to_unset[*]};
-						exec "$shim_source" "\$@";
-					)
-				} else {
-					command "$target" "\$@";
-				} fi
-			}
-			EOF
-		)" && eval "$fn" && unset fn && export -f "${target_name}";
-	} fi
+	# if ! [[ "$PATH" =~ "$shim_dir" ]]; then {
+	# 	export PATH="$shim_dir:$PATH";
+	# 	fn="$(
+	# 		cat <<-EOF
+	# 		function $target_name() {
+	# 			if test -x "$shim_source"; then {
+	# 				(
+	# 					unset ${vars_to_unset[*]};
+	# 					exec "$shim_source" "\$@";
+	# 				)
+	# 			} else {
+	# 				command "$target" "\$@";
+	# 			} fi
+	# 		}
+	# 		EOF
+	# 	)" && eval "$fn" && unset fn && export -f "${target_name}";
+	# } fi
 	
 	if test -v DIRECT_CMD; then {
 		if shift; then {
@@ -186,7 +186,10 @@ function await::create_shim() {
 		exec_bin() {
 			local args=("$@");
 			local bin="${args[0]}";
-			await::until_true test -x "$bin";
+			await::until_true test -x "$bin";			
+			# DEBUG
+			unset "${vars_to_unset[@]}";
+			export PATH="${bin%/*}:$PATH";
 			exec "${args[@]}";
 		}
 
@@ -290,6 +293,7 @@ function await::create_shim() {
 							target "$target" \
 							shim_source "$shim_source" \
 							shim_dir "$shim_dir";
+		printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
 		if test -v SHIM_MIRROR; then {
 			printf '%s="%s"\n' SHIM_MIRROR "$SHIM_MIRROR";
 		} fi

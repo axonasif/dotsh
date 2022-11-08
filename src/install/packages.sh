@@ -35,18 +35,24 @@ function install::packages {
     declare nixpkgs_level_two+=(
         nixpkgs.rclone
         nixpkgs.zoxide
-        nixpkgs.git
         nixpkgs.bat
         nixpkgs.fzf
         nixpkgs.exa
-        nixpkgs.gh
     )
+    if ! command -v git 1>/dev/null; then {
+        nixpkgs_level_two+=(nixpkgs.git);
+    } fi
+    if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] \
+    && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then {
+        nixpkgs_level_one+=(nixpkgs.glab);
+    } else {
+        nixpkgs_level_one+=(nixpkgs.gh);
+    } fi
     
     # Big packages here
     declare nixpkgs_level_three+=(
         nixpkgs.gnumake
         nixpkgs.gcc
-        nixpkgs.glab
         nixpkgs.shellcheck
         nixpkgs.file
         nixpkgs.fd
@@ -57,6 +63,7 @@ function install::packages {
         nixpkgs.neofetch
         nixpkgs.p7zip
         nixpkgs.ripgrep
+        nixpkgs.rsync
         # nixpkgs.yq
     )
 

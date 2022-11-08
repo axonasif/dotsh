@@ -8,8 +8,10 @@ tasks:
     command: |
       l=/workspace/.dinit;
       touch "$l";
-      docker pull axonasif/dotfiles-testing:latest;
-      printf '%s\n' done > "$l";
+      for img in full min; do
+        docker pull axonasif/dotfiles-testing-${img}:latest;
+        printf '%s\n' done > "$l";
+      done
       exit;
 
   - name: Compile project
@@ -34,6 +36,15 @@ tasks:
       source "$HOME/.bashbox/env";
       bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
 
+  - name: Bind mount repos dir
+    command: |
+      dir="$HOME/.dotfiles/repos";
+      target_dir="$PWD/${dir##*/}"
+      if test -e "$dir"; then {
+        mkdir -p "$target_dir";
+        sudo mount --bind "$dir" "$target_dir";
+      } fi
+      exit 0;
 vscode:
   extensions:
     - mads-hartmann.bash-ide-vscode

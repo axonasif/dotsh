@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%26111 () 
+main@bashbox%4776 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%26111 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%26111';
+    ___MAIN_FUNCNAME='main@bashbox%4776';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -84,9 +84,13 @@ main@bashbox%26111 ()
             };
         fi
     };
-    function live () 
+    function livetest-min () 
     { 
-        ( local container_image="axonasif/dotfiles-testing-full:latest";
+        ( ___self_CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest" livetest )
+    };
+    function livetest () 
+    { 
+        ( local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
         source "$_arg_path/src/utils/common.sh";
         cmd="bashbox build --release";
         log::info "Running $cmd";
@@ -103,13 +107,22 @@ main@bashbox%26111 ()
                 workspace_sources=("${_arg_path}")
             };
         fi;
+        if test -e /workspace/.gitpod; then
+            { 
+                workspace_sources+=("/workspace/.gitpod")
+            };
+        fi;
         log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && { 
-            rm -rf "$duplicate_workspace_root";
-            mkdir -p "$duplicate_workspace_root";
-            cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root";
-            if test -e /workspace/.gitpod; then
+            if command -v rsync > /dev/null; then
                 { 
-                    cp -ra /workspace/.gitpod "$duplicate_workspace_root"
+                    mkdir -p "$duplicate_workspace_root";
+                    rsync -ah --info=progress2 --delete "${workspace_sources[@]}" "$duplicate_workspace_root"
+                };
+            else
+                { 
+                    rm -rf "$duplicate_workspace_root";
+                    mkdir -p "$duplicate_workspace_root";
+                    cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root"
                 };
             fi
         };
@@ -122,15 +135,9 @@ main@bashbox%26111 ()
                     docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
                 };
             fi;
-            local dotfiles_sh_dir="$HOME/.dotfiles-sh";
-            if test -e "$dotfiles_sh_dir"; then
-                { 
-                    docker_args+=(-v "$dotfiles_sh_dir:$dotfiles_sh_dir")
-                };
-            fi;
             if is::gitpod; then
                 { 
-                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -e DOTFILES_EDITOR=emacs)
+                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
                 };
             fi;
             docker_args+=(-it "$container_image");
@@ -237,9 +244,7 @@ main@bashbox%26111 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "$res" use box::process::get_temp;
-                    use box::process::get_temp;
-                    unset res
+                    printf '%s\n' "$res" && unset res
                 };
             else
                 { 
@@ -257,9 +262,7 @@ main@bashbox%26111 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "${res%/*}" use box::process::get_temp;
-                    use box::process::get_temp;
-                    unset res
+                    printf '%s\n' "${res%/*}" && unset res
                 };
             else
                 { 
@@ -283,9 +286,7 @@ main@bashbox%26111 ()
     };
     function trap::push () 
     { 
-        local new_trap="$1" use push;
-        use push;
-        shift;
+        local new_trap="$1" && shift;
         local sig;
         for sig in $*;
         do
@@ -302,9 +303,7 @@ main@bashbox%26111 ()
     };
     function trap::append () 
     { 
-        local new_trap="$1" use box::builtin::trap::append;
-        use box::builtin::trap::append;
-        shift;
+        local new_trap="$1" && shift;
         local sig;
         for sig in $*;
         do
@@ -422,10 +421,8 @@ main@bashbox%26111 ()
                 os=Windows
             ;;
             *)
-                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." common > use;
-                2;
-                printf '%s\n' "Open an issue on GitHub to add support for your OS." common > use;
-                2;
+                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." 1>&2;
+                printf '%s\n' "Open an issue on GitHub to add support for your OS." 1>&2;
                 return 1
             ;;
         esac
@@ -1259,25 +1256,6 @@ main@bashbox%26111 ()
                 export KEEP_internal_call=true
             };
         fi;
-        if ! [[ "$PATH" =~ "$shim_dir" ]]; then
-            { 
-                export PATH="$shim_dir:$PATH";
-                fn="$(
-			cat <<-EOF
-			function $target_name() {
-				if test -x "$shim_source"; then {
-					(
-						unset ${vars_to_unset[*]};
-						exec "$shim_source" "\$@";
-					)
-				} else {
-					command "$target" "\$@";
-				} fi
-			}
-			EOF
-		)" && eval "$fn" && unset fn && export -f "${target_name}"
-            };
-        fi;
         if test -v DIRECT_CMD; then
             { 
                 if shift; then
@@ -1337,6 +1315,8 @@ main@bashbox%26111 ()
                 local args=("$@");
                 local bin="${args[0]}";
                 await::until_true test -x "$bin";
+                unset "${vars_to_unset[@]}";
+                export PATH="${bin%/*}:$PATH";
                 exec "${args[@]}"
             };
             function await_while_shim_exists () 
@@ -1424,6 +1404,7 @@ main@bashbox%26111 ()
         { 
             printf 'function main() {\n';
             printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir";
+            printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
             if test -v SHIM_MIRROR; then
                 { 
                     printf '%s="%s"\n' SHIM_MIRROR "$SHIM_MIRROR"
@@ -1458,8 +1439,22 @@ main@bashbox%26111 ()
         esac;
         declare nixpkgs_level_two+=("$_");
         declare nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
-        declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs.bat nixpkgs.fzf nixpkgs.exa nixpkgs.gh);
-        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.glab nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep);
+        declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.bat nixpkgs.fzf nixpkgs.exa);
+        if ! command -v git > /dev/null; then
+            { 
+                nixpkgs_level_two+=(nixpkgs.git)
+            };
+        fi;
+        if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then
+            { 
+                nixpkgs_level_one+=(nixpkgs.glab)
+            };
+        else
+            { 
+                nixpkgs_level_one+=(nixpkgs.gh)
+            };
+        fi;
+        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.rsync);
         if os::is_darwin; then
             { 
                 nixpkgs_level_three+=(nixpkgs.gawk nixpkgs.bashInteractive nixpkgs.reattach-to-user-namespace);
@@ -1972,6 +1967,7 @@ EOF
         sed -i '/ set +o history/,/truncate -s 0 "$HISTFILE"/d' "/ide/startup.sh" 2> /dev/null || :;
         await::signal get install_dotfiles;
         log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
+        mkdir -p "${fish_hist_file%/*}";
         while read -r _command; do
             { 
                 if test -n "$_command"; then
@@ -2234,4 +2230,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%26111 "$@";
+main@bashbox%4776 "$@";

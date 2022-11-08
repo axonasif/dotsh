@@ -1,7 +1,6 @@
 {
 	"folders": [
 		{ "path": "." },
-		{ "path": "/home/gitpod/.dotfiles-sh" },
 		// { "path": "../tmux-gitpod" },
 		// { "path": "../libtmux" },
 	],
