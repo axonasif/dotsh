@@ -119,13 +119,14 @@ function config::tmux::hijack_gitpod_task_terminals {
 function config::tmux() {
 
 	# In case tmux feature is disabled
+	# TODO: Don't do this
 	if test "${DOTFILES_TMUX:-true}" != true; then {
 		await::signal send config_tmux;
 		return;
 	} fi
 
 	log::info "Setting up tmux";
-
+	
 	if is::cde; then {
 		# Lock on tmux binary
 		local check_file=(/nix/store/*-tmux-*/bin/tmux);
@@ -143,14 +144,14 @@ function config::tmux() {
 		await::until_true command -v tmux 1>/dev/null;
 	} fi
 
-	{
-		if is::gitpod; then {
-			if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
-				tmux::start_vimpod & disown;
-			} fi
-			config::tmux::hijack_gitpod_task_terminals &
+	if is::gitpod; then {
+		if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
+			tmux::start_vimpod & disown;
 		} fi
+		config::tmux::hijack_gitpod_task_terminals &
+	} fi
 
+	{
 		await::signal get install_dotfiles;
 
 		local target="$HOME/.tmux/plugins/tpm";

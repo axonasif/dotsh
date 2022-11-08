@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%28523 () 
+main@bashbox%18681 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%28523 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%28523';
+    ___MAIN_FUNCNAME='main@bashbox%18681';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1815,17 +1815,17 @@ CMDC
                 await::until_true command -v tmux > /dev/null
             };
         fi;
+        if is::gitpod; then
+            { 
+                if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
+                    { 
+                        tmux::start_vimpod & disown
+                    };
+                fi;
+                config::tmux::hijack_gitpod_task_terminals &
+            };
+        fi;
         { 
-            if is::gitpod; then
-                { 
-                    if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then
-                        { 
-                            tmux::start_vimpod & disown
-                        };
-                    fi;
-                    config::tmux::hijack_gitpod_task_terminals &
-                };
-            fi;
             await::signal get install_dotfiles;
             local target="$HOME/.tmux/plugins/tpm";
             if test ! -e "$target"; then
@@ -2225,4 +2225,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%28523 "$@";
+main@bashbox%18681 "$@";
