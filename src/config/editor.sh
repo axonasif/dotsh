@@ -67,24 +67,25 @@ function editor::neovim::lunar {
 	# 	} fi
 	# } fi
 
-	local lvim_exec_path="/usr/bin/lvim";
-	if is::cde; then {
-		editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim";
-	} fi
+	# local lvim_exec_path="/usr/bin/lvim";
+	# if is::cde; then {
+	# 	editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim";
+	# } fi
 
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {
 
-		if is::cde; then {
-			NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
-		} fi
+		# if is::cde; then {
+		# 	NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
+		# } fi
 
 		await::until_true command -v git 1>/dev/null;
 		await::until_true command -v $HOME/.nix-profile/bin/nvim 1>/dev/null;
 
 		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
 		
-		CLOSE=true await::create_shim "$lvim_exec_path";
+		# CLOSE=true await::create_shim "$lvim_exec_path";
+		editor::autorun_in_tmux "lvim";
 	} fi
 
 	# for _t in {1..2}; do {

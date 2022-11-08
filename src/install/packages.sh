@@ -4,8 +4,7 @@ function install::packages {
     # =================================================
     # = assign dynamic packages                       =
     # =================================================
-    declare shell="${DOTFILES_DEFAULT_SHELL:-fish}";
-    declare nixpkgs_level_one+=(nixpkgs."${shell##*/}")
+    nixpkgs_level_one+=(nixpkgs."${DOTFILES_SHELL:-fish}")
 
     case "${DOTFILES_EDITOR:-neovim}" in
         "emacs")
@@ -18,69 +17,19 @@ function install::packages {
             : "nixpkgs-unstable.neovim";
         ;;
     esac
-    declare nixpkgs_level_two+=("$_")
+    nixpkgs_level_two+=("$_")
 
-    # =================================================
-    # = userland packages                             =
-    # =================================================
-    # You can find packages at https://search.nixos.org/packages
-    # It is adviced to add very less packages in this array.
-    # Things that you need immediately should be added here.
-    declare nixpkgs_level_one+=(
-        nixpkgs.tmux
-        nixpkgs.jq
-    )
-    
-    # Semi-big packages here. Mostly shell dependencies
-    declare nixpkgs_level_two+=(
-        nixpkgs.rclone
-        nixpkgs.zoxide
-        nixpkgs.bat
-        nixpkgs.fzf
-        nixpkgs.exa
-    )
     if ! command -v git 1>/dev/null; then {
         nixpkgs_level_two+=(nixpkgs.git);
     } fi
     if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] \
     && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then {
-        nixpkgs_level_one+=(nixpkgs.glab);
+        nixpkgs_level_two+=(nixpkgs.glab);
     } else {
-        nixpkgs_level_one+=(nixpkgs.gh);
+        nixpkgs_level_two+=(nixpkgs.gh);
     } fi
-    
-    # Big packages here
-    declare nixpkgs_level_three+=(
-        nixpkgs.gnumake
-        nixpkgs.gcc
-        nixpkgs.shellcheck
-        nixpkgs.file
-        nixpkgs.fd
-        nixpkgs.bottom
-        nixpkgs.coreutils
-        nixpkgs.htop
-        nixpkgs.lsof
-        nixpkgs.neofetch
-        nixpkgs.p7zip
-        nixpkgs.ripgrep
-        nixpkgs.rsync
-        # nixpkgs.yq
-    )
 
     if os::is_darwin; then {
-        # Extra nix packages for macos
-        nixpkgs_level_three+=(
-            nixpkgs.gawk
-            nixpkgs.bashInteractive # macos still stuck with old bash... so...
-            nixpkgs.reattach-to-user-namespace
-        )
-        
-        # =================================================
-        # = macos specific brew packages                  =
-        # =================================================
-        declare brewpkgs_level_one+=(
-            osxfuse
-        )
 
         # Install brew if missing
         if test ! -e /opt/homebrew/Library/Taps/homebrew/homebrew-core/.git \
@@ -97,13 +46,6 @@ function install::packages {
     } fi
 
     if distro::is_ubuntu; then {
-        # =================================================
-        # = ubuntu system packages                        =
-        # =================================================
-        declare aptpkgs+=(
-            # fuse
-        )
-
         log::info "Installing ubuntu system packages";
         (
             sudo apt-get update;

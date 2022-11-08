@@ -25,7 +25,7 @@ Learn more about dotfiles behavior on Gitpod at https://www.gitpod.io/docs/confi
 
 # Quickstart for local machine
 
-Right now **only Linux and MacOS is supported**. In theory it could work on other \*nix systems and maybe Windows, that said, the script would run fine but some special handling of how things are installed or configured needs to be done for these systems, please contribute if you're an user of an "unsupported" system.
+Right now **only Linux and MacOS is supported**. In theory it could work on other \*nix systems and maybe Windows, that said, the script could run fine but some special handling of how things are installed or configured needs to be done for other systems, please contribute if you're an user of an "unsupported" system.
 
 ## Prerequisites
 
@@ -53,21 +53,9 @@ exec bash -li # Reload bash
 After you've made sure that the prerequisites are met, run:
 
 ```bash
+# You may use your own fork instead
 git clone https://github.com/axonasif/dotfiles-sh ~/.dotfiles
 bash ~/.dotfiles/install.sh
-```
-
-# How it works on Gitpod or local machine
-
-A brief overview:
-
-```markdown
-├── Gitpod clones this repo and executes `install.sh` from $HOME/.dotfiles
-│   ├── Asynchronously executes instructions inside `install.sh`
-│   │   ├── Installs some system/userland packages
-│   │   ├── Creates symlinks from your dotfiles sources to `$HOME/`while following`.dotfilesignore`via a helper function │ │ ├── Installs CLIs such as`gh`, `gcloud`and auto-logins into them along several other tools │ │ ├── Process Gitpod workspace persisted shell histories | | ├── Takes over how Gitpod starts the task-terminals and replaces them with`tmux` windows instead
-├── Gitpod starts the IDE process
-└── Logs are saved to $HOME/.dotfiles.log
 ```
 
 # Customizing
@@ -88,7 +76,7 @@ which was a very annoying and time consuming process.
 There is a custom box script defined inside the [`Bashbox.sh`](./Bashbox.sh) called [`live`](/Bashbox.sh#L23). You can execute it like so:
 
 ```bash
-bashbox live
+bashbox livetest
 ```
 
 This will perform all the installation inside a docker container.
@@ -104,6 +92,19 @@ bashbox build --release
 ```
 
 This can be useful to only check for any compile time errors (e.g. syntax errors, missing files)
+
+# How it works on Gitpod or local machine
+
+A brief overview:
+
+```markdown
+├── Gitpod clones this repo and executes `install.sh` from $HOME/.dotfiles
+│   ├── Asynchronously executes instructions inside `install.sh`
+│   │   ├── Installs some system/userland packages
+│   │   ├── Creates symlinks from your dotfiles sources to `$HOME/`while following`.dotfilesignore`via a helper function │ │ ├── Installs CLIs such as`gh`, `gcloud`and auto-logins into them along several other tools │ │ ├── Process Gitpod workspace persisted shell histories | | ├── Takes over how Gitpod starts the task-terminals and replaces them with`tmux` windows instead
+├── Gitpod starts the IDE process
+└── Logs are saved to $HOME/.dotfiles.log
+```
 
 ## Tweak behavior via environment variables
 
@@ -143,7 +144,7 @@ Currently there are a few variables which can alter the behavior of `dotfiles-sh
 
 ---
 
-### `DOTFILES_DEFAULT_SHELL`
+### `DOTFILES_SHELL`
 
 > Defaults to `fish`. (an absolute path to the binary could be used too, e.g. `/usr/bin/fish`)
 

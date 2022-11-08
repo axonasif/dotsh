@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%18681 () 
+main@bashbox%30689 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%18681 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%18681';
+    ___MAIN_FUNCNAME='main@bashbox%30689';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -167,7 +167,7 @@ main@bashbox%18681 ()
                     };
                 else
                     { 
-                        exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li
+                        exec "${DOTFILES_SHELL:-bash}" -li
                     };
                 fi;
                 if test $? != 0; then
@@ -923,9 +923,9 @@ main@bashbox%18681 ()
                 await::signal get config_tmux
             };
         fi;
-        if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then
+        if test -n "${DOTFILES_SHELL:-}"; then
             { 
-                custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
+                custom_shell="$(command -v "${DOTFILES_SHELL}")";
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         local tmux_shell;
@@ -1424,8 +1424,7 @@ main@bashbox%18681 ()
     };
     function install::packages () 
     { 
-        declare shell="${DOTFILES_DEFAULT_SHELL:-fish}";
-        declare nixpkgs_level_one+=(nixpkgs."${shell##*/}");
+        nixpkgs_level_one+=(nixpkgs."${DOTFILES_SHELL:-fish}");
         case "${DOTFILES_EDITOR:-neovim}" in 
             "emacs")
                 : "nixpkgs.emacs"
@@ -1437,9 +1436,7 @@ main@bashbox%18681 ()
                 : "nixpkgs-unstable.neovim"
             ;;
         esac;
-        declare nixpkgs_level_two+=("$_");
-        declare nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
-        declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.bat nixpkgs.fzf nixpkgs.exa);
+        nixpkgs_level_two+=("$_");
         if ! command -v git > /dev/null; then
             { 
                 nixpkgs_level_two+=(nixpkgs.git)
@@ -1447,18 +1444,15 @@ main@bashbox%18681 ()
         fi;
         if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then
             { 
-                nixpkgs_level_one+=(nixpkgs.glab)
+                nixpkgs_level_two+=(nixpkgs.glab)
             };
         else
             { 
-                nixpkgs_level_one+=(nixpkgs.gh)
+                nixpkgs_level_two+=(nixpkgs.gh)
             };
         fi;
-        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.rsync);
         if os::is_darwin; then
             { 
-                nixpkgs_level_three+=(nixpkgs.gawk nixpkgs.bashInteractive nixpkgs.reattach-to-user-namespace);
-                declare brewpkgs_level_one+=(osxfuse);
                 if test ! -e /opt/homebrew/Library/Taps/homebrew/homebrew-core/.git && test ! -e /usr/local/Library/Taps/homebrew/homebrew-core/.git; then
                     { 
                         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -1476,7 +1470,6 @@ main@bashbox%18681 ()
         fi;
         if distro::is_ubuntu; then
             { 
-                declare aptpkgs+=();
                 log::info "Installing ubuntu system packages";
                 ( sudo apt-get update;
                 sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
@@ -1576,7 +1569,6 @@ main@bashbox%18681 ()
     function install::dotfiles () 
     { 
         log::info "Installing dotfiles";
-        local dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}");
         TARGET="$HOME" dotfiles::initialize "${dotfiles_repos[@]}";
         await::signal send install_dotfiles
     };
@@ -1585,7 +1577,6 @@ main@bashbox%18681 ()
         if is::cde; then
             { 
                 log::info "Performing local filesync, scoped to ${HOSTNAME:-"${GITPOD_WORKSPACE_ID:-}"} workspace";
-                local files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
                 if test -e "$workspace_persist_dir"; then
                     { 
                         filesync::restore_local
@@ -1603,7 +1594,6 @@ main@bashbox%18681 ()
                 printf '%s\n' "${RCLONE_DATA}" | base64 -d > "$rclone_conf_file";
                 await::until_true command -v rclone > /dev/null;
                 log::info "Performing cloud filesync, scoped globally";
-                declare rclone_cmd_args=(--config="$rclone_conf_file" mount --allow-other --async-read --vfs-cache-mode=full "${rclone_profile_name}:" "$rclone_mount_dir");
                 mkdir -p "${rclone_mount_dir}";
                 sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
                 local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
@@ -1992,7 +1982,7 @@ EOF
 						"path": "bash",
 						"args": [
 							"-c",
-							"set -x && exec 2>>/tmp/.tvlog; until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
+							"until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
 						]
 					}
 				},
@@ -2033,7 +2023,6 @@ EOF
                 await::until_true command -v $HOME/.nix-profile/bin/fish > /dev/null
             };
         fi;
-        declare fish_plugins=(PatrickF1/fzf.fish jorgebucaran/fisher);
         log::info "Installing fisher and some plugins for fish-shell";
         mkdir -p "$fish_confd_dir";
         { 
@@ -2132,23 +2121,12 @@ EOF
     };
     function editor::neovim::lunar () 
     { 
-        local lvim_exec_path="/usr/bin/lvim";
-        if is::cde; then
-            { 
-                editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim"
-            };
-        fi;
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                if is::cde; then
-                    { 
-                        NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path"
-                    };
-                fi;
                 await::until_true command -v git > /dev/null;
                 await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
                 curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null;
-                CLOSE=true await::create_shim "$lvim_exec_path"
+                editor::autorun_in_tmux "lvim"
             };
         fi
     };
@@ -2157,30 +2135,50 @@ EOF
         todo
     };
     export PATH="$PATH:$HOME/.nix-profile/bin";
+    declare dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}");
+    : "${DOTFILES_SHELL:=fish}";
+    declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
+    declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
+    declare fish_plugins+=(PatrickF1/fzf.fish jorgebucaran/fisher);
+    : "${DOTFILES_TMUX:=true}";
+    declare -r tmux_first_session_name="main";
+    declare -r tmux_first_window_num="1";
+    : "${DOTFILES_SPAWN_SSH_PROTO:=true}";
+    : "${DOTFILES_NO_VSCODE:=false}";
+    : "${DOTFILES_EDITOR:=neovim}";
+    : "${DOTFILES_EDITOR_PRESET:=lunarvim}";
+    declare nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
+    declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.bat nixpkgs.fzf nixpkgs.exa);
+    declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.rsync);
+    if os::is_darwin; then
+        { 
+            nixpkgs_level_three+=(nixpkgs.gawk nixpkgs.bashInteractive nixpkgs.reattach-to-user-namespace);
+            declare brewpkgs_level_one+=(osxfuse)
+        };
+    fi;
+    declare aptpkgs+=(fuse);
     declare -r workspace_dir="$(
-	if is::gitpod; then {
-		printf '%s\n' "/workspace";
-	} elif is::codespaces; then {
-		printf '%s\n' "/workspaces";
-	} fi
+    if is::gitpod; then {
+        printf '%s\n' "/workspace";
+    } elif is::codespaces; then {
+        printf '%s\n' "/workspaces";
+    } fi
 )";
     declare -r workspace_persist_dir="$workspace_dir/.persist_root";
     declare -r vscode_machine_settings_file="$(
-	if is::gitpod; then {
-		: "$workspace_dir";
-	} else {
-		: "$HOME";
-	} fi
-	printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
+    if is::gitpod; then {
+        : "$workspace_dir";
+    } else {
+        : "$HOME";
+    } fi
+    printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
 )";
-    declare -r tmux_first_session_name="main";
-    declare -r tmux_first_window_num="1";
-    declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
-    declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
     declare -r dotfiles_sh_repos_dir="$___self_DIR/repos";
     declare -r rclone_mount_dir="$HOME/cloudsync";
     declare -r rclone_conf_file="$HOME/.config/rclone/rclone.conf";
     declare -r rclone_profile_name="cloudsync";
+    declare rclone_cmd_args=(--config="$rclone_conf_file" mount --allow-other --async-read --vfs-cache-mode=full "${rclone_profile_name}:" "$rclone_mount_dir");
+    declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
         if ! is::cde; then
@@ -2225,4 +2223,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%18681 "$@";
+main@bashbox%30689 "$@";

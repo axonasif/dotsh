@@ -148,7 +148,7 @@ livetest() (
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
 				## These options below are also available, see README.md for more info
-				# -e DOTFILES_DEFAULT_SHELL=zsh
+				# -e DOTFILES_SHELL=zsh
 				# -e DOTFILES_TMUX=false
 				# -e DOTFILES_EDITOR=emacs
 			)
@@ -187,7 +187,7 @@ livetest() (
 			if test "${DOTFILES_TMUX:-true}" == true; then {
 				AWAIT_SHIM_PRINT_INDICATOR=true tmux attach;
 			} else {
-				exec "${DOTFILES_DEFAULT_SHELL:-bash}" -li;
+				exec "${DOTFILES_SHELL:-bash}" -li;
 			} fi
 
 			# Fallback

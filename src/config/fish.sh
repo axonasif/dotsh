@@ -16,11 +16,6 @@ function config::fish() {
 		await::until_true command -v $HOME/.nix-profile/bin/fish 1>/dev/null;
 	} fi
 
-  declare fish_plugins=(
-    PatrickF1/fzf.fish
-    jorgebucaran/fisher
-  )
-
 	# Install fisher plugin manager
 	log::info "Installing fisher and some plugins for fish-shell";
 

@@ -2,11 +2,6 @@ function install::filesync() {
     # scoped to specific workspace
     if is::cde; then {
         log::info "Performing local filesync, scoped to ${HOSTNAME:-"${GITPOD_WORKSPACE_ID:-}"} workspace";
-        local files_to_persist_locally=(
-            "${HISTFILE:-"$HOME/.bash_history"}"
-            "${HISTFILE:-"$HOME/.zsh_history"}"
-            "$fish_hist_file"
-        )
         if test -e "$workspace_persist_dir"; then {
             filesync::restore_local;
         } else {
@@ -27,14 +22,7 @@ function install::filesync() {
 
         log::info "Performing cloud filesync, scoped globally";
         # Mount your cloud provider at $rclone_mount_dir
-        declare rclone_cmd_args=(
-            --config="$rclone_conf_file"
-            mount
-            --allow-other
-            --async-read
-            --vfs-cache-mode=full
-            "${rclone_profile_name}:" "$rclone_mount_dir"
-        )
+
         mkdir -p "${rclone_mount_dir}";
         sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
 

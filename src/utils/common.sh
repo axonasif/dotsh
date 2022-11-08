@@ -38,8 +38,8 @@ function get::default_shell() {
 		await::signal get config_tmux;
 	} fi
 
-	if test -n "${DOTFILES_DEFAULT_SHELL:-}"; then {
-		custom_shell="$(command -v "${DOTFILES_DEFAULT_SHELL}")";
+	if test -n "${DOTFILES_SHELL:-}"; then {
+		custom_shell="$(command -v "${DOTFILES_SHELL}")";
 
 		if test "${DOTFILES_TMUX:-true}" == true; then {
 			local tmux_shell;
