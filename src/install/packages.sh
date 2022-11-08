@@ -64,15 +64,15 @@ function install::packages {
         # Extra nix packages for macos
         nixpkgs_level_three+=(
             nixpkgs.gawk
+            nixpkgs.bashInteractive # macos still stuck with old bash... so...
+            nixpkgs.reattach-to-user-namespace
         )
         
         # =================================================
         # = macos specific brew packages                  =
         # =================================================
         declare brewpkgs_level_one+=(
-            bash # macos still stuck with old bash... so...
             osxfuse
-            reattach-to-user-namespace
         )
 
         # Install brew if missing
@@ -86,7 +86,7 @@ function install::packages {
             PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"; # Intentionally low-prio
             eval "$(brew shellenv)";
         } fi
-        NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}";
+        NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}" || true; # Do not halt the rest of the process
     } fi
 
     if distro::is_ubuntu; then {
@@ -121,7 +121,7 @@ function install::packages {
             log::info "Installing nix";
             curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon >/dev/null 2>&1;
         } fi
-        source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
+        source "$HOME/.nix-profile/etc/profile.d/nix.sh" 2>/dev/null || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
 
         function nix-install() {
             command nix-env -iAP "$@" 2>&1 \

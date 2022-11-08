@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%318 () 
+main@bashbox%26111 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%318 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%318';
+    ___MAIN_FUNCNAME='main@bashbox%26111';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -237,7 +237,9 @@ main@bashbox%318 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "$res" && unset res
+                    printf '%s\n' "$res" use box::process::get_temp;
+                    use box::process::get_temp;
+                    unset res
                 };
             else
                 { 
@@ -255,7 +257,9 @@ main@bashbox%318 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "${res%/*}" && unset res
+                    printf '%s\n' "${res%/*}" use box::process::get_temp;
+                    use box::process::get_temp;
+                    unset res
                 };
             else
                 { 
@@ -279,7 +283,9 @@ main@bashbox%318 ()
     };
     function trap::push () 
     { 
-        local new_trap="$1" && shift;
+        local new_trap="$1" use push;
+        use push;
+        shift;
         local sig;
         for sig in $*;
         do
@@ -296,7 +302,9 @@ main@bashbox%318 ()
     };
     function trap::append () 
     { 
-        local new_trap="$1" && shift;
+        local new_trap="$1" use box::builtin::trap::append;
+        use box::builtin::trap::append;
+        shift;
         local sig;
         for sig in $*;
         do
@@ -414,8 +422,10 @@ main@bashbox%318 ()
                 os=Windows
             ;;
             *)
-                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." 1>&2;
-                printf '%s\n' "Open an issue on GitHub to add support for your OS." 1>&2;
+                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." common > use;
+                2;
+                printf '%s\n' "Open an issue on GitHub to add support for your OS." common > use;
+                2;
                 return 1
             ;;
         esac
@@ -1449,10 +1459,11 @@ main@bashbox%318 ()
         declare nixpkgs_level_two+=("$_");
         declare nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
         declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.git nixpkgs.bat nixpkgs.fzf nixpkgs.exa nixpkgs.gh);
-        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.gawk nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.tree);
+        declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.glab nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep);
         if os::is_darwin; then
             { 
-                declare brewpkgs_level_one+=(bash osxfuse reattach-to-user-namespace);
+                nixpkgs_level_three+=(nixpkgs.gawk nixpkgs.bashInteractive nixpkgs.reattach-to-user-namespace);
+                declare brewpkgs_level_one+=(osxfuse);
                 if test ! -e /opt/homebrew/Library/Taps/homebrew/homebrew-core/.git && test ! -e /usr/local/Library/Taps/homebrew/homebrew-core/.git; then
                     { 
                         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -1465,7 +1476,7 @@ main@bashbox%318 ()
                         eval "$(brew shellenv)"
                     };
                 fi;
-                NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}"
+                NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}" || true
             };
         fi;
         if distro::is_ubuntu; then
@@ -1497,7 +1508,7 @@ main@bashbox%318 ()
                 curl -sL https://nixos.org/nix/install | bash -s -- --no-daemon > /dev/null 2>&1
             };
         fi;
-        source "$HOME/.nix-profile/etc/profile.d/nix.sh" || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
+        source "$HOME/.nix-profile/etc/profile.d/nix.sh" 2> /dev/null || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
         function nix-install () 
         { 
             command nix-env -iAP "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
@@ -1539,7 +1550,9 @@ main@bashbox%318 ()
                 };
             fi;
         fi;
-        printf 'source %s\n' "$HOME/.bashbox/env" > "$HOME/$_/bashbox.bash" ) & disown
+        target="$HOME/$_/bashbox.bash";
+        rm -f "$target";
+        printf 'source %s\n' "$HOME/.bashbox/env" > "$target" ) & disown
     };
     function install::ranger () 
     { 
@@ -1950,7 +1963,7 @@ EOF
                     };
                 fi;
             fi ) || :;
-            CLOSE=true await::create_shim "$tmux_exec_path";
+            CLOSE=true await::create_shim "${tmux_exec_path:-}";
             await::signal send config_tmux_session
         } & disown
     };
@@ -2029,10 +2042,11 @@ EOF
                 await::until_true command -v $HOME/.nix-profile/bin/fish > /dev/null
             };
         fi;
+        declare fish_plugins=(PatrickF1/fzf.fish jorgebucaran/fisher);
         log::info "Installing fisher and some plugins for fish-shell";
         mkdir -p "$fish_confd_dir";
         { 
-            fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
+            fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}"
         } > /dev/null 2>&1;
         CLOSE=true await::create_shim "$fish_exec_path"
     };
@@ -2119,12 +2133,20 @@ EOF
         fi;
         git clone --depth 1 https://github.com/syl20bnr/spacemacs "$clone_dir" > /dev/null;
         await::until_true test -x "$HOME/.nix-profile/bin/emacs";
-        editor::autorun_in_tmux "emacs"
+        if is::cde; then
+            { 
+                editor::autorun_in_tmux "emacs"
+            };
+        fi
     };
     function editor::neovim::lunar () 
     { 
         local lvim_exec_path="/usr/bin/lvim";
-        editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim";
+        if is::cde; then
+            { 
+                editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim"
+            };
+        fi;
         if test ! -e "$HOME/.config/lvim"; then
             { 
                 if is::cde; then
@@ -2164,8 +2186,7 @@ EOF
     declare -r tmux_first_window_num="1";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
     declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
-    declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
-    declare -r dotfiles_sh_repos_dir="$dotfiles_sh_home/repos";
+    declare -r dotfiles_sh_repos_dir="$___self_DIR/repos";
     declare -r rclone_mount_dir="$HOME/cloudsync";
     declare -r rclone_conf_file="$HOME/.config/rclone/rclone.conf";
     declare -r rclone_profile_name="cloudsync";
@@ -2213,4 +2234,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%318 "$@";
+main@bashbox%26111 "$@";

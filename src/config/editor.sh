@@ -51,7 +51,9 @@ function editor::emacs::space {
 
 	git clone --depth 1 https://github.com/syl20bnr/spacemacs "$clone_dir" 1>/dev/null;
 	await::until_true test -x "$HOME/.nix-profile/bin/emacs";
-	editor::autorun_in_tmux "emacs";
+	if is::cde; then {
+		editor::autorun_in_tmux "emacs";
+	} fi
 }
 
 function editor::neovim::lunar {
@@ -66,7 +68,9 @@ function editor::neovim::lunar {
 	# } fi
 
 	local lvim_exec_path="/usr/bin/lvim";
-	editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim";
+	if is::cde; then {
+		editor::autorun_in_tmux "AWAIT_SHIM_PRINT_INDICATOR=true lvim";
+	} fi
 
 	# Install LunarVim as an example config
 	if test ! -e "$HOME/.config/lvim"; then {

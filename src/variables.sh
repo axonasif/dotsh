@@ -30,8 +30,8 @@ declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
 declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
 
 # Dotfiles specific
-declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
-declare -r dotfiles_sh_repos_dir="$dotfiles_sh_home/repos";
+#declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
+declare -r dotfiles_sh_repos_dir="$___self_DIR/repos";
 
 # Rclone specific
 declare -r rclone_mount_dir="$HOME/cloudsync";

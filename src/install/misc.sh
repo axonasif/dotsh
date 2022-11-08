@@ -14,7 +14,9 @@ function install::misc {
 		} else {
 			exit 0;
 		} fi
-		printf 'source %s\n' "$HOME/.bashbox/env" > "$HOME/$_/bashbox.bash";
+		target="$HOME/$_/bashbox.bash";
+		rm -f "$target";
+		printf 'source %s\n' "$HOME/.bashbox/env" > "$target";
 
 	) & disown;
 

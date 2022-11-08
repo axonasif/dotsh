@@ -16,12 +16,17 @@ function config::fish() {
 		await::until_true command -v $HOME/.nix-profile/bin/fish 1>/dev/null;
 	} fi
 
+  declare fish_plugins=(
+    PatrickF1/fzf.fish
+    jorgebucaran/fisher
+  )
+
 	# Install fisher plugin manager
 	log::info "Installing fisher and some plugins for fish-shell";
 
 	mkdir -p "$fish_confd_dir";
 	{
-		fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher';
+		fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}"
 
 		# Fisher plugins
 		# fish -c 'fisher install lilyball/nix-env.fish'; # Might not be necessary because of my own .config/fish/conf.d/bash_env.fish

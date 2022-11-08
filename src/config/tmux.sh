@@ -275,7 +275,8 @@ EOF
 			} fi
 		) || :;
 		
-		CLOSE=true await::create_shim "$tmux_exec_path";
+		CLOSE=true await::create_shim "${tmux_exec_path:-}";
+		
 		await::signal send config_tmux_session;
 		
 	 } & disown;
