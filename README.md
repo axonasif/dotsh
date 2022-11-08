@@ -45,9 +45,7 @@ In MacOS you could install these via `brew` before proceeding.
 # If you don't have homebrew already, otherwise skip this command
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-set -m # Disable job control temporarily
-bash -lic 'brew install git bash'
-set +m # Re-enable job control
+bash -lic 'set -m; brew install git bash'
 
 exec bash -li # Reload bash
 ```

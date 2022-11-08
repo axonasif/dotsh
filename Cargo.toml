@@ -1,0 +1,8 @@
+[package]
+name = "dotfiles-sh"
+version = "0.1.0"
+authors = ["AXON <axonasif@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+neovim = { git = "https://github.com/neovim/neovim" }
