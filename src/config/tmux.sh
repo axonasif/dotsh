@@ -148,7 +148,7 @@ function config::tmux() {
 		if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 			tmux::start_vimpod & disown;
 		} fi
-		config::tmux::hijack_gitpod_task_terminals &
+		config::tmux::hijack_gitpod_task_terminals & wait;
 	} fi
 
 	{

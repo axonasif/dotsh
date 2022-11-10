@@ -115,7 +115,7 @@ declare nixpkgs_level_three+=(
     nixpkgs.neofetch
     nixpkgs.p7zip
     nixpkgs.ripgrep
-    nixpkgs.rsync
+    nixpkgs.rsync # Useful for 'bashbox livetest' command
     # nixpkgs.yq
 )
 # =================================================

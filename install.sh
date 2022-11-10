@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11969 () 
+main@bashbox%72 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%11969 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%11969';
+    ___MAIN_FUNCNAME='main@bashbox%72';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -244,9 +244,7 @@ main@bashbox%11969 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "$res" use box::process::get_temp;
-                    use box::process::get_temp;
-                    unset res
+                    printf '%s\n' "$res" && unset res
                 };
             else
                 { 
@@ -264,9 +262,7 @@ main@bashbox%11969 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "${res%/*}" use box::process::get_temp;
-                    use box::process::get_temp;
-                    unset res
+                    printf '%s\n' "${res%/*}" && unset res
                 };
             else
                 { 
@@ -290,9 +286,7 @@ main@bashbox%11969 ()
     };
     function trap::push () 
     { 
-        local new_trap="$1" use push;
-        use push;
-        shift;
+        local new_trap="$1" && shift;
         local sig;
         for sig in $*;
         do
@@ -309,9 +303,7 @@ main@bashbox%11969 ()
     };
     function trap::append () 
     { 
-        local new_trap="$1" use box::builtin::trap::append;
-        use box::builtin::trap::append;
-        shift;
+        local new_trap="$1" && shift;
         local sig;
         for sig in $*;
         do
@@ -429,10 +421,8 @@ main@bashbox%11969 ()
                 os=Windows
             ;;
             *)
-                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." common > use;
-                2;
-                printf '%s\n' "Open an issue on GitHub to add support for your OS." common > use;
-                2;
+                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." 1>&2;
+                printf '%s\n' "Open an issue on GitHub to add support for your OS." 1>&2;
                 return 1
             ;;
         esac
@@ -1822,7 +1812,7 @@ CMDC
                         tmux::start_vimpod & disown
                     };
                 fi;
-                config::tmux::hijack_gitpod_task_terminals &
+                config::tmux::hijack_gitpod_task_terminals & wait
             };
         fi;
         { 
@@ -2025,7 +2015,7 @@ EOF
                 config::shell::zsh & disown
             ;;
         esac;
-        config::shell::set_default_vscode_profile &
+        config::shell::set_default_vscode_profile & wait
     };
     function config::shell::set_default_vscode_profile () 
     { 
@@ -2262,7 +2252,7 @@ EOF
         fi;
         config::editor & disown;
         log::info "Waiting for background jobs to complete" && jobs -l;
-        while test -n "$(jobs -p)" && sleep 0.2; do
+        while test -n "$(jobs -rp)" && sleep 0.2; do
             { 
                 printf '.';
                 continue
@@ -2274,4 +2264,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%11969 "$@";
+main@bashbox%72 "$@";

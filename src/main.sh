@@ -58,7 +58,7 @@ function main() {
 	# Wait for "owned" background processess to exit (i.e. processess that were not "disown"ed)
 	# it will ignore "disown"ed commands as you can see up there.
 	log::info "Waiting for background jobs to complete" && jobs -l;
-	while test -n "$(jobs -p)" && sleep 0.2; do {
+	while test -n "$(jobs -rp)" && sleep 0.2; do {
 		printf '.';
 		continue;
 	} done

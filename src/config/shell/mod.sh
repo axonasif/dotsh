@@ -19,7 +19,7 @@ function config::shell {
 		;;
 	esac
 
-	config::shell::set_default_vscode_profile &
+	config::shell::set_default_vscode_profile & wait;
 }
 
 function config::shell::set_default_vscode_profile() {
