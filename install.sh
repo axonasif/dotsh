@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%30689 () 
+main@bashbox%11969 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%30689 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%30689';
+    ___MAIN_FUNCNAME='main@bashbox%11969';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -167,7 +167,7 @@ main@bashbox%30689 ()
                     };
                 else
                     { 
-                        exec "${DOTFILES_SHELL:-bash}" -li
+                        exec bash -li
                     };
                 fi;
                 if test $? != 0; then
@@ -244,7 +244,9 @@ main@bashbox%30689 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "$res" && unset res
+                    printf '%s\n' "$res" use box::process::get_temp;
+                    use box::process::get_temp;
+                    unset res
                 };
             else
                 { 
@@ -262,7 +264,9 @@ main@bashbox%30689 ()
         else
             if res="$(mktemp -u)"; then
                 { 
-                    printf '%s\n' "${res%/*}" && unset res
+                    printf '%s\n' "${res%/*}" use box::process::get_temp;
+                    use box::process::get_temp;
+                    unset res
                 };
             else
                 { 
@@ -286,7 +290,9 @@ main@bashbox%30689 ()
     };
     function trap::push () 
     { 
-        local new_trap="$1" && shift;
+        local new_trap="$1" use push;
+        use push;
+        shift;
         local sig;
         for sig in $*;
         do
@@ -303,7 +309,9 @@ main@bashbox%30689 ()
     };
     function trap::append () 
     { 
-        local new_trap="$1" && shift;
+        local new_trap="$1" use box::builtin::trap::append;
+        use box::builtin::trap::append;
+        shift;
         local sig;
         for sig in $*;
         do
@@ -421,8 +429,10 @@ main@bashbox%30689 ()
                 os=Windows
             ;;
             *)
-                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." 1>&2;
-                printf '%s\n' "Open an issue on GitHub to add support for your OS." 1>&2;
+                printf '%s\n' "Unknown OS detected: '$kernel_name', aborting..." common > use;
+                2;
+                printf '%s\n' "Open an issue on GitHub to add support for your OS." common > use;
+                2;
                 return 1
             ;;
         esac
@@ -1442,13 +1452,13 @@ main@bashbox%30689 ()
                 nixpkgs_level_two+=(nixpkgs.git)
             };
         fi;
-        if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then
+        if is::gitpod; then
             { 
-                nixpkgs_level_two+=(nixpkgs.glab)
+                nixpkgs_level_two+=(nixpkgs."${gitpod_scm_cli}")
             };
         else
             { 
-                nixpkgs_level_two+=(nixpkgs.gh)
+                nixpkgs_level_two+=(nixpkgs.gh nixpkgs.glab)
             };
         fi;
         if os::is_darwin; then
@@ -1947,60 +1957,11 @@ EOF
             await::signal send config_tmux_session
         } & disown
     };
-    function config::shell::fish::append_hist_from_gitpod_tasks () 
+    function config::shell::bash () 
     { 
-        sed -i '/ set +o history/,/truncate -s 0 "$HISTFILE"/d' "/ide/startup.sh" 2> /dev/null || :;
-        await::signal get install_dotfiles;
-        log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
-        mkdir -p "${fish_hist_file%/*}";
-        while read -r _command; do
-            { 
-                if test -n "$_command"; then
-                    { 
-                        printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "$fish_hist_file"
-                    };
-                fi
-            };
-        done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
+        todo
     };
-    function config::shell::set_default_vscode_profile () 
-    { 
-        log::info "Setting the integrated tmux shell for VScode as default";
-        local pyh="$HOME/.bashrc.d/60-python";
-        if test -e "$pyh"; then
-            { 
-                sed -i '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh"
-            };
-        fi;
-        local json_data;
-        json_data="$(
-		if test "${DOTFILES_TMUX:-true}" == true; then {
-			cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
-			{
-				"terminal.integrated.profiles.linux": {
-					"tmuxshell": {
-						"path": "bash",
-						"args": [
-							"-c",
-							"until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x == ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main; "
-						]
-					}
-				},
-				"terminal.integrated.defaultProfile.linux": "tmuxshell"
-			}
-			JSON
-		} else {
-			shell="$(get::default_shell)" && shell="${shell##*/}";
-			cat <<-JSON
-			{
-				"terminal.integrated.defaultProfile.linux": "$shell"
-			}
-			JSON
-		} fi
-	)";
-        vscode::add_settings "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json" "$HOME/.vscode-remote/data/Machine/settings.json" <<< "$json_data"
-    };
-    function config::fish () 
+    function config::shell::fish () 
     { 
         if is::cde; then
             { 
@@ -2030,15 +1991,97 @@ EOF
         } > /dev/null 2>&1;
         CLOSE=true await::create_shim "$fish_exec_path"
     };
-    function config::gh () 
+    function config::shell::fish::append_hist_from_gitpod_tasks () 
+    { 
+        await::signal get install_dotfiles;
+        log::info "Appending .gitpod.yml:tasks shell histories to fish_history";
+        mkdir -p "${fish_hist_file%/*}";
+        while read -r _command; do
+            { 
+                if test -n "$_command"; then
+                    { 
+                        printf '\055 cmd: %s\n  when: %s\n' "$_command" "$(date +%s)" >> "$fish_hist_file"
+                    };
+                fi
+            };
+        done < <(sed "s/\r//g" /workspace/.gitpod/cmd-* 2>/dev/null || :)
+    };
+    function config::shell::zsh () 
+    { 
+        todo
+    };
+    function config::shell () 
+    { 
+        sed -i '/ set +o history/,/truncate -s 0 "$HISTFILE"/d' "/ide/startup.sh" 2> /dev/null || :;
+        case "${DEFAULT_SHELL:-fish}" in 
+            "bash")
+                config::shell::bash & disown
+            ;;
+            "fish")
+                config::shell::fish & disown;
+                config::shell::fish::append_hist_from_gitpod_tasks & disown
+            ;;
+            "zsh")
+                config::shell::zsh & disown
+            ;;
+        esac;
+        config::shell::set_default_vscode_profile &
+    };
+    function config::shell::set_default_vscode_profile () 
+    { 
+        log::info "Setting the integrated tmux shell for VScode as default";
+        local pyh="$HOME/.bashrc.d/60-python";
+        if test -e "$pyh"; then
+            { 
+                sed -i '/local lockfile=.*/,/touch "$lockfile"/c mkdir /tmp/.vcs_add.lock || exit 0' "$pyh"
+            };
+        fi;
+        local json_data;
+        json_data="$(
+		if [ "${DOTFILES_TMUX:-true}" == true ] && [ "${DOTFILES_TMUX_VSCODE:-true}" == true ]; then {
+			cat <<-'JSON' | sed "s|main|${tmux_first_session_name}|g"
+			{
+				"terminal.integrated.profiles.linux": {
+					"tmuxshell": {
+						"path": "bash",
+						"args": [
+							"-c",
+							"until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x = ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main;"
+						]
+					}
+				},
+				"terminal.integrated.defaultProfile.linux": "tmuxshell"
+			}
+			JSON
+		} else {
+			shell="$(get::default_shell)" && shell="${shell##*/}";
+			cat <<-JSON
+			{
+				"terminal.integrated.defaultProfile.linux": "$shell"
+			}
+			JSON
+		} fi
+	)";
+        vscode::add_settings "$vscode_machine_settings_file" "$HOME/.vscode-server/data/Machine/settings.json" "$HOME/.vscode-remote/data/Machine/settings.json" <<< "$json_data"
+    };
+    function config::scm_cli () 
     { 
         local tarball_url gp_credentials;
         await::until_true command -v gh > /dev/null;
         await::for_vscode_ide_start;
+        local scm_cli_args=("${gitpod_scm_cli}" auth login);
+        case "$gitpod_scm_cli" in 
+            "gh")
+                scm_cli_args+=(--with-token)
+            ;;
+            "glab")
+                scm_cli_args+=(--stdin)
+            ;;
+        esac;
         local token && if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then
             { 
                 local tries=1;
-                until printf '%s\n' "$token" | gh auth login --with-token > /dev/null 2>&1; do
+                until printf '%s\n' "$token" | "${scm_cli_args[@]}" > /dev/null 2>&1; do
                     { 
                         if test $tries -gt 5; then
                             { 
@@ -2141,6 +2184,7 @@ EOF
     declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
     declare fish_plugins+=(PatrickF1/fzf.fish jorgebucaran/fisher);
     : "${DOTFILES_TMUX:=true}";
+    : "${DOTFILES_TMUX_VSCODE:=true}";
     declare -r tmux_first_session_name="main";
     declare -r tmux_first_window_num="1";
     : "${DOTFILES_SPAWN_SSH_PROTO:=true}";
@@ -2173,6 +2217,14 @@ EOF
     } fi
     printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
 )";
+    declare -r gitpod_scm_cli="$(
+	if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]]     && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then {
+		: "glab";
+    } else {
+		: "gh";
+    } fi
+	printf '%s\n' "$_";
+)";
     declare -r dotfiles_sh_repos_dir="$___self_DIR/repos";
     declare -r rclone_mount_dir="$HOME/cloudsync";
     declare -r rclone_conf_file="$HOME/.config/rclone/rclone.conf";
@@ -2198,15 +2250,14 @@ EOF
         install::misc & disown;
         install::dotfiles & disown;
         install::filesync & disown;
-        config::tmux & config::fish & disown;
-        if is::cde; then
+        config::tmux & if is::cde; then
             { 
-                config::shell::set_default_vscode_profile & config::shell::fish::append_hist_from_gitpod_tasks & disown
+                config::shell &
             };
         fi;
         if is::gitpod; then
             { 
-                config::gh & disown
+                config::scm_cli & disown
             };
         fi;
         config::editor & disown;
@@ -2223,4 +2274,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%30689 "$@";
+main@bashbox%11969 "$@";

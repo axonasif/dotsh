@@ -15,7 +15,7 @@ function try_sudo() {
 	"$@" 2>/dev/null || sudo "$@";
 }
 
-function get::default_shell() {
+function get::default_shell {
 	function get_tmux_shell {
 		local shell;
 		shell="$(tmux start-server\; display -p '#{default-shell}' 2>/dev/null)" || true;

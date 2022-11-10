@@ -187,7 +187,7 @@ livetest() (
 			if test "${DOTFILES_TMUX:-true}" == true; then {
 				AWAIT_SHIM_PRINT_INDICATOR=true tmux attach;
 			} else {
-				exec "${DOTFILES_SHELL:-bash}" -li;
+				exec bash -li;
 			} fi
 
 			# Fallback

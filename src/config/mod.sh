@@ -1,5 +1,4 @@
 use tmux;
 use shell;
-use fish;
-use gh;
+use scm_cli;
 use editor;

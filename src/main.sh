@@ -38,17 +38,15 @@ function main() {
 	
 	# Tmux + plugins + set as default shell for VSCode + create gitpod-tasks as tmux-windows
 	config::tmux &
-	config::fish & disown;
 
 	# Shell + Fish hacks
 	if is::cde; then {
-		config::shell::set_default_vscode_profile &
-		config::shell::fish::append_hist_from_gitpod_tasks & disown;
+		config::shell &
 	} fi
 
 	if is::gitpod; then {
 		# Install and login into gh
-		config::gh & disown;
+		config::scm_cli & disown;
 	} fi
 
 	# Configure neovim

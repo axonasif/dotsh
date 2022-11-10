@@ -22,11 +22,14 @@ function install::packages {
     if ! command -v git 1>/dev/null; then {
         nixpkgs_level_two+=(nixpkgs.git);
     } fi
-    if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] \
-    && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then {
-        nixpkgs_level_two+=(nixpkgs.glab);
+    
+    if is::gitpod; then {
+        nixpkgs_level_two+=(nixpkgs."${gitpod_scm_cli}");
     } else {
-        nixpkgs_level_two+=(nixpkgs.gh);
+        nixpkgs_level_two+=(
+            nixpkgs.gh
+            nixpkgs.glab
+        )
     } fi
 
     if os::is_darwin; then {

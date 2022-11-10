@@ -36,8 +36,9 @@ declare fish_plugins+=(
 # = TMUX OPTIONS                                  =
 # =================================================
 # Tmux is enabled by default.
-: "${DOTFILES_TMUX:=true}"
-# TODO: DOTFILES_TMUX_VSCODE
+: "${DOTFILES_TMUX:=true}";
+# Tmux integration for VSCode
+: "${DOTFILES_TMUX_VSCODE:=true}";
 declare -r tmux_first_session_name="main";
 declare -r tmux_first_window_num="1";
 
@@ -50,7 +51,7 @@ declare -r tmux_first_window_num="1";
 : "${DOTFILES_SPAWN_SSH_PROTO:=true}";
 # When the below option is true, VSCode will be
 # killed after you've established a SSH connection
-# with the workspace.
+# with the workspace to save RAM and CPU.
 : "${DOTFILES_NO_VSCODE:=false}"; #
 
 
@@ -157,6 +158,15 @@ declare -r vscode_machine_settings_file="$(
         : "$HOME";
     } fi
     printf '%s\n' "$_/.vscode-remote/data/Machine/settings.json";
+)";
+declare -r gitpod_scm_cli="$(
+	if [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *gitlab* ]] \
+    && ! [[ "${GITPOD_WORKSPACE_CONTEXT_URL:-}" == *github.com/* ]]; then {
+		: "glab";
+    } else {
+		: "gh";
+    } fi
+	printf '%s\n' "$_";
 )";
 
 
