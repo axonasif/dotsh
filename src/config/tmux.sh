@@ -276,6 +276,10 @@ EOF
 			} fi
 		) || :;
 		
+		if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
+			sleep 2;
+		} fi 
+
 		CLOSE=true await::create_shim "${tmux_exec_path:-}";
 		
 		await::signal send config_tmux_session;

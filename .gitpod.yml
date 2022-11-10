@@ -32,7 +32,7 @@ tasks:
     command: |
       gp sync-await compile;
       source "$HOME/.bashbox/env";
-      bashbox live; # `live` is a custom project command defined in `Bashbox.sh`
+      bashbox livetest; # `live` is a custom project command defined in `Bashbox.sh`
 
   - name: Bind mount repos dir
     command: |
