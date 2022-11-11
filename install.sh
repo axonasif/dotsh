@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%13432 () 
+main@bashbox%19100 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,12 +55,12 @@ main@bashbox%13432 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%13432';
+    ___MAIN_FUNCNAME='main@bashbox%19100';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::23ec8e3 https://github.com/bashbox/libtmux);
+    ___self_DEPENDENCIES=(std::23ec8e3 https://github.com/bashbox/libtmux::fa10570);
     ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -91,7 +91,7 @@ main@bashbox%13432 ()
     function livetest () 
     { 
         ( local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
-        source "$_arg_path/src/utils/common.sh";
+        source "$_target_release_dir/utils/common.sh";
         cmd="bashbox build --release";
         log::info "Running $cmd";
         $cmd || exit 1;
@@ -879,19 +879,24 @@ main@bashbox%13432 ()
             };
         fi
     };
-    function tmux::get_option () 
+    function tmux::show-option () 
     { 
         local opt="$1";
-        local def_val="${DEFAULT_VALUE}";
         local opt_val;
-        if opt_val="$(tmux show-option -gv "$opt")" 2> /dev/null; then
+        if opt_val="$(tmux start-server\; show-option -gv "$opt")" 2> /dev/null; then
             { 
                 printf '%s\n' "$opt_val"
             };
         else
-            { 
-                printf '%s\n' "$def_val"
-            };
+            if test -v DEFAULT_VALUE; then
+                { 
+                    printf '%s\n' "$DEFAULT_VALUE"
+                };
+            else
+                { 
+                    return 1
+                };
+            fi;
         fi
     };
     function is::gitpod () 
@@ -1726,13 +1731,23 @@ main@bashbox%13432 ()
     readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
     readonly WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m';
     readonly PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m';
-    function tmux::create_session () 
+    function tmux::new-session () 
     { 
-        tmux new-session -n home -ds "$TMUX_SESSION_NAME" "$@"
+        declare +x WINDOW_NAME SESSION_NAME;
+        tmux new-session -n "${WINDOW_NAME:-home}" -ds "$SESSION_NAME" "$@"
     };
-    function tmux::create_window () 
+    function await::until_tmux_has-session () 
     { 
-        tmux new-window -n "${WINDOW_NAME:"${PWD##*/}"}" -t "${TMUX_SESSION_NAME}" "$@"
+        until tmux has-session 2> /dev/null; do
+            { 
+                sleep 0.5
+            };
+        done
+    };
+    function tmux::new-window () 
+    { 
+        declare +x WINDOW_NAME SESSION_NAME;
+        tmux new-window -n "${WINDOW_NAME:-"${PWD##*/}"}" -t "${SESSION_NAME}" "$@"
     };
     function tmux_create_session () 
     { 
@@ -2293,7 +2308,11 @@ EOF
     declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
-        filesync::cli "$@";
+        if test -n "${@:-}"; then
+            { 
+                filesync::cli "$@"
+            };
+        fi;
         if ! is::cde; then
             { 
                 process::preserve_sudo
@@ -2335,4 +2354,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%13432 "$@";
+main@bashbox%19100 "$@";

@@ -6,7 +6,7 @@ AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
 	std::23ec8e3
-  https://github.com/bashbox/libtmux
+  https://github.com/bashbox/libtmux::fa10570
 )
 REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"
@@ -40,7 +40,7 @@ livetest-min() (
 
 livetest() (
 	local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}"; # From src/dockerfiles/testing-full.Dockerfile
-	source "$_arg_path/src/utils/common.sh";
+	source "$_target_release_dir/utils/common.sh";
 
 	cmd="bashbox build --release";
 	log::info "Running $cmd";
