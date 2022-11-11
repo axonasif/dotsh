@@ -1,3 +1,5 @@
+use libtmux::common;
+
 function is::gitpod() {
       # Check for existent of this gitpod-specific file and the ENV var.
       test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT;
@@ -16,20 +18,6 @@ function try_sudo() {
 }
 
 function get::default_shell {
-	function get_tmux_shell {
-		local shell;
-		shell="$(tmux start-server\; display -p '#{default-shell}' 2>/dev/null)" || true;
-		
-		if test -z "${shell:-}"; then {
-			shell="$(tmux start-server\; run-shell '\echo #{default-shell}' 2>/dev/null)" || true;
-		} fi
-
-		if test -n "${shell:-}"; then {
-			printf '%s\n' "${shell}";
-		} else {
-			false;
-		} fi
-	}
 
 	await::signal get install_dotfiles;
 	
@@ -43,7 +31,7 @@ function get::default_shell {
 
 		if test "${DOTFILES_TMUX:-true}" == true; then {
 			local tmux_shell;
-			if tmux_shell="$(get_tmux_shell)" \
+			if tmux_shell="$(tmux::show-option default-shell)" \
 			&& [ "$tmux_shell" != "$custom_shell" ]; then {
 				(
 					exec 1>&-;
@@ -56,7 +44,7 @@ function get::default_shell {
 		} fi
 
 	} elif test "${DOTFILES_TMUX:-true}" == true; then {
-		if custom_shell="$(get_tmux_shell)" \
+		if custom_shell="$(tmux::show-option default-shell)" \
 		&& [ "${custom_shell}" == "/bin/sh" ]; then {
 			custom_shell="$(command -v bash)";
 		} fi

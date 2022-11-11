@@ -11,6 +11,10 @@ use config;
 use variables;
 
 function main() {
+
+  # Hook CLIs
+  filesync::cli "$@";
+
 	# Ensure and preserve sudo when not CDE
 	if ! is::cde; then {
 		process::preserve_sudo;

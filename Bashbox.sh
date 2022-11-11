@@ -5,7 +5,8 @@ CODENAME="dotfiles"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
-	std::2a98a57
+	std::23ec8e3
+  https://github.com/bashbox/libtmux
 )
 REPOSITORY="https://github.com/axonasif/dotfiles.git"
 BASHBOX_COMPAT="0.3.9~"

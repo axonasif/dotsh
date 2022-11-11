@@ -3,9 +3,9 @@ function install::filesync() {
     if is::cde; then {
         log::info "Performing local filesync, scoped to ${HOSTNAME:-"${GITPOD_WORKSPACE_ID:-}"} workspace";
         if test -e "$workspace_persist_dir"; then {
-            filesync::restore_local;
+          TARGET="$workspace_persist_dir" filesync::restore_local;
         } else {
-            filesync::save_local "${files_to_persist_locally[@]}";
+          TARGET="$workspace_persist_dir" filesync::save_local "${files_to_persist_locally[@]}";
         } fi
     } fi
 
@@ -27,59 +27,120 @@ function install::filesync() {
         sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
 
         # Install dotfiles from the cloud provider
-        local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
-        local times=0;
-        until test -e "$rclone_dotfiles_dir"; do {
+        declare rclone_dotfiles_sh_dir="$rclone_mount_dir/.dotfiles-sh";
+        declare rclone_dotfiles_sh_sync_dir="$rclone_dotfiles_sh_dir/sync";
+        declare rclone_dotfiles_sh_sync_relative_home_dir="$rclone_dotfiles_sh_sync_dir/relhome";
+        declare rclone_dotfiles_sh_sync_rootfs_dir="$rclone_dotfiles_sh_sync_dir/rootfs";
+
+        declare times=0;
+        until test -e "$rclone_dotfiles_sh_dir"; do {
             sleep 1;
             if test $times -gt 10; then {
                 break;
             } fi
             ((times=times+1));
         } done
-        if test -e "$rclone_dotfiles_dir"; then {
-            #  WHERE-TO          FUNCTION              SOURCE
-            TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_dir";
+
+        # Relative home dotfiles
+        if test -e "$rclone_dotfiles_sh_sync_relative_home_dir"; then {
+            #  WHERE-TO          FUNCTION                         SOURCE
+            TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_sh_sync_relative_home_dir";
+        } fi
+
+        # Full rootfs absolute sync
+        if test -e "$rclone_dotfiles_sh_sync_rootfs_dir"; then {
+          TARGET="$rclone_dotfiles_sh_sync_rootfs_dir" filesync::restore_local;
         } fi
 
     } fi
 }
 
 function filesync::restore_local {
-    mkdir -p "$workspace_persist_dir";
-    local _input _persisted_node _persisted_node_dir;
+    declare +x TARGET;
+    declare target_persist_dir="${TARGET}";
+    mkdir -p "$target_persist_dir";
+    declare _input _persisted_node _persisted_node_dir;
 
     while read -r _input; do {
-        _persisted_node="${_input#"${workspace_persist_dir}"}"
+        _persisted_node="${_input#"${target_persist_dir}"}"
         _persisted_node_dir="${_persisted_node%/*}";
 
         if test -e "$_persisted_node"; then {
             log::info "Overwriting ${_input} with workspace persisted file";
             try_sudo mkdir -p "${_input%/*}";
-            ln -sf "$_persisted_node" "$_input";
+            try_sudo ln -sf "$_persisted_node" "$_input";
         } fi
-    } done < <(find "$workspace_persist_dir" -type f)
+    } done < <(find "$target_persist_dir" -type f)
 }
 
 function filesync::save_local() {
-    mkdir -p "$workspace_persist_dir";
-    local _input _input_dir _persisted_node _persisted_node_dir;
+    declare +x TARGET;
+    declare target_persist_dir="${TARGET}";
+    mkdir -p "$target_persist_dir";
+    declare _input _input_dir _persisted_node _persisted_node_dir;
 
     for _input in "$@"; do {
-        _persisted_node="${workspace_persist_dir}/${_input}";
-        _persisted_node_dir="${_persisted_node%/*}";
-        _input_dir="${_input%/*}";
+        if test ! -v RELATIVE_HOME; then {
+          _persisted_node="${target_persist_dir}/${_input}";
+          _persisted_node_dir="${_persisted_node%/*}";
+          _input_dir="${_input%/*}";
+        } else {
+          _persisted_node="${target_persist_dir}/${_input#"$HOME"}";
+          _persisted_node_dir="${_persisted_node%/*}";
+          _input_dir="${_input%/*}";
+        } fi
+
+        if test "$_input_dir" == "$_input"; then { 
+          log::error "Something went wrong, _input_dir is same as _input" 1 || return;
+        } fi
 
         if test ! -e "$_persisted_node"; then {
-            mkdir -p "$_persisted_node_dir" "$_input_dir";
-            if test ! -d "$_input"; then {
-                printf '' > "$_input";
+            try_sudo mkdir -p "$_persisted_node_dir";
+
+            if test ! -e "$_input" && test ! -d "$_input"; then {
+                try_sudo sh -c "mkdir -p \"$_input_dir\" && printf '' > \"$_input\"";
             } fi
-            cp -ra "$_input" "$_persisted_node_dir";
-            
-            rm -rf "$_input";
-            ln -sr "$_persisted_node" "$_input";
+
+            try_sudo cp -ra "$_input" "$_persisted_node_dir";
+            try_sudo rm -rf "$_input";
+            try_sudo ln -sr "$_persisted_node" "$_input";
         } else {
             log::warn "$_input is already persisted";
         } fi
     } done
+}
+
+function filesync::cli() {
+
+  case "$1" in
+    "syncfiles")
+      shift;
+
+      case "$1" in
+        -h|--help)
+          printf '%s\t%s\n' \
+            "-rh" "Save in global home" \
+            "-h|--help" "This help message";
+          exit;
+          ;;
+        -gh|--global-home)
+          declare arg_rel_home=true;
+          ;;
+      esac
+
+      declare file filelist;
+
+      for file in "$@"; do {
+        filelist+=("$(readlink "$file")") || true;
+      } done
+      
+      if test ! -v arg_rel_home; then {
+        filesync::save_local "${filelist[@]}";
+      } else {
+        RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}";
+      } fi
+      
+      exit;
+    ;;
+  esac
 }

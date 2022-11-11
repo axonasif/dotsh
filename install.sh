@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%18885 () 
+main@bashbox%13432 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,12 +55,12 @@ main@bashbox%18885 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%18885';
+    ___MAIN_FUNCNAME='main@bashbox%13432';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::2a98a57);
+    ___self_DEPENDENCIES=(std::23ec8e3 https://github.com/bashbox/libtmux);
     ___self_REPOSITORY="https://github.com/axonasif/dotfiles.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -879,6 +879,21 @@ main@bashbox%18885 ()
             };
         fi
     };
+    function tmux::get_option () 
+    { 
+        local opt="$1";
+        local def_val="${DEFAULT_VALUE}";
+        local opt_val;
+        if opt_val="$(tmux show-option -gv "$opt")" 2> /dev/null; then
+            { 
+                printf '%s\n' "$opt_val"
+            };
+        else
+            { 
+                printf '%s\n' "$def_val"
+            };
+        fi
+    };
     function is::gitpod () 
     { 
         test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT
@@ -897,25 +912,6 @@ main@bashbox%18885 ()
     };
     function get::default_shell () 
     { 
-        function get_tmux_shell () 
-        { 
-            local shell;
-            shell="$(tmux start-server\; display -p '#{default-shell}' 2>/dev/null)" || true;
-            if test -z "${shell:-}"; then
-                { 
-                    shell="$(tmux start-server\; run-shell '\echo #{default-shell}' 2>/dev/null)" || true
-                };
-            fi;
-            if test -n "${shell:-}"; then
-                { 
-                    printf '%s\n' "${shell}"
-                };
-            else
-                { 
-                    false
-                };
-            fi
-        };
         await::signal get install_dotfiles;
         local custom_shell;
         if test "${DOTFILES_TMUX:-true}" == true; then
@@ -929,7 +925,7 @@ main@bashbox%18885 ()
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         local tmux_shell;
-                        if tmux_shell="$(get_tmux_shell)" && [ "$tmux_shell" != "$custom_shell" ]; then
+                        if tmux_shell="$(tmux::show-option default-shell)" && [ "$tmux_shell" != "$custom_shell" ]; then
                             { 
                                 ( exec 1>&-;
                                 until tmux has-session 2> /dev/null; do
@@ -946,7 +942,7 @@ main@bashbox%18885 ()
         else
             if test "${DOTFILES_TMUX:-true}" == true; then
                 { 
-                    if custom_shell="$(get_tmux_shell)" && [ "${custom_shell}" == "/bin/sh" ]; then
+                    if custom_shell="$(tmux::show-option default-shell)" && [ "${custom_shell}" == "/bin/sh" ]; then
                         { 
                             custom_shell="$(command -v bash)"
                         };
@@ -1154,14 +1150,6 @@ main@bashbox%18885 ()
         local file="$1";
         await::until_true test -e "$file"
     };
-    function await::for_vscode_ide_start () 
-    { 
-        if grep -q 'supervisor' /proc/1/cmdline; then
-            { 
-                gp ports await 23000 > /dev/null
-            };
-        fi
-    };
     function await::signal () 
     { 
         local kind="$1";
@@ -1179,6 +1167,14 @@ main@bashbox%18885 ()
                 printf 'done\n' >> "$status_file"
             ;;
         esac
+    };
+    function await::for_vscode_ide_start () 
+    { 
+        if grep -q 'supervisor' /proc/1/cmdline; then
+            { 
+                gp ports await 23000 > /dev/null
+            };
+        fi
     };
     function await::create_shim () 
     { 
@@ -1579,11 +1575,11 @@ main@bashbox%18885 ()
                 log::info "Performing local filesync, scoped to ${HOSTNAME:-"${GITPOD_WORKSPACE_ID:-}"} workspace";
                 if test -e "$workspace_persist_dir"; then
                     { 
-                        filesync::restore_local
+                        TARGET="$workspace_persist_dir" filesync::restore_local
                     };
                 else
                     { 
-                        filesync::save_local "${files_to_persist_locally[@]}"
+                        TARGET="$workspace_persist_dir" filesync::save_local "${files_to_persist_locally[@]}"
                     };
                 fi
             };
@@ -1596,9 +1592,12 @@ main@bashbox%18885 ()
                 log::info "Performing cloud filesync, scoped globally";
                 mkdir -p "${rclone_mount_dir}";
                 sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
-                local rclone_dotfiles_dir="$rclone_mount_dir/dotfiles";
-                local times=0;
-                until test -e "$rclone_dotfiles_dir"; do
+                declare rclone_dotfiles_sh_dir="$rclone_mount_dir/.dotfiles-sh";
+                declare rclone_dotfiles_sh_sync_dir="$rclone_dotfiles_sh_dir/sync";
+                declare rclone_dotfiles_sh_sync_relative_home_dir="$rclone_dotfiles_sh_sync_dir/relhome";
+                declare rclone_dotfiles_sh_sync_rootfs_dir="$rclone_dotfiles_sh_sync_dir/rootfs";
+                declare times=0;
+                until test -e "$rclone_dotfiles_sh_dir"; do
                     { 
                         sleep 1;
                         if test $times -gt 10; then
@@ -1609,9 +1608,14 @@ main@bashbox%18885 ()
                         ((times=times+1))
                     };
                 done;
-                if test -e "$rclone_dotfiles_dir"; then
+                if test -e "$rclone_dotfiles_sh_sync_relative_home_dir"; then
                     { 
-                        TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_dir"
+                        TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_sh_sync_relative_home_dir"
+                    };
+                fi;
+                if test -e "$rclone_dotfiles_sh_sync_rootfs_dir"; then
+                    { 
+                        TARGET="$rclone_dotfiles_sh_sync_rootfs_dir" filesync::restore_local
                     };
                 fi
             };
@@ -1619,43 +1623,62 @@ main@bashbox%18885 ()
     };
     function filesync::restore_local () 
     { 
-        mkdir -p "$workspace_persist_dir";
-        local _input _persisted_node _persisted_node_dir;
+        declare +x TARGET;
+        declare target_persist_dir="${TARGET}";
+        mkdir -p "$target_persist_dir";
+        declare _input _persisted_node _persisted_node_dir;
         while read -r _input; do
             { 
-                _persisted_node="${_input#"${workspace_persist_dir}"}";
+                _persisted_node="${_input#"${target_persist_dir}"}";
                 _persisted_node_dir="${_persisted_node%/*}";
                 if test -e "$_persisted_node"; then
                     { 
                         log::info "Overwriting ${_input} with workspace persisted file";
                         try_sudo mkdir -p "${_input%/*}";
-                        ln -sf "$_persisted_node" "$_input"
+                        try_sudo ln -sf "$_persisted_node" "$_input"
                     };
                 fi
             };
-        done < <(find "$workspace_persist_dir" -type f)
+        done < <(find "$target_persist_dir" -type f)
     };
     function filesync::save_local () 
     { 
-        mkdir -p "$workspace_persist_dir";
-        local _input _input_dir _persisted_node _persisted_node_dir;
+        declare +x TARGET;
+        declare target_persist_dir="${TARGET}";
+        mkdir -p "$target_persist_dir";
+        declare _input _input_dir _persisted_node _persisted_node_dir;
         for _input in "$@";
         do
             { 
-                _persisted_node="${workspace_persist_dir}/${_input}";
-                _persisted_node_dir="${_persisted_node%/*}";
-                _input_dir="${_input%/*}";
+                if test ! -v RELATIVE_HOME; then
+                    { 
+                        _persisted_node="${target_persist_dir}/${_input}";
+                        _persisted_node_dir="${_persisted_node%/*}";
+                        _input_dir="${_input%/*}"
+                    };
+                else
+                    { 
+                        _persisted_node="${target_persist_dir}/${_input#"$HOME"}";
+                        _persisted_node_dir="${_persisted_node%/*}";
+                        _input_dir="${_input%/*}"
+                    };
+                fi;
+                if test "$_input_dir" == "$_input"; then
+                    { 
+                        log::error "Something went wrong, _input_dir is same as _input" 1 || return
+                    };
+                fi;
                 if test ! -e "$_persisted_node"; then
                     { 
-                        mkdir -p "$_persisted_node_dir" "$_input_dir";
-                        if test ! -d "$_input"; then
+                        try_sudo mkdir -p "$_persisted_node_dir";
+                        if test ! -e "$_input" && test ! -d "$_input"; then
                             { 
-                                printf '' > "$_input"
+                                try_sudo sh -c "mkdir -p \"$_input_dir\" && printf '' > \"$_input\""
                             };
                         fi;
-                        cp -ra "$_input" "$_persisted_node_dir";
-                        rm -rf "$_input";
-                        ln -sr "$_persisted_node" "$_input"
+                        try_sudo cp -ra "$_input" "$_persisted_node_dir";
+                        try_sudo rm -rf "$_input";
+                        try_sudo ln -sr "$_persisted_node" "$_input"
                     };
                 else
                     { 
@@ -1665,17 +1688,59 @@ main@bashbox%18885 ()
             };
         done
     };
+    function filesync::cli () 
+    { 
+        case "$1" in 
+            "syncfiles")
+                shift;
+                case "$1" in 
+                    -h | --help)
+                        printf '%s\t%s\n' "-rh" "Save in global home" "-h|--help" "This help message";
+                        exit
+                    ;;
+                    -gh | --global-home)
+                        declare arg_rel_home=true
+                    ;;
+                esac;
+                declare file filelist;
+                for file in "$@";
+                do
+                    { 
+                        filelist+=("$(readlink "$file")") || true
+                    };
+                done;
+                if test ! -v arg_rel_home; then
+                    { 
+                        filesync::save_local "${filelist[@]}"
+                    };
+                else
+                    { 
+                        RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}"
+                    };
+                fi;
+                exit
+            ;;
+        esac
+    };
     readonly RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m';
     readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
     readonly WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m';
     readonly PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m';
     function tmux::create_session () 
     { 
-        tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get::default_shell)" -li 2> /dev/null || :
+        tmux new-session -n home -ds "$TMUX_SESSION_NAME" "$@"
     };
     function tmux::create_window () 
     { 
-        tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t "$tmux_first_session_name" "$@"
+        tmux new-window -n "${WINDOW_NAME:"${PWD##*/}"}" -t "${TMUX_SESSION_NAME}" "$@"
+    };
+    function tmux_create_session () 
+    { 
+        SESSION_NAME="$tmux_first_session_name" WINDOW_NAME="editor" tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -- "$(get::default_shell)" -li 2> /dev/null || :
+    };
+    function tmux_create_window () 
+    { 
+        SESSION_NAME="$tmux_first_session_name" tmux::new-window "$@"
     };
     function tmux::start_vimpod () 
     { 
@@ -1744,7 +1809,7 @@ CMDC
                                             pkill -9 vimpod || :
                                         };
                                     fi;
-                                    AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
+                                    AWAIT_SHIM_PRINT_INDICATOR=true tmux_create_session;
                                     exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num}
                                 };
                             else
@@ -1770,7 +1835,7 @@ CMDC
         };
         if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2> /dev/null; then
             { 
-                local function_exports=(tmux::create_session tmux::inject get::task_cmd get::default_shell await::signal);
+                local function_exports=(tmux::new-session tmux_create_session tmux::inject get::task_cmd tmux::show-option get::default_shell await::signal);
                 printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "$(declare -f "${function_exports[@]}")" 'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
@@ -1827,7 +1892,7 @@ CMDC
             await::signal send config_tmux;
             if is::cde; then
                 { 
-                    tmux::create_session
+                    tmux_create_session
                 };
             fi;
             ( if is::gitpod; then
@@ -1884,7 +1949,7 @@ CMDC
 						} fi
 					)";
                             cmd="$(get::task_cmd "$cmd")";
-                            WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
+                            WINDOW_NAME="$name" tmux_create_window -d -- bash -cli "$cmd";
                             ((arr_elem=arr_elem+1))
                         };
                     done;
@@ -2228,6 +2293,7 @@ EOF
     declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
+        filesync::cli "$@";
         if ! is::cde; then
             { 
                 process::preserve_sudo
@@ -2269,4 +2335,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%18885 "$@";
+main@bashbox%13432 "$@";

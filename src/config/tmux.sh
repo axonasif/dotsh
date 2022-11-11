@@ -1,12 +1,16 @@
 use std::term::colors;
+use libtmux::session;
+use libtmux::window;
 
-function tmux::create_session() {
-	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get::default_shell)" -li 2>/dev/null || :;
-	#\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 
+function tmux_create_session() {
+	SESSION_NAME="$tmux_first_session_name" \
+  WINDOW_NAME="editor" \
+    tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" \
+      -- "$(get::default_shell)" -li 2>/dev/null || :;
 }
 
-function tmux::create_window() {
-	tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t "$tmux_first_session_name" "$@";
+function tmux_create_window() {
+  SESSION_NAME="$tmux_first_session_name" tmux::new-window "$@";
 }
 
 function tmux::start_vimpod() {
@@ -74,7 +78,7 @@ function config::tmux::hijack_gitpod_task_terminals {
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
 					# I'll go with the second option for now
 					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
-					AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
+					AWAIT_SHIM_PRINT_INDICATOR=true tmux_create_session;
 					exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
 				} else {
 					exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
@@ -100,9 +104,11 @@ function config::tmux::hijack_gitpod_task_terminals {
 	if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2>/dev/null; then {
 		# log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		local function_exports=(
-			tmux::create_session
+      tmux::new-session
+			tmux_create_session
 			tmux::inject
 			get::task_cmd
+      tmux::show-option
 			get::default_shell
 			await::signal
 		)
@@ -163,7 +169,7 @@ function config::tmux() {
 		await::signal send config_tmux;
 
 		if is::cde; then {
-			tmux::create_session;
+			tmux_create_session;
 		} fi
 	
 		(
@@ -212,7 +218,7 @@ function config::tmux() {
 					)";
 					cmd="$(get::task_cmd "$cmd")";
 
-					WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
+					WINDOW_NAME="$name" tmux_create_window -d -- bash -cli "$cmd";
 
 					((arr_elem=arr_elem+1));
 				} done
