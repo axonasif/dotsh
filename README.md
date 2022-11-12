@@ -1,25 +1,14 @@
 # Introduction
 
-A fast asynchronous dotfiles and system configuration installer for use on Gitpod and locally, batteries included.
-
-What's special about it? Nothing. It's compilation of some automation to create consistent terminal-focused dev environment across different systems, that's all. There are no configuration files (such as `.yaml`) for this, it is meant to be edited from the source code and compiled.
-
-## Features
-
-- Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
-- Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
-  - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
-- Features **[live testing of dotfiles](#live-test-changes)** within your existing Gitpod workspace or locally so that you can prototype quickly without compromising your environment.
-- Works both locally and on Gitpod.
-- Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the task scripts.
-- Save/restore/persist files **across** or **scoped-to-specific** Gitpod workspaces.
-- Preserve existing host configs (e.g. `.bashrc`, `.gitconfig` and etc.) while applying `dotfiles` but inject your own configs on top of them when necessary.
+A simple and fast dotfiles + system-configuration installer optimized for Gitpod (can be used locally too), batteries included. Is this another dotfiles-manager? Nope. In fact, you have options to install your dotfiles via one of the many managers if you're using one, otherwise it tries to symlink natively with it's own implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience.
 
 # Quickstart for Gitpod
 
 Simply put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod.io/preferences).
 
 ![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
+
+After you've opened a workspace, run `dotsh config` for interactive configuration wizard.
 
 Learn more about dotfiles behavior on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
@@ -57,6 +46,73 @@ After you've made sure that the prerequisites are met, run:
 git clone https://github.com/axonasif/dotfiles-sh ~/.dotfiles
 bash ~/.dotfiles/install.sh
 ```
+
+# Features
+
+Most of these features stemmed from my personal needs of having a more productive terminal environment on Gitpod, I simply couldn't wait but try implementing them myselves as long it's possible from the context of `dotfiles` layer of Gitpod.
+
+## Fast installation
+
+The [install.sh](./install.sh) executes **everything** in parallel while still keeping in sync between multiple `jobs`, this leads to a fast installation. Your workspace starts quick nomatter how many things you configure/install. [install.sh](./install.sh) will exit in just 1 second. If I were to install and configure all the things in the regular way, it'd take at least 60seconds for the dotfiles-installation itself, rendering big dotfiles unsable. Several [tricks](#awaitcreate_shim) are used to start fast without crashing things that rely on shell and tmux (for example) while they're being installed in the background.
+
+<insert-gif-of-bashbox-live>
+
+<spoiler-more-tech-details>
+
+## Live testing of dotfiles and Gitpod workspace config
+
+### Dotfiles
+- Features **[live testing of dotfiles](#live-test-changes)** within your existing Gitpod workspace or locally so that you can prototype quickly without compromising your environment.
+
+### Gitpod workspace configuration
+
+**Note:** This is optimized for Gitpod and will not work elsewhere. Use [run-gp] if you want to run a Gitpod workspace locally.
+
+## Cross-workspace and local filesync
+
+The ephemeral nature of Gitpod may seem like a roadblock but not anymore as long you can program a reproducable environment. While dotfiles help with creating reproducable environments but one key part is private file synchronization. This let's you sync files across workspaces or locally to individual workspaces. That means you could persist your login for CLI programs, cache big files and so on. Obviously, it's gluing together external tools(`rclone`) to accomplish this, nothing special on it's own.
+
+- Save/restore/persist files **across** or **scoped-to-specific** Gitpod workspaces.
+
+## Tmux integration
+- Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
+  - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
+
+## Optimized for CLI EDITORS
+
+Your favorite CLI editor is auto installed for you. Also several common CLI tools, dependencies, editor plugins/presets are install and configured based on your preference. So you can easily get started with your own editor-config without worrying about tweaking the system.
+
+### Emacs
+
+### Helix
+
+### Neovim
+
+### Vim
+
+## Optimized for custom shell
+
+- Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the Gitpod task scripts.
+
+
+## Easy SHH'ing through local terminal
+
+## Host aware multi-layer dotfiles installation
+
+- Preserve existing host configs (e.g. `.bashrc`, `.gitconfig` and etc.) while applying `dotfiles` but inject your own configs on top of them when necessary.
+
+If you find any conflicting config files, please raise a bug report.
+
+- Works both locally and on Gitpod.
+
+## Easy cross-platform package installation
+
+Again, on the shoulders of the giants, in this case `nix`.
+
+## Easy interactive configuration
+
+
+## Extra goodies
 
 # Customizing
 
@@ -271,7 +327,7 @@ Await for the Gitpod VSCode window to appear.
 
 Live usage example can be found [here](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/gh.sh#L11).
 
-## [await::create_shim](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L37)
+## [await::create_shim](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L37) (Unstable)
 
 ```js
 await::create_shim /usr/bin/something_fancy
