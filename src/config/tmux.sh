@@ -13,10 +13,12 @@ function tmux_create_window() {
   SESSION_NAME="$tmux_first_session_name" tmux::new-window "$@";
 }
 
+# TODO: Decouple it from here
 function tmux::start_vimpod() {
-	local lockfile=/tmp/.vimpod;
-	if test -e "$lockfile"; then return 0; fi
-	touch "$lockfile"
+	if ! (set -o noclobber && printf '' > /tmp/.dotsh_spawn_ssh) 2>/dev/null; then {
+		return;
+	} fi
+
 	"$___self_DIR/src/utils/vimpod.py" & disown;
 	(
 		{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
@@ -135,19 +137,22 @@ function config::tmux() {
 	
 	if is::cde; then {
 		# Lock on tmux binary
-		local check_file=(/nix/store/*-tmux-*/bin/tmux);
-		local tmux_exec_path;
+		# local check_file=(/nix/store/*-tmux-*/bin/tmux);
+		# local tmux_exec_path;
 
-		if test -n "${check_file:-}"; then {
-			tmux_exec_path="${check_file[0]}";
-			KEEP=true await::create_shim "$tmux_exec_path";
-		} else {
-			tmux_exec_path="/usr/bin/tmux";
-			KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
-				await::create_shim "$tmux_exec_path";
-		} fi
+		# if test -n "${check_file:-}"; then {
+		# 	tmux_exec_path="${check_file[0]}";
+		# 	KEEP=true await::create_shim "$tmux_exec_path";
+		# } else {
+		# 	tmux_exec_path="/usr/bin/tmux";
+		# 	KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
+		# 		await::create_shim "$tmux_exec_path";
+		# } fi
+		declare tmux_exec_path=/usr/bin/tmux;
+		await::until_true command::exists "$tmux_exec_path";
+		KEEP=true await::create_shim "$tmux_exec_path";
 	} else {
-		await::until_true command -v tmux 1>/dev/null;
+		await::until_true command::exists tmux;
 	} fi
 
 	if is::gitpod; then {
@@ -185,6 +190,7 @@ function config::tmux() {
 					log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit;
 				} fi
 
+				await::until_true command::exists jq;
 				function jqw() {
 					local cmd;
 					if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS"); then {

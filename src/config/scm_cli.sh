@@ -2,7 +2,7 @@ function config::scm_cli() {
 	local tarball_url gp_credentials;
 
 	# Wait for gh to be installed via nix at userland_tools.sh:leveltwo_pkgs
-	await::until_true command -v gh 1>/dev/null;
+	await::until_true command::exists gh;
 
 	# Login into scm_cli (i.e. gh or glab)
 	await::for_vscode_ide_start;

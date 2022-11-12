@@ -56,8 +56,14 @@ function get::default_shell {
 	printf '%s\n' "${custom_shell:-/bin/bash}";
 }
 
+function command::exists() {
+	declare cmd="$1";
+	cmd="$(command -v "$cmd")" && test -x "$cmd";
+}
+
 function vscode::add_settings() {
 	SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
+	await::until_true command::exists jq ;
 
 	# Read from standard input
 	read -t0.5 -u0 -r -d '' input || :
@@ -93,7 +99,7 @@ function vscode::add_settings() {
 }
 
 function dotfiles::initialize() {
-	await::until_true command -v git 1>/dev/null;
+	await::until_true command::exists git;
 	
 	local installation_target="${INSTALL_TARGET:-"$HOME"}";
 	local last_applied_filelist="$installation_target/.last_applied_dotfiles";

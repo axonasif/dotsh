@@ -18,7 +18,7 @@ function install::filesync() {
         printf '%s\n' "${RCLONE_DATA}" | base64 -d > "$rclone_conf_file";
 
         # Wait for rclone to be fully installed
-        await::until_true command -v rclone 1>/dev/null;
+        await::until_true command::exists rclone;
 
         log::info "Performing cloud filesync, scoped globally";
         # Mount your cloud provider at $rclone_mount_dir

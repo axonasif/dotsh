@@ -10,6 +10,7 @@ function await::create_shim() {
 	declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call);
 	declare +x CLOSE KEEP DIRECT_CMD; # Keep local, do not export into env
 	export SHIM_MIRROR; # Reuse previoulsy exported SHIM_MIRROR before CLOSE'ing
+	declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {
@@ -48,7 +49,7 @@ function await::create_shim() {
 	function create_self() {
 		declare +x NO_PRINT;
 		cmd() {
-			printf '%s\n' '#!/usr/bin/env bash' "$(declare -f main)" 'main "$@"'
+			printf '%s\n' '#!/usr/bin/env bash' "$SHIM_HEADER_SIGNATURE" "$(declare -f main)" 'main "$@"'
 		}
 		if ! test -v NO_PRINT; then {
 			cmd > "${1:-"${BASH_SOURCE[0]}"}";
@@ -136,10 +137,10 @@ function await::create_shim() {
 		# } fi
 
 		# TODO: Improve this, too many garbage left behind
-		diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-		if test ! -e "$diff_target"; then {
-			create_self "$diff_target";
-		} fi
+		# diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+		# if test ! -e "$diff_target"; then {
+		# 	create_self "$diff_target";
+		# } fi
 
 		await_for_no_open_writes() {
 			while lsof -F 'f' -- "$1" 2>/dev/null | grep -q '^f.*w$'; do
@@ -201,8 +202,11 @@ function await::create_shim() {
 				await_while_shim_exists;
 			} fi
 		} elif ! is::custom_shim; then {
-			TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
-			rm -f "$diff_target" 2>/dev/null || :;
+			# TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+			while test "$(sed -n '2p;3q' "$target" 2>/dev/null)" == "$SHIM_HEADER_SIGNATURE"; do {
+				sleep 0.5;
+			} done
+			# rm -f "$diff_target" 2>/dev/null || :;
 			TIME="0.5${RANDOM}" await_for_no_open_writes "$target";
 		} else {
 			TIME="0.5${RANDOM}" await::for_file_existence "$SHIM_MIRROR";
@@ -256,7 +260,9 @@ function await::create_shim() {
 		printf '%s="%s"\n' \
 							target "$target" \
 							shim_source "$shim_source" \
-							shim_dir "$shim_dir";
+							shim_dir "$shim_dir"\
+							SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE";
+
 		printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
 		if test -v SHIM_MIRROR; then {
 			printf '%s="%s"\n' SHIM_MIRROR "$SHIM_MIRROR";

@@ -1,6 +1,6 @@
 function install::ranger() {
 	# Install ranger-fm
-    if ! command -v pip3 1>/dev/null; then {
+    if ! command::exists pip3; then {
         log::error "Python not installed" 1 || exit;
     } fi
 	bash -lic 'pip3 install --no-input ranger-fm' 1>/dev/null;

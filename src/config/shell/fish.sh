@@ -13,7 +13,7 @@ function config::shell::fish() {
 				await::create_shim "$fish_exec_path";
 		} fi
 	} else {
-		await::until_true command -v $HOME/.nix-profile/bin/fish 1>/dev/null;
+		await::until_true command::exists $HOME/.nix-profile/bin/fish;
 	} fi
 
 	# Install fisher plugin manager

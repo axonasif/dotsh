@@ -79,8 +79,8 @@ function editor::neovim::lunar {
 		# 	NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
 		# } fi
 
-		await::until_true command -v git 1>/dev/null;
-		await::until_true command -v $HOME/.nix-profile/bin/nvim 1>/dev/null;
+		await::until_true command::exists git;
+		await::until_true command::exists nvim;
 
 		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
 		

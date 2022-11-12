@@ -40,11 +40,10 @@ livetest-min() (
 
 livetest() (
 	local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}"; # From src/dockerfiles/testing-full.Dockerfile
-	source "$_target_release_dir/utils/common.sh";
 
-	cmd="bashbox build --release";
-	log::info "Running $cmd";
-	$cmd || exit 1;
+	log::info "Running bashbox build --release";
+	subcommand::build --release;
+	source "$_target_workdir/utils/common.sh";
 
 	local duplicate_workspace_root="/tmp/.mrroot";
 	local workspace_sources;
@@ -60,7 +59,7 @@ livetest() (
 	} fi
 
 	log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && {
-		if command -v rsync 1>/dev/null; then {
+		if command::exists rsync; then {
 			mkdir -p "$duplicate_workspace_root";
 			rsync -ah --info=progress2 --delete "${workspace_sources[@]}" "$duplicate_workspace_root";
 		} else {
@@ -173,7 +172,7 @@ livetest() (
 			(
 				until tmux has-session 2>/dev/null; do sleep 1; done;
 				pkill -9 -f "${tail_cmd//+/\\+}" || :;
-				tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on;
+				tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on\; set -g visual-activity off;
 				until test -n "$(tmux list-clients)"; do sleep 1; done;
 				printf '====== %% %s\n' \
 					"Run 'tmux detach' to exit from here" \

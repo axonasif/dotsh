@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%16035 () 
+main@bashbox%28763 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%16035 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%16035';
+    ___MAIN_FUNCNAME='main@bashbox%28763';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -91,10 +91,9 @@ main@bashbox%16035 ()
     function livetest () 
     { 
         ( local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
-        source "$_target_release_dir/utils/common.sh";
-        cmd="bashbox build --release";
-        log::info "Running $cmd";
-        $cmd || exit 1;
+        log::info "Running bashbox build --release";
+        subcommand::build --release;
+        source "$_target_workdir/utils/common.sh";
         local duplicate_workspace_root="/tmp/.mrroot";
         local workspace_sources;
         if test -n "${GITPOD_REPO_ROOTS:-}"; then
@@ -113,7 +112,7 @@ main@bashbox%16035 ()
             };
         fi;
         log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && { 
-            if command -v rsync > /dev/null; then
+            if command::exists rsync; then
                 { 
                     mkdir -p "$duplicate_workspace_root";
                     rsync -ah --info=progress2 --delete "${workspace_sources[@]}" "$duplicate_workspace_root"
@@ -156,7 +155,7 @@ main@bashbox%16035 ()
                     sleep 1;
                 done;
                 pkill -9 -f "${tail_cmd//+/\\+}" || :;
-                tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on;
+                tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on\; set -g visual-activity off;
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
@@ -963,9 +962,15 @@ main@bashbox%16035 ()
         fi;
         printf '%s\n' "${custom_shell:-/bin/bash}"
     };
+    function command::exists () 
+    { 
+        declare cmd="$1";
+        cmd="$(command -v "$cmd")" && test -x "$cmd"
+    };
     function vscode::add_settings () 
     { 
         SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
+        await::until_true command::exists jq;
         read -t0.5 -u0 -r -d '' input || :;
         if test -z "${input:-}"; then
             { 
@@ -1000,7 +1005,7 @@ main@bashbox%16035 ()
     };
     function dotfiles::initialize () 
     { 
-        await::until_true command -v git > /dev/null;
+        await::until_true command::exists git;
         local installation_target="${INSTALL_TARGET:-"$HOME"}";
         local last_applied_filelist="$installation_target/.last_applied_dotfiles";
         local dotfiles_repo local_dotfiles_repo_count repo_user repo_name source_dir repo_dir_name check_dir;
@@ -1186,6 +1191,7 @@ main@bashbox%16035 ()
         declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call);
         declare +x CLOSE KEEP DIRECT_CMD;
         export SHIM_MIRROR;
+        declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
         function is::custom_shim () 
         { 
             test -v SHIM_MIRROR
@@ -1219,7 +1225,7 @@ main@bashbox%16035 ()
             declare +x NO_PRINT;
             function cmd () 
             { 
-                printf '%s\n' '#!/usr/bin/env bash' "$(declare -f main)" 'main "$@"'
+                printf '%s\n' '#!/usr/bin/env bash' "$SHIM_HEADER_SIGNATURE" "$(declare -f main)" 'main "$@"'
             };
             if ! test -v NO_PRINT; then
                 { 
@@ -1299,12 +1305,6 @@ main@bashbox%16035 ()
         function async_wrapper () 
         { 
             set -eu;
-            diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-            if test ! -e "$diff_target"; then
-                { 
-                    create_self "$diff_target"
-                };
-            fi;
             function await_for_no_open_writes () 
             { 
                 while lsof -F 'f' -- "$1" 2> /dev/null | grep -q '^f.*w$'; do
@@ -1352,8 +1352,11 @@ main@bashbox%16035 ()
             else
                 if ! is::custom_shim; then
                     { 
-                        TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
-                        rm -f "$diff_target" 2> /dev/null || :;
+                        while test "$(sed -n '2p;3q' "$target" 2>/dev/null)" == "$SHIM_HEADER_SIGNATURE"; do
+                            { 
+                                sleep 0.5
+                            };
+                        done;
                         TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
                     };
                 else
@@ -1404,7 +1407,7 @@ main@bashbox%16035 ()
         };
         { 
             printf 'function main() {\n';
-            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir";
+            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir" SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE";
             printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
             if test -v SHIM_MIRROR; then
                 { 
@@ -1425,20 +1428,64 @@ main@bashbox%16035 ()
     };
     function install::packages () 
     { 
+        declare -a dw_cmd;
+        if command::exists curl; then
+            { 
+                dw_cmd=(curl -sSL)
+            };
+        else
+            if command::exists wget; then
+                { 
+                    dw_cmd=(wget -qO-)
+                };
+            fi;
+        fi;
+        if test "${DOTFILES_TMUX:-true}" == true; then
+            { 
+                if is::cde && test -n "${dw_cmd[0]}"; then
+                    { 
+                        ( dw_path=/tmp/.tmuxdw;
+                        declare dw_url="https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
+                        "${dw_cmd[@]}" "${dw_url}" > "$dw_path";
+                        sudo sh -c "mv $dw_path /usr/bin/tmux && chmod +x /usr/bin/tmux";
+                        if ! command::exists jq; then
+                            { 
+                                dw_path=/tmp/.jqdw;
+                                dw_url="https://github.com/stedolan/jq/releases/latest/download/jq-linux64";
+                                "${dw_cmd[@]}" "$dw_url" > "$dw_path";
+                                sudo sh -c "mv $dw_path /usr/bin/jq && chmod +x /usr/bin/jq"
+                            };
+                        fi ) & disown
+                    };
+                else
+                    { 
+                        nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq)
+                    };
+                fi
+            };
+        fi;
         nixpkgs_level_one+=(nixpkgs."${DOTFILES_SHELL:-fish}");
         case "${DOTFILES_EDITOR:-neovim}" in 
             "emacs")
-                : "nixpkgs.emacs"
+                nixpkgs_level_two+=("nixpkgs.emacs")
             ;;
             "helix")
-                : "nixpkgs.helix"
+                nixpkgs_level_two+=("nixpkgs.helix")
             ;;
             "neovim")
-                : "nixpkgs-unstable.neovim"
+                if is::cde && test -n "${dw_cmd[0]}"; then
+                    { 
+                        ( declare dw_url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz";
+                        "${dw_cmd[@]}" "${dw_url}" | sudo tar --strip-components=1 -C /usr -xpz ) & disown
+                    };
+                else
+                    { 
+                        nixpkgs_level_two+=("nixpkgs-unstable.neovim")
+                    };
+                fi
             ;;
         esac;
-        nixpkgs_level_two+=("$_");
-        if ! command -v git > /dev/null; then
+        if ! command::exists git; then
             { 
                 nixpkgs_level_two+=(nixpkgs.git)
             };
@@ -1460,21 +1507,31 @@ main@bashbox%16035 ()
                     };
                 fi;
                 log::info "Installing userland packages with brew";
-                if ! command -v brew > /dev/null; then
+                if ! command::exists brew; then
                     { 
                         PATH="$PATH:/opt/homebrew/bin:/usr/local/bin";
                         eval "$(brew shellenv)"
                     };
                 fi;
-                NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}" || true
+                for level in ${!brewpkgs_level_*};
+                do
+                    { 
+                        declare -n ref="$level";
+                        if test -n "${ref:-}"; then
+                            { 
+                                NONINTERACTIVE=1 brew install -q "${ref[@]}" || true
+                            };
+                        fi
+                    };
+                done
             };
         fi;
-        if distro::is_ubuntu; then
+        if command::exists apt; then
             { 
                 log::info "Installing ubuntu system packages";
                 ( sudo apt-get update;
                 sudo debconf-set-selections <<< 'debconf debconf/frontend select Noninteractive';
-                for level in aptpkgs;
+                for level in ${!aptpkgs_level_*};
                 do
                     { 
                         declare -n ref="$level";
@@ -1500,25 +1557,26 @@ main@bashbox%16035 ()
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" 2> /dev/null || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
         function nix-install () 
         { 
-            command nix-env -iAP "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)'
+            if test ! -v nix_unstable_installed && [[ "$*" == *nixpkgs-unstable.* ]]; then
+                { 
+                    nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs-unstable;
+                    nix-channel --update;
+                    nix_unstable_installed=true
+                };
+            fi;
+            command nix-env -iAP "$@" 2>&1 | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these|this path will be fetched)'
         };
-        if test -n "${nixpkgs_level_one:-}"; then
+        for level in ${!nixpkgs_level_*};
+        do
             { 
-                nix-install "${nixpkgs_level_one[@]}"
+                declare -n ref="$level";
+                if test -n "${ref:-}"; then
+                    { 
+                        nix-install "${ref[@]}"
+                    };
+                fi
             };
-        fi;
-        nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs-unstable;
-        nix-channel --update;
-        if test -n "${nixpkgs_level_two:-}"; then
-            { 
-                nix-install "${nixpkgs_level_two[@]}"
-            };
-        fi;
-        if test -n "${nixpkgs_level_three:-}"; then
-            { 
-                nix-install "${nixpkgs_level_three[@]}"
-            };
-        fi ) & disown
+        done ) & disown
     };
     function install::misc () 
     { 
@@ -1545,7 +1603,7 @@ main@bashbox%16035 ()
     };
     function install::ranger () 
     { 
-        if ! command -v pip3 > /dev/null; then
+        if ! command::exists pip3; then
             { 
                 log::error "Python not installed" 1 || exit
             };
@@ -1593,7 +1651,7 @@ main@bashbox%16035 ()
             { 
                 mkdir -p "${rclone_conf_file%/*}";
                 printf '%s\n' "${RCLONE_DATA}" | base64 -d > "$rclone_conf_file";
-                await::until_true command -v rclone > /dev/null;
+                await::until_true command::exists rclone;
                 log::info "Performing cloud filesync, scoped globally";
                 mkdir -p "${rclone_mount_dir}";
                 sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
@@ -1695,37 +1753,57 @@ main@bashbox%16035 ()
     };
     function filesync::cli () 
     { 
+        function cli::save () 
+        { 
+            case "$1" in 
+                -h | --help)
+                    printf '%s\t%s\n' "-rh" "Save in global home" "-h|--help" "This help message";
+                    exit
+                ;;
+                -dh | --dynamic-home)
+                    declare arg_rel_home=true;
+                    shift
+                ;;
+            esac;
+            declare file filelist;
+            for file in "$@";
+            do
+                { 
+                    filelist+=("$(readlink "$file")") || true
+                };
+            done;
+            if test ! -v arg_rel_home; then
+                { 
+                    filesync::save_local "${filelist[@]}"
+                };
+            else
+                { 
+                    RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}"
+                };
+            fi
+        };
         case "$1" in 
-            "syncfiles")
-                shift;
-                case "$1" in 
-                    -h | --help)
-                        printf '%s\t%s\n' "-rh" "Save in global home" "-h|--help" "This help message";
-                        exit
-                    ;;
-                    -gh | --global-home)
-                        declare arg_rel_home=true
-                    ;;
-                esac;
-                declare file filelist;
-                for file in "$@";
-                do
-                    { 
-                        filelist+=("$(readlink "$file")") || true
-                    };
-                done;
-                if test ! -v arg_rel_home; then
-                    { 
-                        filesync::save_local "${filelist[@]}"
-                    };
-                else
-                    { 
-                        RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}"
-                    };
-                fi;
-                exit
+            "filesync")
+                shift
             ;;
-        esac
+            *)
+                return
+            ;;
+        esac;
+        case "$1" in 
+            -h | --help)
+                printf '%s\t%s\n' "save" "Start syncing selected files" "restore" "Manual file sync trigger" "-h|--help" "This help message"
+            ;;
+            save)
+                shift;
+                cli::save "$@"
+            ;;
+            restore)
+                shift;
+                cli::restore "$@"
+            ;;
+        esac;
+        exit
     };
     readonly RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m';
     readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
@@ -1759,11 +1837,11 @@ main@bashbox%16035 ()
     };
     function tmux::start_vimpod () 
     { 
-        local lockfile=/tmp/.vimpod;
-        if test -e "$lockfile"; then
-            return 0;
+        if ! ( set -o noclobber && printf '' > /tmp/.dotsh_spawn_ssh ) 2> /dev/null; then
+            { 
+                return
+            };
         fi;
-        touch "$lockfile";
         "$___self_DIR/src/utils/vimpod.py" & disown;
         ( { 
             gp ports await 23000 && gp ports await 22000
@@ -1866,23 +1944,13 @@ CMDC
         log::info "Setting up tmux";
         if is::cde; then
             { 
-                local check_file=(/nix/store/*-tmux-*/bin/tmux);
-                local tmux_exec_path;
-                if test -n "${check_file:-}"; then
-                    { 
-                        tmux_exec_path="${check_file[0]}";
-                        KEEP=true await::create_shim "$tmux_exec_path"
-                    };
-                else
-                    { 
-                        tmux_exec_path="/usr/bin/tmux";
-                        KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" await::create_shim "$tmux_exec_path"
-                    };
-                fi
+                declare tmux_exec_path=/usr/bin/tmux;
+                await::until_true command::exists "$tmux_exec_path";
+                KEEP=true await::create_shim "$tmux_exec_path"
             };
         else
             { 
-                await::until_true command -v tmux > /dev/null
+                await::until_true command::exists tmux
             };
         fi;
         if is::gitpod; then
@@ -1927,6 +1995,7 @@ CMDC
                             log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit
                         };
                     fi;
+                    await::until_true command::exists jq;
                     function jqw () 
                     { 
                         local cmd;
@@ -2056,7 +2125,7 @@ EOF
             };
         else
             { 
-                await::until_true command -v $HOME/.nix-profile/bin/fish > /dev/null
+                await::until_true command::exists $HOME/.nix-profile/bin/fish
             };
         fi;
         log::info "Installing fisher and some plugins for fish-shell";
@@ -2121,7 +2190,7 @@ EOF
 						"path": "bash",
 						"args": [
 							"-c",
-							"until command -v tmux 1>/dev/null; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x = ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main;"
+							"until cmd=\"$(command -v tmux)\" && test -x \"$cmd\"; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true tmux new-session -ds main 2>/dev/null || :; if cpids=$(tmux list-clients -t main -F '#{client_pid}'); then for cpid in $cpids; do [ $(ps -o ppid= -p $cpid)x = ${PPID}x ] && exec tmux new-window -n \"vs:${PWD##*/}\" -t main; done; fi; exec tmux attach -t main;"
 						]
 					}
 				},
@@ -2142,7 +2211,7 @@ EOF
     function config::scm_cli () 
     { 
         local tarball_url gp_credentials;
-        await::until_true command -v gh > /dev/null;
+        await::until_true command::exists gh;
         await::for_vscode_ide_start;
         local scm_cli_args=("${gitpod_scm_cli}" auth login);
         case "$gitpod_scm_cli" in 
@@ -2241,8 +2310,8 @@ EOF
     { 
         if test ! -e "$HOME/.config/lvim"; then
             { 
-                await::until_true command -v git > /dev/null;
-                await::until_true command -v $HOME/.nix-profile/bin/nvim > /dev/null;
+                await::until_true command::exists git;
+                await::until_true command::exists nvim;
                 curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y > /dev/null;
                 editor::autorun_in_tmux "lvim"
             };
@@ -2253,29 +2322,38 @@ EOF
         todo
     };
     export PATH="$PATH:$HOME/.nix-profile/bin";
-    declare dotfiles_repos=("${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}");
+    declare dotfiles_repos=(https://github.com/axonasif/dotfiles.public);
     : "${DOTFILES_SHELL:=fish}";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
     declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
     declare fish_plugins+=(PatrickF1/fzf.fish jorgebucaran/fisher);
     : "${DOTFILES_TMUX:=true}";
     : "${DOTFILES_TMUX_VSCODE:=true}";
-    declare -r tmux_first_session_name="main";
+    declare -r tmux_first_session_name="gitpod";
     declare -r tmux_first_window_num="1";
     : "${DOTFILES_SPAWN_SSH_PROTO:=true}";
     : "${DOTFILES_NO_VSCODE:=false}";
     : "${DOTFILES_EDITOR:=neovim}";
     : "${DOTFILES_EDITOR_PRESET:=lunarvim}";
-    declare nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
-    declare nixpkgs_level_two+=(nixpkgs.rclone nixpkgs.zoxide nixpkgs.bat nixpkgs.fzf nixpkgs.exa);
-    declare nixpkgs_level_three+=(nixpkgs.gnumake nixpkgs.gcc nixpkgs.shellcheck nixpkgs.file nixpkgs.fd nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.ripgrep nixpkgs.rsync);
-    if os::is_darwin; then
+    declare nixpkgs_level_1+=(nixpkgs.ripgrep nixpkgs.fd nixpkgs.fzf);
+    declare nixpkgs_level_2+=(nixpkgs.zoxide nixpkgs.rclone nixpkgs.bat nixpkgs.exa);
+    declare nixpkgs_level_3+=(nixpkgs.shellcheck nixpkgs.file nixpkgs.bottom nixpkgs.coreutils nixpkgs.htop nixpkgs.lsof nixpkgs.neofetch nixpkgs.p7zip nixpkgs.rsync);
+    if command::exists apt; then
         { 
-            nixpkgs_level_three+=(nixpkgs.gawk nixpkgs.bashInteractive nixpkgs.reattach-to-user-namespace);
-            declare brewpkgs_level_one+=(osxfuse)
+            aptpkgs_level_1+=(build-essential make gcc)
+        };
+    else
+        { 
+            nixpkgs_level_3+=(nixpkgs.gnumake nixpkgs.gcc)
         };
     fi;
-    declare aptpkgs+=(fuse);
+    if os::is_darwin; then
+        { 
+            nixpkgs_level_3+=(nixpkgs.gawk nixpkgs.bashInteractive nixpkgs.reattach-to-user-namespace);
+            declare brewpkgs_level_1+=(osxfuse)
+        };
+    fi;
+    declare aptpkgs_level_1+=(fuse);
     declare -r workspace_dir="$(
     if is::gitpod; then {
         printf '%s\n' "/workspace";
@@ -2354,4 +2432,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%16035 "$@";
+main@bashbox%28763 "$@";

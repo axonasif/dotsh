@@ -74,11 +74,13 @@ Testing out your `dotfiles` or `.gitpod.yml` changes can be a lengthy and diffic
   <summary>Usage</summary>
 
 For only testing dotfiles changes:
+
 - Make sure your [CWD](https://en.wikipedia.org/wiki/Working_directory) is either your `dotfiles-sh` repo that you opened on a Gitpod workspace or is `~/.dotfiles`.
   - For example: `cd ~/.dotfiles`, if you want to edit your dotfiles without explicitly opening your `dotfiles-sh` repo on Gitpod.
-- Run: `bashbox testdots`
+- Run: `bashbox livetest`
 
 For testing `.gitpod.yml` changes of a repo you're working on:
+
 - Run `dotsh livetest` from anywhere in your workspace.
 
 </details>
@@ -93,17 +95,17 @@ Official issue: https://github.com/gitpod-io/gitpod/issues/7671. I've made a pro
 
 Using SSH or terminal in general without TMUX feels powerless! Gitpod got amazing SSH support and various different ways to SSH into its workspaces.
 
-|Gitpod tasks are opened as tmux-windows|
-|----|
-|img here|
+| Gitpod tasks are opened as tmux-windows |
+| --------------------------------------- |
+| img here                                |
 
-|A more native experience|
-|----|
-|ok|
+| A more native experience |
+| ------------------------ |
+| ok                       |
 
-|Integrated tmux usage for VSCode|
-|----|
-|img here|
+| Integrated tmux usage for VSCode |
+| -------------------------------- |
+| img here                         |
 
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
 
@@ -135,7 +137,6 @@ dotsh filesync -dh .config/docker.json
 
 </details>
 
-
 ## Optimized for CLI EDITORS
 
 Your favorite CLI editor is auto installed for you. Also several common CLI tools, dependencies, editor plugins/presets are install and configured based on your preference. So you can easily get started with your own editor-config without worrying about tweaking the system.
@@ -148,7 +149,7 @@ Your favorite CLI editor is auto installed for you. Also several common CLI tool
 
 ## Easy SHH'ing through local terminal
 
-  - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
+- Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
 
 ## Host aware multi-layer dotfiles installation
 
@@ -163,7 +164,6 @@ If you find any conflicting config files, please raise a bug report.
 Again, on the shoulders of the giants, in this case `nix`.
 
 ## Easy interactive configuration
-
 
 ## Extra goodies
 
