@@ -1,6 +1,6 @@
 # Introduction
 
-A fast dotfiles and system-configuration installer optimized for Gitpod (can be used locally too). Is this another dotfiles-manager? Nope. In fact, it will try to detect your dotfiles-manager and install your raw files through it if you're using one, otherwise it tries to symlink natively with it's own simple implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience.
+A fast dotfiles and system-configuration installer optimized for Gitpod (can be used locally too). Is this another dotfiles-manager? Nope. In fact, it will try to detect your dotfiles-manager and install your raw files through it if you're using one, otherwise it tries to symlink with it's own tiny implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience.
 
 # Quickstart for Gitpod
 
@@ -16,10 +16,10 @@ Learn more about dotfiles behavior on Gitpod at https://www.gitpod.io/docs/confi
 
 Right now **only Linux and MacOS is supported**. In theory it could work on other \*nix systems and maybe Windows, that said, the script could run fine but some special handling of how things are installed or configured needs to be done for other systems, please contribute if you're an user of an "unsupported" system.
 
-## Prerequisites
+### Prerequisites
 
 <details>
-  <summery>Expand</summery>
+  <summary>Expand</summary>
 
 - git
 - bash 4.3 or above
@@ -71,7 +71,7 @@ Testing out your `dotfiles` or `.gitpod.yml` changes can be a lengthy and diffic
 <inset-bashbox-live-cmd>
 
 <details>
-  <summery>Usage</summery>
+  <summary>Usage</summary>
 
 For only testing dotfiles changes:
 - Make sure your [CWD](https://en.wikipedia.org/wiki/Working_directory) is either your `dotfiles-sh` repo that you opened on a Gitpod workspace or is `~/.dotfiles`.
@@ -114,7 +114,7 @@ The ephemeral nature of Gitpod may seem like a roadblock but not anymore as long
 > Run `dotsh config rclone` for initial setup of `rclone`.
 
 <details>
-  <summery>Usage</summery>
+  <summary>Usage</summary>
 
 To start syncing files, you can use:
 
