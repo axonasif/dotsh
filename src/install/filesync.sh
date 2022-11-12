@@ -112,35 +112,60 @@ function filesync::save_local() {
 
 function filesync::cli() {
 
-  case "$1" in
-    "syncfiles")
-      shift;
+  function cli::save {
 
-      case "$1" in
-        -h|--help)
-          printf '%s\t%s\n' \
-            "-rh" "Save in global home" \
-            "-h|--help" "This help message";
-          exit;
-          ;;
-        -gh|--global-home)
-          declare arg_rel_home=true;
-          ;;
-      esac
+    case "$1" in
+      -h|--help)
+        printf '%s\t%s\n' \
+          "-rh" "Save in global home" \
+          "-h|--help" "This help message";
+        exit;
+        ;;
+      -dh|--dynamic-home)
+        declare arg_rel_home=true;
+        shift;
+        ;;
+    esac
 
-      declare file filelist;
+    declare file filelist;
 
-      for file in "$@"; do {
-        filelist+=("$(readlink "$file")") || true;
-      } done
+    for file in "$@"; do {
+      filelist+=("$(readlink "$file")") || true;
+    } done
+    
+    if test ! -v arg_rel_home; then {
+      filesync::save_local "${filelist[@]}";
+    } else {
+      RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}";
+    } fi
+  }
+
+    case "$1" in
+      "filesync")
+        shift;
+      ;;
+      *) 
+        return;
+      ;;
+    esac
       
-      if test ! -v arg_rel_home; then {
-        filesync::save_local "${filelist[@]}";
-      } else {
-        RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}";
-      } fi
-      
-      exit;
-    ;;
-  esac
+
+    case "$1" in
+      -h|--help)
+        printf '%s\t%s\n' \
+          "save" "Start syncing selected files" \
+          "restore" "Manual file sync trigger" \
+          "-h|--help" "This help message";
+        ;;
+      save)
+        shift;
+        cli::save "$@";
+        ;;
+      restore)
+        shift;
+        cli::restore "$@";
+        ;;
+    esac
+
+    exit;
 }

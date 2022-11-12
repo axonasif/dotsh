@@ -8,7 +8,7 @@ Put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod
 
 ![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
 
-After you've opened a workspace, run `dotsh config` for interactive configuration wizard.
+After you've opened a workspace, run `dotsh config` for interactive configuration wizard. At the end you'd be pushing your changes to your own repo.
 
 Learn more about dotfiles behavior on Gitpod at https://www.gitpod.io/docs/config-dotfiles
 
@@ -54,11 +54,11 @@ bash ~/.dotfiles/install.sh
 
 # Features
 
-Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myselves as long it's possible with the context of `dotfiles` layer on Gitpod. I really like how programmable Gitpod can be unlike anything out there!
+Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myself as long it's possible within the context of `dotfiles` layer on Gitpod. I really like how programmable Gitpod can be unlike anything out there!
 
 ## Fast installation
 
-The [install.sh](./install.sh) executes **everything** in parallel while still keeping in sync between multiple `jobs`, this leads to a reasonably fast installation, thus faster workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unsable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed in the background.
+The [install.sh](./install.sh) executes **everything** in parallel while still keeping in sync between multiple `jobs`, this leads to a reasonably fast installation, thus faster workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unusable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed in the background.
 
 <insert-gif-of-bashbox-live>
 
@@ -66,9 +66,12 @@ The [install.sh](./install.sh) executes **everything** in parallel while still k
 
 ## Live testing of dotfiles and `.gitpod.yml`
 
-Testing out your `dotfiles` or `.gitpod.yml` changes is a lengthy and difficult process in the regular way. This live testing capability allowed me to quickly prototype the rest of my dotfiles logic, which would've been quite impossible otherwise.
+Testing out your `dotfiles` or `.gitpod.yml` changes can be a lengthy and difficult process. This live testing capability allowed me to quickly prototype the rest of `dotfiles-sh` logic, which would've been quite impossible otherwise.
 
 <inset-bashbox-live-cmd>
+
+<details>
+  <summery>Usage</summery>
 
 For only testing dotfiles changes:
 - Make sure your [CWD](https://en.wikipedia.org/wiki/Working_directory) is either your `dotfiles-sh` repo that you opened on a Gitpod workspace or is `~/.dotfiles`.
@@ -77,6 +80,8 @@ For only testing dotfiles changes:
 
 For testing `.gitpod.yml` changes of a repo you're working on:
 - Run `dotsh livetest` from anywhere in your workspace.
+
+</details>
 
 [Tmux integration](#tmux-integration) and the overall [quick feedback](#fast-installation) makes it much more useful.
 
@@ -90,34 +95,60 @@ Using SSH or terminal in general without TMUX feels powerless! Gitpod got amazin
 
 |Gitpod tasks are opened as tmux-windows|
 |----|
-|test|
+|img here|
+
+|A more native experience|
+|----|
+|ok|
+
+|Integrated tmux usage for VSCode|
+|----|
+|img here|
 
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
-  - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
 
 ## Cross-workspace and local filesync
 
-The ephemeral nature of Gitpod may seem like a roadblock but not anymore as long you can program a reproducable environment. While dotfiles help with creating reproducable environments but one key part is private file synchronization. This let's you sync files across workspaces or locally to individual workspaces. That means you could persist your login for CLI programs, cache big files and so on. Obviously, it's gluing together external tools(`rclone`) to accomplish this, nothing special on it's own.
+The ephemeral nature of Gitpod may seem like a roadblock but not anymore as long you can program a reproducible environment. While dotfiles help with creating reproducible environments but one key part is private file synchronization. This let's you sync files across workspaces or locally to individual workspaces. That means you could persist your login for CLI programs, cache big files and so on. Obviously, it's gluing together external tools(`rclone`) to accomplish this, nothing special on it's own.
 
-- Save/restore/persist files **across** or **scoped-to-specific** Gitpod workspaces.
+> Run `dotsh config rclone` for initial setup of `rclone`.
+
+<details>
+  <summery>Usage</summery>
+
+To start syncing files, you can use:
+
+```bash
+# This will save and restore in the absolute static path.
+dotsh filesync save /path/to/file another_file
+```
+
+To save a file from your `$HOME` directory and to dynamically auto restore it for current user home dir:
+
+```bash
+# Useful when you're using dotfiles-sh both locally and on Gitpod.
+# -dh is short form of --dynamic-home argument.
+# I'm saving docker.json to persist my login, so that I don't have to login every time.
+cd $HOME
+dotsh filesync -dh .config/docker.json
+```
+
+</details>
+
 
 ## Optimized for CLI EDITORS
 
 Your favorite CLI editor is auto installed for you. Also several common CLI tools, dependencies, editor plugins/presets are install and configured based on your preference. So you can easily get started with your own editor-config without worrying about tweaking the system.
 
-### Emacs
-
-### Helix
-
-### Neovim
-
-### Vim
+### Emacs ### Helix ### Neovim ### Vim
 
 ## Optimized for custom shell
 
 - Uses your favorite shell on Gitpod task-terminals while perseving bash/posix compatibility with the Gitpod task scripts.
 
 ## Easy SHH'ing through local terminal
+
+  - Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](#how-to-automatically-launch-gitpod-workspaces-inside-your-local-terminal-emulator) to skip all the manual steps to SSH from your terminal emulator (i.e manually copying the ssh command and running it on the terminal).
 
 ## Host aware multi-layer dotfiles installation
 
@@ -317,7 +348,7 @@ If you wish to apply the symlinks to a different directory for example:
 REPO="your-repo-link/path-here" dotfiles::initialize "/root/.local/very/deep/location";
 ```
 
-Live examples of it's usage can be found on this [file](https://github.com/axonasif/dotfiles-sh/blob/main/src/install/dotfiles.sh)
+Live examples of it's usage can be found on this [file](/src/install/dotfiles.sh)
 
 ## [await::until_true](https://github.com/axonasif/dotfiles-sh/blob/main/src/utils/await.sh#L1)
 
