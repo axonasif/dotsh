@@ -1,10 +1,10 @@
 # Introduction
 
-A simple and fast dotfiles + system-configuration installer optimized for Gitpod (can be used locally too), batteries included. Is this another dotfiles-manager? Nope. In fact, you have options to install your dotfiles via one of the many managers if you're using one, otherwise it tries to symlink natively with it's own implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience.
+A simple and fast dotfiles + system-configuration installer optimized for Gitpod (can be used locally too). Is this another dotfiles-manager? Nope. In fact, it will try to detect your dotfiles-manager install your raw files through it if you're using one, otherwise it tries to symlink natively with it's own simple implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience.
 
 # Quickstart for Gitpod
 
-Simply put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod.io/preferences).
+For quickly trying out, put https://github.com/axonasif/dotfiles-sh on your [preferences](https://gitpod.io/preferences).
 
 ![image](https://user-images.githubusercontent.com/39482679/190343513-8f1f25cb-5197-4d84-a550-a6b85459e95d.png)
 
@@ -17,6 +17,9 @@ Learn more about dotfiles behavior on Gitpod at https://www.gitpod.io/docs/confi
 Right now **only Linux and MacOS is supported**. In theory it could work on other \*nix systems and maybe Windows, that said, the script could run fine but some special handling of how things are installed or configured needs to be done for other systems, please contribute if you're an user of an "unsupported" system.
 
 ## Prerequisites
+
+<details>
+  <summery>Expand</summery>
 
 - git
 - bash 4.3 or above
@@ -47,26 +50,39 @@ git clone https://github.com/axonasif/dotfiles-sh ~/.dotfiles
 bash ~/.dotfiles/install.sh
 ```
 
+</details>
+
 # Features
 
-Most of these features stemmed from my personal needs of having a more productive terminal environment on Gitpod, I simply couldn't wait but try implementing them myselves as long it's possible from the context of `dotfiles` layer of Gitpod.
+Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myselves as long it's possible from the context of `dotfiles` layer of Gitpod.
 
 ## Fast installation
 
-The [install.sh](./install.sh) executes **everything** in parallel while still keeping in sync between multiple `jobs`, this leads to a fast installation. Your workspace starts quick nomatter how many things you configure/install. [install.sh](./install.sh) will exit in just 1 second. If I were to install and configure all the things in the regular way, it'd take at least 60seconds for the dotfiles-installation itself, rendering big dotfiles unsable. Several [tricks](#awaitcreate_shim) are used to start fast without crashing things that rely on shell and tmux (for example) while they're being installed in the background.
+The [install.sh](./install.sh) executes **everything** in parallel while still keeping in sync between multiple `jobs`, this leads to a reasonably fast installation, thus faster workspace startup. In the regular way it'd take at least 60seconds for the dotfiles-installation itself, rendering big dotfiles unsable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed in the background.
 
 <insert-gif-of-bashbox-live>
 
 <spoiler-more-tech-details>
 
-## Live testing of dotfiles and Gitpod workspace config
+## Live testing of dotfiles and `.gitpod.yml`
 
-### Dotfiles
-- Features **[live testing of dotfiles](#live-test-changes)** within your existing Gitpod workspace or locally so that you can prototype quickly without compromising your environment.
+Testing out your dotfiles changes is a lengthy and difficult process in the regular way, that was my experience. This live testing capability allowed me to quickly prototype the rest of my dotfiles logic, which would've been quite impossible otherwise.
 
-### Gitpod workspace configuration
+<inset-bashbox-live-cmd>
 
-**Note:** This is optimized for Gitpod and will not work elsewhere. Use [run-gp] if you want to run a Gitpod workspace locally.
+For only testing dotfiles changes:
+- Make sure your [CWD](https://en.wikipedia.org/wiki/Working_directory) is either your dotfiles repo that you opened on a Gitpod workspace or is `~/.dotfiles`.
+  - For example: `cd ~/.dotfiles`, if you want to edit your dotfiles without explicitly opening your dotfiles repo on Gitpod.
+- Run: `bashbox livetest`
+
+For testing `.gitpod.yml` changes of a repo you're working on:
+- Run `dotsh livetest` from anywhere in your workspace.
+
+[Tmux integration](#tmux-integration) and the overall [fast feedback](#fast-installation) makes it much more useful.
+
+**Note:** This is optimized for Gitpod and will not work elsewhere. Use [run-gp](https://github.com/gitpod-io/run-gp) if you want to run a Gitpod workspace locally.
+
+Official issue: https://github.com/gitpod-io/gitpod/issues/7671. I've made a proposal there for a native implementation.
 
 ## Cross-workspace and local filesync
 
