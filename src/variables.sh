@@ -29,6 +29,7 @@ declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
 declare fish_plugins+=(
     PatrickF1/fzf.fish
     jorgebucaran/fisher
+    axonasif/bashenv.fish
 )
 
 

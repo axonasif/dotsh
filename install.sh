@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%8399 () 
+main@bashbox%1899 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%8399 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%8399';
+    ___MAIN_FUNCNAME='main@bashbox%1899';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -94,7 +94,10 @@ main@bashbox%8399 ()
                 export DOTFILES_READ_GITPOD_YML=true
             ;;
             "stress")
-                export DOTFILES_STRESS_TEST=true
+                export DOTFILES_STRESS_TEST=true;
+                while livetest; do
+                    continue;
+                done
             ;;
         esac;
         local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
@@ -1495,6 +1498,30 @@ EOF
         create_self "$target" );
         chmod +x "$target"
     };
+    function await::create_shim_nix_common_wrapper () 
+    { 
+        declare name="$1";
+        if is::cde; then
+            { 
+                declare check_file=(/nix/store/*-"${name}"-*/bin/"${name}");
+                if test -n "${check_file:-}"; then
+                    { 
+                        exec_path="${check_file[0]}";
+                        KEEP=true await::create_shim "$exec_path"
+                    };
+                else
+                    { 
+                        exec_path="/usr/bin/${name}";
+                        KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/${name}" await::create_shim "$exec_path"
+                    };
+                fi
+            };
+        else
+            { 
+                await::until_true command::exists "$HOME/.nix-profile/bin/${name}"
+            };
+        fi
+    };
     function install::packages () 
     { 
         if test "${DOTFILES_TMUX:-true}" == true; then
@@ -2189,33 +2216,13 @@ EOF
     };
     function config::shell::fish () 
     { 
-        if is::cde; then
-            { 
-                local check_file=(/nix/store/*-fish-*/bin/fish);
-                local fish_exec_path;
-                if test -n "${check_file:-}"; then
-                    { 
-                        fish_exec_path="${check_file[0]}";
-                        KEEP=true await::create_shim "$fish_exec_path"
-                    };
-                else
-                    { 
-                        fish_exec_path="/usr/bin/fish";
-                        KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/fish" await::create_shim "$fish_exec_path"
-                    };
-                fi
-            };
-        else
-            { 
-                await::until_true command::exists $HOME/.nix-profile/bin/fish
-            };
-        fi;
+        await::create_shim_nix_common_wrapper "fish";
         log::info "Installing fisher and some plugins for fish-shell";
         mkdir -p "$fish_confd_dir";
         { 
             fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}"
         } > /dev/null 2>&1;
-        CLOSE=true await::create_shim "$fish_exec_path"
+        CLOSE=true await::create_shim "$exec_path"
     };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
@@ -2234,7 +2241,8 @@ EOF
     };
     function config::shell::zsh () 
     { 
-        todo
+        await::create_shim_nix_common_wrapper "zsh";
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     };
     function config::shell () 
     { 
@@ -2413,7 +2421,7 @@ EOF
     : "${DOTFILES_SHELL:=fish}";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
     declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
-    declare fish_plugins+=(PatrickF1/fzf.fish jorgebucaran/fisher);
+    declare fish_plugins+=(PatrickF1/fzf.fish jorgebucaran/fisher axonasif/bashenv.fish);
     : "${DOTFILES_TMUX:=true}";
     : "${DOTFILES_TMUX_VSCODE:=true}";
     declare -r tmux_first_session_name="gitpod";
@@ -2519,4 +2527,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%8399 "$@";
+main@bashbox%1899 "$@";

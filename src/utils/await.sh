@@ -303,3 +303,22 @@ function await::create_shim() {
 
 	chmod +x "$target";
 }
+
+function await::create_shim_nix_common_wrapper() {
+	declare name="$1";
+	if is::cde; then {
+		declare check_file=(/nix/store/*-"${name}"-*/bin/"${name}");
+
+		# Lock on binary
+		if test -n "${check_file:-}"; then {
+			exec_path="${check_file[0]}";
+			KEEP=true await::create_shim "$exec_path";
+		} else {
+			exec_path="/usr/bin/${name}";
+			KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/${name}" \
+				await::create_shim "$exec_path";
+		} fi
+	} else {
+		await::until_true command::exists "$HOME/.nix-profile/bin/${name}";
+	} fi
+}

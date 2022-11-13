@@ -44,6 +44,7 @@ livetest() (
 		;;
 		"stress")
 			export DOTFILES_STRESS_TEST=true;
+			while livetest; do continue; done
 		;;
 	esac
 
