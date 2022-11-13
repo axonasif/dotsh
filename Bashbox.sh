@@ -34,11 +34,19 @@ bashbox::build::before() {
 	} fi
 }
 
-livetest-min() (
-	CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest" livetest;
-)
-
 livetest() (
+	case "${1:-}" in
+		"minimg")
+			CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest";
+		;;
+		"ws")
+			export DOTFILES_READ_GITPOD_YML=true;
+		;;
+		"stress")
+			export DOTFILES_STRESS_TEST=true;
+		;;
+	esac
+
 	local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}"; # From src/dockerfiles/testing-full.Dockerfile
 
 	log::info "Running bashbox build --release";
@@ -69,11 +77,11 @@ livetest() (
 		} fi
 	}
 
-	# local ide_mirror="/tmp/.idem";
-	# if test ! -e "$ide_mirror"; then {
-	# 	log::info "Creating /ide mirror";
-	# 	cp -ra /ide "$ide_mirror";
-	# } fi
+	local ide_mirror="/tmp/.idem";
+	if test ! -e "$ide_mirror"; then {
+		log::info "Creating /ide mirror";
+		cp -ra /ide "$ide_mirror";
+	} fi
 
 	log::info "Starting a fake Gitpod workspace with headless IDE" && {
 		# local ide_cmd ide_port;
@@ -96,13 +104,16 @@ livetest() (
 		if is::gitpod; then {
 			docker_args+=(
 				# IDE mountpoints
-				# -v "$ide_mirror:/ide"
+				-v "$ide_mirror:/ide"
 				-v /usr/bin/gp:/usr/bin/gp:ro
+				# Gitpod specific
+				-v /.supervisor:/.supervisor
 				# Required for rclone
 				--privileged
 				--device /dev/fuse
 				# Docker socket
 				-v /var/run/docker.sock:/var/run/docker.sock
+				# Add IDE bindir to PATH
 			)
 		} fi
 		
@@ -131,6 +142,7 @@ livetest() (
 			docker_args+=(
 				# Fake gitpod tasks for testing
 				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]'
+
 				# !! Note: the DOTFILES_ env vars could be overwritten by https://gitpod.io/variables even if you set them here.
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
@@ -138,7 +150,10 @@ livetest() (
 				# -e DOTFILES_SHELL=zsh
 				# -e DOTFILES_TMUX=false
 				# -e DOTFILES_EDITOR=emacs
-				# -e DOTFILES_READ_GITPOD_YML=true
+
+				# The below two are only set conditionally
+				-e DOTFILES_READ_GITPOD_YML
+				-e DOTFILES_STRESS_TEST
 			)
 		} fi
 
@@ -148,7 +163,7 @@ livetest() (
 		)
 
 		function startup_command() {
-			export PATH="$HOME/.nix-profile/bin:$PATH";
+			export PATH="$HOME/.nix-profile/bin:/ide/bin/remote-cli:$PATH";
 			local logfile="$HOME/.dotfiles.log";
 			# local tail_cmd="less -S -XR +F $logfile";
 			local tail_cmd="tail -n +0 -F $logfile";
@@ -170,10 +185,11 @@ livetest() (
 					"Run 'tmux detach' to exit from here" \
 					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
-				# DEBUG
-				# tmux select-window -t :1;
-				# sleep 2;
-				# tmux detach-client;
+				if test "${DOTFILES_STRESS_TEST:-}" == true; then {
+					tmux select-window -t :1;
+					sleep 2;
+					tmux detach-client;
+				} fi
 			) & disown;
 
 			if test "${DOTFILES_TMUX:-true}" == true; then {
@@ -190,16 +206,16 @@ livetest() (
 			} fi
 		}
 
-		if is::gitpod; then {
+		# if is::gitpod; then {
 			docker_args+=(
 				# Startup command
-				 /bin/bash -li
-			)
-		} else {
-			docker_args+=(
 				/bin/bash -li
 			)
-		} fi
+		# } else {
+		# 	docker_args+=(
+		# 		/bin/bash -li
+		# 	)
+		# } fi
 		# local confirmed_statfile="/tmp/.confirmed_statfile";
 		# touch "$confirmed_statfile";
 		# local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
@@ -223,7 +239,7 @@ livetest() (
 			rm -f "$lckfile";
 		} fi
 		docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
-		docker container prune -f 1>/dev/null & disown;
+		docker container prune -f >/dev/null 2>&1 & disown;
 	}
 
 )

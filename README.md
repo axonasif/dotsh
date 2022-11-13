@@ -58,7 +58,7 @@ Most of these features stemmed from my personal needs, I simply couldn't wait bu
 
 ## Fast installation
 
-The [install.sh](./install.sh) executes **everything** in parallel while still keeping in sync between multiple `jobs`, this leads to a reasonably fast installation, thus faster workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unusable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed in the background.
+The [install.sh](./install.sh) executes **everything** in parallel without crashing for mutability between multiple `jobs`, this leads to a reasonably fast installation and workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unusable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed/configured in the background.
 
 <insert-gif-of-bashbox-live>
 

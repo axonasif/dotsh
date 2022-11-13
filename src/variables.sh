@@ -2,8 +2,8 @@
 
 # UPPERCASE variables may be supplied as environment variables instead.
 
-# Add nix bin and .local/bin to PATH in advance
-export PATH="$PATH:$HOME/.nix-profile/bin";
+# Add nix, .local and ide bindir to PATH in advance
+export PATH="$PATH:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
 
 
 # =================================================

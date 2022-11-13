@@ -17,3 +17,5 @@ RUN . "$HOME/.nix-profile/etc/profile.d/nix.sh" \
 	&& git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" >/dev/null 2>&1 \
 	&& bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" \
 	&& nix-env --uninstall tmux && nix-collect-garbage -d || true;
+
+RUN sudo sh -c 'f=/usr/bin/yq; curl -sSL https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64 --output $f && chmod +x $f '

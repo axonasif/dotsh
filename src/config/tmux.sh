@@ -195,7 +195,7 @@ function config::tmux() {
 			if is::gitpod; then {
 				await::until_true command::exists yq;
 
-				if test -v DOTFILES_READ_GITPOD_YML; then {
+				if test "${DOTFILES_READ_GITPOD_YML:-}" == true; then {
 					declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
 					if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then {
 						if ! GITPOD_TASKS="$(yq -I0 -erM -o=json '.tasks' "$gitpod_yml" 2>&1)"; then {

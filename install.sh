@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%22078 () 
+main@bashbox%8399 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%22078 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%22078';
+    ___MAIN_FUNCNAME='main@bashbox%8399';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -84,13 +84,20 @@ main@bashbox%22078 ()
             };
         fi
     };
-    function livetest-min () 
-    { 
-        ( ___self_CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest" livetest )
-    };
     function livetest () 
     { 
-        ( local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
+        ( case "${1:-}" in 
+            "minimg")
+                ___self_CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest"
+            ;;
+            "ws")
+                export DOTFILES_READ_GITPOD_YML=true
+            ;;
+            "stress")
+                export DOTFILES_STRESS_TEST=true
+            ;;
+        esac;
+        local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
         log::info "Running bashbox build --release";
         subcommand::build --release;
         source "$_target_workdir/utils/common.sh";
@@ -125,13 +132,20 @@ main@bashbox%22078 ()
                 };
             fi
         };
+        local ide_mirror="/tmp/.idem";
+        if test ! -e "$ide_mirror"; then
+            { 
+                log::info "Creating /ide mirror";
+                cp -ra /ide "$ide_mirror"
+            };
+        fi;
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
             local docker_args=();
             docker_args+=(run --net=host);
             docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$_arg_path:$HOME/.dotfiles");
             if is::gitpod; then
                 { 
-                    docker_args+=(-v /usr/bin/gp:/usr/bin/gp:ro --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
+                    docker_args+=(-v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -v /.supervisor:/.supervisor --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
                 };
             fi;
             if is::gitpod; then
@@ -153,13 +167,13 @@ main@bashbox%22078 ()
                             docker_args+=(-e "${key}")
                         };
                     done;
-                    docker_args+=(-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
+                    docker_args+=(-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -e DOTFILES_READ_GITPOD_YML -e DOTFILES_STRESS_TEST)
                 };
             fi;
             docker_args+=(-it "$container_image");
             function startup_command () 
             { 
-                export PATH="$HOME/.nix-profile/bin:$PATH";
+                export PATH="$HOME/.nix-profile/bin:/ide/bin/remote-cli:$PATH";
                 local logfile="$HOME/.dotfiles.log";
                 local tail_cmd="tail -n +0 -F $logfile";
                 eval "$(gp env -e)";
@@ -177,7 +191,14 @@ main@bashbox%22078 ()
                 until test -n "$(tmux list-clients)"; do
                     sleep 1;
                 done;
-                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
+                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile";
+                if test "${DOTFILES_STRESS_TEST:-}" == true; then
+                    { 
+                        tmux select-window -t :1;
+                        sleep 2;
+                        tmux detach-client
+                    };
+                fi ) & disown;
                 if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux attach
@@ -195,15 +216,7 @@ main@bashbox%22078 ()
                     };
                 fi
             };
-            if is::gitpod; then
-                { 
-                    docker_args+=(/bin/bash -li)
-                };
-            else
-                { 
-                    docker_args+=(/bin/bash -li)
-                };
-            fi;
+            docker_args+=(/bin/bash -li);
             local lckfile="/workspace/.dinit";
             if test -e "$lckfile" && test ! -s "$lckfile"; then
                 { 
@@ -217,7 +230,7 @@ main@bashbox%22078 ()
                 };
             fi;
             docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
-            docker container prune -f > /dev/null & disown
+            docker container prune -f > /dev/null 2>&1 & disown
         } )
     };
     function log::info () 
@@ -2037,7 +2050,7 @@ CMDC
             ( if is::gitpod; then
                 { 
                     await::until_true command::exists yq;
-                    if test -v DOTFILES_READ_GITPOD_YML; then
+                    if test "${DOTFILES_READ_GITPOD_YML:-}" == true; then
                         { 
                             declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
                             if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then
@@ -2395,7 +2408,7 @@ EOF
     { 
         todo
     };
-    export PATH="$PATH:$HOME/.nix-profile/bin";
+    export PATH="$PATH:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
     declare dotfiles_repos=(https://github.com/axonasif/dotfiles.public);
     : "${DOTFILES_SHELL:=fish}";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
@@ -2506,4 +2519,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%22078 "$@";
+main@bashbox%8399 "$@";
