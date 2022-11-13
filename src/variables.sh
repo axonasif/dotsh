@@ -104,6 +104,7 @@ declare nixpkgs_level_2+=(
 # =================================================
 # = BIG PACKAGES                                  =
 # =================================================
+# yq is included internally
 declare nixpkgs_level_3+=(
     nixpkgs.shellcheck
     nixpkgs.file
@@ -114,7 +115,10 @@ declare nixpkgs_level_3+=(
     nixpkgs.neofetch
     nixpkgs.p7zip
     nixpkgs.rsync # Useful for 'bashbox livetest' command
-    # nixpkgs.yq
+    nixpkgs.helm
+    nixpkgs.kubectl
+    nixpkgs.k9s
+    nixpkgs.google-cloud-sdk
 )
 if command::exists apt; then {
     aptpkgs_level_1+=(
