@@ -54,7 +54,7 @@ bash ~/.dotfiles/install.sh
 
 # Features
 
-Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myself as long it's possible within the context of `dotfiles` layer on Gitpod. I really like how programmable Gitpod can be unlike anything out there!
+Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myself as long it's possible within the context of `dotfiles` layer on Gitpod. I really like how programmable Gitpod can be unlike anything out there! (although I wish it was more obvious)
 
 ## Fast installation
 

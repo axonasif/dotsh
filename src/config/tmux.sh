@@ -162,8 +162,8 @@ function config::tmux() {
 		# 		await::create_shim "$tmux_exec_path";
 		# } fi
 		declare tmux_exec_path=/usr/bin/tmux;
-		await::until_true command::exists "$tmux_exec_path";
-		KEEP=true await::create_shim "$tmux_exec_path";
+		# await::until_true command::exists "$tmux_exec_path";
+		KEEP=true SHIM_MIRROR="/usr/bin/.dw/tmux" await::create_shim "$tmux_exec_path";
 	} else {
 		await::until_true command::exists tmux;
 	} fi
@@ -177,18 +177,19 @@ function config::tmux() {
 
 	{
 		await::signal get install_dotfiles;
-
 		local target="$HOME/.tmux/plugins/tpm";
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true;
 		} fi
-
+		"$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+	
 		await::signal send config_tmux;
 
 		if is::cde; then {
 			tmux_create_session;
 		} fi
+
+		CLOSE=true await::create_shim "${tmux_exec_path:-}";
 	
 		(
 			if is::gitpod; then {
@@ -257,13 +258,12 @@ function config::tmux() {
 				((arr_elem=arr_elem+1));
 			} done
 
-		) || :;
+		) & disown;
 		
-		if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
-			sleep 1;
-		} fi 
+		# if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
+		# 	sleep 1;
+		# } fi 
 
-		CLOSE=true await::create_shim "${tmux_exec_path:-}";
 		
 		await::signal send config_tmux_session;
 

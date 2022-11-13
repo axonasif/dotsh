@@ -84,7 +84,7 @@ livetest() (
 		local docker_args=();
 		docker_args+=(
 			run
-			--rm
+			# --rm
 			--net=host
 		)
 		docker_args+=(
@@ -151,11 +151,11 @@ livetest() (
 			export PATH="$HOME/.nix-profile/bin:$PATH";
 			local logfile="$HOME/.dotfiles.log";
 			# local tail_cmd="less -S -XR +F $logfile";
-			local tail_cmd="tail -n +0 -f $logfile";
+			local tail_cmd="tail -n +0 -F $logfile";
 			# Load https://gitpod.io/variables into environment
 			eval "$(gp env -e)";
 			# Spawn the log pager
-			$tail_cmd & disown;
+			$tail_cmd 2>/dev/null & disown;
 
 			set +m; # Temporarily disable job control
 			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & wait;
@@ -170,6 +170,7 @@ livetest() (
 					"Run 'tmux detach' to exit from here" \
 					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
+				# DEBUG
 				# tmux select-window -t :1;
 				# sleep 2;
 				# tmux detach-client;
@@ -221,8 +222,8 @@ livetest() (
 			} done
 			rm -f "$lckfile";
 		} fi
-
 		docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
+		docker container prune -f 1>/dev/null & disown;
 	}
 
 )

@@ -1,42 +1,19 @@
 function install::packages {
     # shellcheck disable=SC2034
-    declare -a dw_cmd;
-    if command::exists curl; then {
-        dw_cmd=(curl -sSL);
-    } elif command::exists wget; then {
-        dw_cmd=(wget -qO-);
-    } fi
-
-    function dw() {
-        if test -n "${dw_cmd:-}"; then {
-            declare dw_path="$1";
-            declare dw_url="$2";
-            declare cmd="$(
-                cat <<EOF
-${dw_cmd[*]} "$dw_url" ${PIPE:-"> '$dw_path'"}
-if test -e "$dw_path"; then {
-    chmod +x "$dw_path";
-} fi
-EOF
-            )"
-            sudo sh -c "$cmd";
-        } else {
-            log::warn "curl or wget wasn't found, some things will go wrong";
-        } fi
-    }
 
     # =================================================
     # = assign dynamic packages                       =
     # =================================================
     if test "${DOTFILES_TMUX:-true}" == true; then {
-        if is::cde && test -n "${dw_cmd:-}"; then {
+        if is::cde; then {
             (
-                dw /usr/bin/tmux "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
+                dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
+
                 if ! command::exists yq; then {
-                    PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz";
+                    PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
                 } fi
                 if ! command::exists jq; then {
-                    dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64";
+                    dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown;
                 } fi
             ) & disown;
         } else {
@@ -55,10 +32,8 @@ EOF
         ;;
         "neovim")
             if is::cde; then {
-                (
-                    PIPE="| tar --strip-components=1 -C /usr -xpz" \
-                        dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz";
-                ) & disown;
+                PIPE="| tar --strip-components=1 -C /usr -xpz" \
+                    dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" & disown;
             } else {
                 nixpkgs_level_2+=("nixpkgs-unstable.neovim");
             } fi

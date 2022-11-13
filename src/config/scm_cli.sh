@@ -25,8 +25,8 @@ function config::scm_cli() {
 	local token && if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then {
 		# local token="${BASH_REMATCH[1]}";
 		local tries=1;
-		until printf '%s\n' "$token" | "${scm_cli_args[@]}" >/dev/null 2>&1; do {
-			if test $tries -gt 5; then {
+		until printf '%s\n' "$token" | "${scm_cli_args[@]}"; do {
+			if test $tries -gt 2; then {
 				log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:9}" 1 || exit;
 				break;
 			} fi

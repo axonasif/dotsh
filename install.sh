@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%11761 () 
+main@bashbox%22078 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%11761 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%11761';
+    ___MAIN_FUNCNAME='main@bashbox%22078';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -127,7 +127,7 @@ main@bashbox%11761 ()
         };
         log::info "Starting a fake Gitpod workspace with headless IDE" && { 
             local docker_args=();
-            docker_args+=(run --rm --net=host);
+            docker_args+=(run --net=host);
             docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$_arg_path:$HOME/.dotfiles");
             if is::gitpod; then
                 { 
@@ -161,9 +161,9 @@ main@bashbox%11761 ()
             { 
                 export PATH="$HOME/.nix-profile/bin:$PATH";
                 local logfile="$HOME/.dotfiles.log";
-                local tail_cmd="tail -n +0 -f $logfile";
+                local tail_cmd="tail -n +0 -F $logfile";
                 eval "$(gp env -e)";
-                $tail_cmd & disown;
+                $tail_cmd 2> /dev/null & disown;
                 set +m;
                 { 
                     "$HOME/.dotfiles/install.sh" 2>&1
@@ -216,7 +216,8 @@ main@bashbox%11761 ()
                     rm -f "$lckfile"
                 };
             fi;
-            docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")"
+            docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
+            docker container prune -f > /dev/null & disown
         } )
     };
     function log::info () 
@@ -904,6 +905,38 @@ main@bashbox%11761 ()
             fi;
         fi
     };
+    function dw () 
+    { 
+        declare -a dw_cmd;
+        if command::exists curl; then
+            { 
+                dw_cmd=(curl -sSL)
+            };
+        else
+            if command::exists wget; then
+                { 
+                    dw_cmd=(wget -qO-)
+                };
+            fi;
+        fi;
+        if test -n "${dw_cmd:-}"; then
+            { 
+                declare dw_path="$1";
+                declare dw_url="$2";
+                declare cmd="$(
+			cat <<EOF
+mkdir -m 0755 -p "${dw_path%/*}" && until ${dw_cmd[*]} "$dw_url" ${PIPE:-"> '$dw_path'"}; do continue; done
+if test -e "$dw_path"; then chmod +x "$dw_path"; fi
+EOF
+		)";
+                sudo sh -c "$cmd"
+            };
+        else
+            { 
+                log::warn "curl or wget wasn't found, some things will go wrong"
+            };
+        fi
+    };
     function is::gitpod () 
     { 
         test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT
@@ -1208,20 +1241,18 @@ main@bashbox%11761 ()
                     try_sudo touch "$shim_tombstone";
                     if ! is::custom_shim; then
                         { 
-                            try_sudo mv "$shim_source" "$target"
+                            try_sudo ln -sf "$shim_source" "$target"
                         };
                     else
                         { 
-                            try_sudo mv "$shim_source" "$SHIM_MIRROR";
-                            try_sudo ln -sf "$SHIM_MIRROR" "$target"
+                            try_sudo ln -sf "$shim_source" "$target"
                         };
                     fi;
                     unset "${vars_to_unset[@]}";
                     unset -f "$target_name";
                     export PATH="${PATH//"${shim_dir}:"/}";
                     ( sleep 3;
-                    try_sudo rm -f "$shim_tombstone" || true;
-                    try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2> /dev/null || : ) & disown
+                    try_sudo rm -f "$shim_tombstone" || true ) & disown
                 };
             fi
         };
@@ -1310,11 +1341,19 @@ main@bashbox%11761 ()
         function async_wrapper () 
         { 
             set -eu;
-            function await_for_no_open_writes () 
+            function await_nowrite_executable () 
             { 
-                while lsof -F 'f' -- "$1" 2> /dev/null | grep -q '^f.*w$'; do
-                    sleep 0.5${RANDOM};
-                done
+                declare input="$1";
+                while lsof -F 'f' -- "$input" 2> /dev/null | grep -q '^f.*w$'; do
+                    sleep 0.5;
+                done;
+                await::until_true test -x "$input"
+            };
+            function await_nowrite_executable_symlink () 
+            { 
+                declare input="$1";
+                await_nowrite_executable "$input";
+                await::until_true test -L "$input"
             };
             function exec_bin () 
             { 
@@ -1327,13 +1366,23 @@ main@bashbox%11761 ()
             };
             function await_while_shim_exists () 
             { 
-                : "$shim_source";
+                if is::custom_shim; then
+                    { 
+                        : "$target"
+                    };
+                else
+                    { 
+                        : "$shim_source"
+                    };
+                fi;
                 local checkf="$_";
                 for _i in {1..3};
                 do
                     { 
                         sleep 0.2${RANDOM};
-                        TIME="0.5${RANDOM}" await::while_true test -e "$checkf"
+                        while test -e "$checkf" && test ! -L "$checkf"; do
+                            sleep 0.5${RANDOM};
+                        done
                     };
                 done
             };
@@ -1362,12 +1411,19 @@ main@bashbox%11761 ()
                                 sleep 0.5
                             };
                         done;
-                        TIME="0.5${RANDOM}" await_for_no_open_writes "$target"
+                        await_nowrite_executable "$target"
                     };
                 else
                     { 
-                        TIME="0.5${RANDOM}" await::for_file_existence "$SHIM_MIRROR";
-                        await_for_no_open_writes "$SHIM_MIRROR"
+                        if test "${KEEP_internal_call:-}" == true; then
+                            { 
+                                await_nowrite_executable "$SHIM_MIRROR"
+                            };
+                        else
+                            { 
+                                await_nowrite_executable_symlink "$target"
+                            };
+                        fi
                     };
                 fi;
             fi;
@@ -1377,7 +1433,7 @@ main@bashbox%11761 ()
                         { 
                             if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then
                                 { 
-                                    try_sudo mkdir -p "${shim_source%/*}";
+                                    try_sudo mkdir -p "${shim_dir}";
                                     if ! is::custom_shim; then
                                         { 
                                             try_sudo mv "$target" "$shim_source";
@@ -1401,11 +1457,6 @@ main@bashbox%11761 ()
                             await_while_shim_exists
                         };
                     fi
-                };
-            fi;
-            if is::custom_shim; then
-                { 
-                    target="$SHIM_MIRROR"
                 };
             fi;
             exec_bin "$target" "$@"
@@ -1433,53 +1484,19 @@ main@bashbox%11761 ()
     };
     function install::packages () 
     { 
-        declare -a dw_cmd;
-        if command::exists curl; then
-            { 
-                dw_cmd=(curl -sSL)
-            };
-        else
-            if command::exists wget; then
-                { 
-                    dw_cmd=(wget -qO-)
-                };
-            fi;
-        fi;
-        function dw () 
-        { 
-            if test -n "${dw_cmd:-}"; then
-                { 
-                    declare dw_path="$1";
-                    declare dw_url="$2";
-                    declare cmd="$(
-                cat <<EOF
-${dw_cmd[*]} "$dw_url" ${PIPE:-"> '$dw_path'"}
-if test -e "$dw_path"; then {
-    chmod +x "$dw_path";
-} fi
-EOF
-            )";
-                    sudo sh -c "$cmd"
-                };
-            else
-                { 
-                    log::warn "curl or wget wasn't found, some things will go wrong"
-                };
-            fi
-        };
         if test "${DOTFILES_TMUX:-true}" == true; then
             { 
-                if is::cde && test -n "${dw_cmd:-}"; then
+                if is::cde; then
                     { 
-                        ( dw /usr/bin/tmux "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
+                        ( dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
                         if ! command::exists yq; then
                             { 
-                                PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz"
+                                PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown
                             };
                         fi;
                         if ! command::exists jq; then
                             { 
-                                dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64"
+                                dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown
                             };
                         fi ) & disown
                     };
@@ -1501,7 +1518,7 @@ EOF
             "neovim")
                 if is::cde; then
                     { 
-                        ( PIPE="| tar --strip-components=1 -C /usr -xpz" dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" ) & disown
+                        PIPE="| tar --strip-components=1 -C /usr -xpz" dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" & disown
                     };
                 else
                     { 
@@ -1984,8 +2001,7 @@ CMDC
         if is::cde; then
             { 
                 declare tmux_exec_path=/usr/bin/tmux;
-                await::until_true command::exists "$tmux_exec_path";
-                KEEP=true await::create_shim "$tmux_exec_path"
+                KEEP=true SHIM_MIRROR="/usr/bin/.dw/tmux" await::create_shim "$tmux_exec_path"
             };
         else
             { 
@@ -2007,16 +2023,17 @@ CMDC
             local target="$HOME/.tmux/plugins/tpm";
             if test ! -e "$target"; then
                 { 
-                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1;
-                    bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true
+                    git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" > /dev/null 2>&1
                 };
             fi;
+            "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
             await::signal send config_tmux;
             if is::cde; then
                 { 
                     tmux_create_session
                 };
             fi;
+            CLOSE=true await::create_shim "${tmux_exec_path:-}";
             ( if is::gitpod; then
                 { 
                     await::until_true command::exists yq;
@@ -2098,13 +2115,7 @@ CMDC
                     WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
                     ((arr_elem=arr_elem+1))
                 };
-            done ) || :;
-            if test "$(tmux display-message -p '#{session_windows}')" -le 2; then
-                { 
-                    sleep 1
-                };
-            fi;
-            CLOSE=true await::create_shim "${tmux_exec_path:-}";
+            done ) & disown;
             await::signal send config_tmux_session;
             if is::gitpod; then
                 { 
@@ -2283,9 +2294,9 @@ EOF
         local token && if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then
             { 
                 local tries=1;
-                until printf '%s\n' "$token" | "${scm_cli_args[@]}" > /dev/null 2>&1; do
+                until printf '%s\n' "$token" | "${scm_cli_args[@]}"; do
                     { 
-                        if test $tries -gt 5; then
+                        if test $tries -gt 2; then
                             { 
                                 log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:9}" 1 || exit;
                                 break
@@ -2495,4 +2506,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%11761 "$@";
+main@bashbox%22078 "$@";
