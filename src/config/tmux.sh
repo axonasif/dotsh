@@ -35,10 +35,23 @@ function get::task_cmd() {
 	local task="$1";
 	local cmdc;
 	local cmdc_tmp_file="/tmp/.dotfiles_task_cmd.$((RANDOM * $$))";
-
 	IFS='' read -rd '' cmdc <<CMDC || :;
-trap "rm -f $cmdc_tmp_file 2>/dev/null || true; exec '$(get::default_shell)' -il" EXIT
-printf "$BGREEN>> Executing task:$RC\n";
+function ___exit_callback() {
+	local r=\$?;
+	rm -f "$cmdc_tmp_file" 2>/dev/null || true;
+	if test -z "\${___manual_exit:-}"; then {
+		exec '$(get::default_shell)' -il;
+	} else {
+		printf "\n${BRED}>> This task issued manual 'exit' with return code \$r${RC}\n";
+		printf "${BRED}>> Press Enter or Return to dismiss${RC}" && read -r -n 1;
+	} fi
+}
+function exit() {
+	___manual_exit=true;
+	command exit "\$@";
+}; export -f exit;
+trap "___exit_callback" EXIT;
+printf "$BGREEN>> Executing task in bash:$RC\n";
 IFS='' read -rd '' lines <<'EOF' || :;
 $task
 EOF
@@ -179,55 +192,82 @@ function config::tmux() {
 	
 		(
 			if is::gitpod; then {
-				if test -n "${GITPOD_TASKS:-}"; then {
-					log::info "Spawning Gitpod tasks in tmux";
-				} else {
-					exit;
-				} fi
+				await::until_true command::exists yq;
 
-				await::for_file_existence "$workspace_dir/.gitpod/ready";
-				if ! cd "${GITPOD_REPO_ROOT:-}"; then {
-					log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit;
-				} fi
-
-				await::until_true command::exists jq;
-				function jqw() {
-					local cmd;
-					if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS"); then {
-						printf '%s\n' "$cmd";
-					} else {
-						return 1;
-					} fi
-				} 2>/dev/null
-
-				local name cmd arr_elem=0;
-				local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
-				while {
-					success=0;
-					cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
-					cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
-					test $success -gt 0;
-				}; do {
-					if ! name="$(jqw ".[${arr_elem}].name")"; then {
-						name="AnonTask-${arr_elem}";
-					} fi
-
-					local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
-					
-					cmd="$(
-						if test -e "$prebuild_log"; then {
-							printf 'cat %s\n' "$prebuild_log";
-							printf '%s\n' "${cmd_others:-}";
-						} else {
-							printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+				if test -v DOTFILES_READ_GITPOD_YML; then {
+					declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
+					if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then {
+						if ! GITPOD_TASKS="$(yq -I0 -erM -o=json '.tasks' "$gitpod_yml" 2>&1)"; then {
+							log::error "Syntax errors found on $gitpod_yml: $GITPOD_TASKS" 1 || return;
 						} fi
-					)";
-					cmd="$(get::task_cmd "$cmd")";
+					} fi
+				} fi
 
-					WINDOW_NAME="$name" tmux_create_window -d -- bash -cli "$cmd";
+				if test -z "${GITPOD_TASKS:-}"; then {
+					return;
+				} else {
+					log::info "Spawning Gitpod tasks in tmux";
+				} fi
 
-					((arr_elem=arr_elem+1));
-				} done
+			} elif is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then {
+				cd "$CODESPACE_VSCODE_FOLDER" || true;
+				return;
+			} else {
+				return;
+			} fi
+
+			await::for_file_existence "$workspace_dir/.gitpod/ready";
+			cd "${GITPOD_REPO_ROOT:-}";
+
+			function jqw() {
+				local cmd;
+				if cmd=$(yq -I0 -erM "$@" <<<"$GITPOD_TASKS"); then {
+					printf '%s\n' "$cmd";
+				} else {
+					return 1;
+				} fi
+			} 2>/dev/null
+
+			local name cmd arr_elem=0;
+			local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
+			while {
+				success=0;
+				cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
+				cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
+				test $success -gt 0;
+			}; do {
+				if ! name="$(jqw ".[${arr_elem}].name")"; then {
+					name="AnonTask-${arr_elem}";
+				} fi
+
+				local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
+				
+				cmd="$(
+					if test -e "$prebuild_log"; then {
+						printf 'cat %s\n' "$prebuild_log";
+						printf '%s\n' "${cmd_others:-}";
+					} else {
+						printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+					} fi
+				)";
+				cmd="$(get::task_cmd "$cmd")";
+
+				WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+
+				((arr_elem=arr_elem+1));
+			} done
+
+		) || :;
+		
+		if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
+			sleep 1;
+		} fi 
+
+		CLOSE=true await::create_shim "${tmux_exec_path:-}";
+		
+		await::signal send config_tmux_session;
+
+		if is::gitpod; then {
 
 			# Install gitpod specific ephemeral plugins
 			## Dotfiles loading indicator (spinner)
@@ -247,11 +287,11 @@ done
 current_status="$(tmux display -p '#{status-right}')";
 tmux set -g status-right "$(printf '%s\n' "$current_status" | sed "s|#(exec $0)||g")"
 EOF
-			)"
+		)"
 
 			local resources_indicator="/usr/bin/tmux-resources-indicator.sh";
 			local resources_indicator_data="$(
-			printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
 
 				cat <<'EOF'
 printf '\n'; # init quick draw
@@ -259,7 +299,7 @@ printf '\n'; # init quick draw
 while true; do {
 	# Read all properties
 	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
-		< <(gp top -j | jq -r ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
+		< <(gp top -j | yq -I0 -rM ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
 
 	# Human friendly memory numbers
 	read -r hmem_used hmem_max < <(numfmt -z --to=iec --format="%8.2f" $mem_used $mem_max);
@@ -272,7 +312,7 @@ while true; do {
 	sleep 3;
 } done
 EOF
-			)"
+		)"
 
 			{
 				printf '%s\n' "$spinner_data" | sudo tee "$spinner";
@@ -283,18 +323,6 @@ EOF
 			tmux set-option -g status-left-length 100\; set-option -g status-right-length 100\; \
 				set-option -ga status-right "#(exec $resources_indicator)#(exec $spinner)";
 
-			} elif is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then {
-				cd "$CODESPACE_VSCODE_FOLDER" || :;
-			} fi
-		) || :;
-		
-		if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
-			sleep 2;
-		} fi 
-
-		CLOSE=true await::create_shim "${tmux_exec_path:-}";
-		
-		await::signal send config_tmux_session;
-		
+		} fi
 	 } & disown;
 }

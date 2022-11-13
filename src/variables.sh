@@ -2,7 +2,7 @@
 
 # UPPERCASE variables may be supplied as environment variables instead.
 
-# Add nix bin PATH in advance
+# Add nix bin and .local/bin to PATH in advance
 export PATH="$PATH:$HOME/.nix-profile/bin";
 
 

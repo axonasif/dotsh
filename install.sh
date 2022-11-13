@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%28763 () 
+main@bashbox%11951 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%28763 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%28763';
+    ___MAIN_FUNCNAME='main@bashbox%11951';
     ___self_NAME="dotfiles";
     ___self_CODENAME="dotfiles";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -111,7 +111,7 @@ main@bashbox%28763 ()
                 workspace_sources+=("/workspace/.gitpod")
             };
         fi;
-        log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && { 
+        log::info "Creating a clone of ${workspace_sources} at $duplicate_workspace_root" && { 
             if command::exists rsync; then
                 { 
                     mkdir -p "$duplicate_workspace_root";
@@ -136,7 +136,24 @@ main@bashbox%28763 ()
             fi;
             if is::gitpod; then
                 { 
-                    docker_args+=(-e GP_EXTERNAL_BROWSER -e GP_OPEN_EDITOR -e GP_PREVIEW_BROWSER -e GITPOD_ANALYTICS_SEGMENT_KEY -e GITPOD_ANALYTICS_WRITER -e GITPOD_CLI_APITOKEN -e GITPOD_GIT_USER_EMAIL -e GITPOD_GIT_USER_NAME -e GITPOD_HOST -e GITPOD_IDE_ALIAS -e GITPOD_INSTANCE_ID -e GITPOD_INTERVAL -e GITPOD_MEMORY -e GITPOD_OWNER_ID -e GITPOD_PREVENT_METADATA_ACCESS -e GITPOD_REPO_ROOT -e GITPOD_REPO_ROOTS -e GITPOD_THEIA_PORT -e GITPOD_WORKSPACE_CLASS -e GITPOD_WORKSPACE_CLUSTER_HOST -e GITPOD_WORKSPACE_CONTEXT -e GITPOD_WORKSPACE_CONTEXT_URL -e GITPOD_WORKSPACE_ID -e GITPOD_WORKSPACE_URL -e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
+                    declare gitpod_env_vars="${!GITPOD_*}" && { 
+                        gitpod_env_vars="${gitpod_env_vars//"GITPOD_TASKS"/}"
+                    };
+                    declare gp_env_vars="${!GP_*}" && { 
+                        declare key && for key in GP_PYENV_FAKEROOT GP_PYENV_INIT GP_PYENV_MIRROR;
+                        do
+                            { 
+                                gp_env_vars="${gp_env_vars//"${key}"/}"
+                            };
+                        done
+                    };
+                    for key in ${gitpod_env_vars:-} ${gp_env_vars:-};
+                    do
+                        { 
+                            docker_args+=(-e "${key}")
+                        };
+                    done;
+                    docker_args+=(-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false)
                 };
             fi;
             docker_args+=(-it "$container_image");
@@ -146,6 +163,7 @@ main@bashbox%28763 ()
                 local logfile="$HOME/.dotfiles.log";
                 local tail_cmd="tail -n +0 -f $logfile";
                 eval "$(gp env -e)";
+                $tail_cmd & disown;
                 set +m;
                 { 
                     "$HOME/.dotfiles/install.sh" 2>&1
@@ -160,7 +178,7 @@ main@bashbox%28763 ()
                     sleep 1;
                 done;
                 printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile" ) & disown;
-                $tail_cmd & if test "${DOTFILES_TMUX:-true}" == true; then
+                if test "${DOTFILES_TMUX:-true}" == true; then
                     { 
                         ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux attach
                     };
@@ -970,7 +988,7 @@ main@bashbox%28763 ()
     function vscode::add_settings () 
     { 
         SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
-        await::until_true command::exists jq;
+        await::until_true command::exists yq;
         read -t0.5 -u0 -r -d '' input || :;
         if test -z "${input:-}"; then
             { 
@@ -988,15 +1006,14 @@ main@bashbox%28763 ()
                         touch "$settings_file"
                     };
                 fi;
-                if test ! -s "$settings_file" || ! jq -reM '""' "$settings_file" > /dev/null; then
+                if test ! -s "$settings_file" || ! yq -o=json -reM '""' "$settings_file" > /dev/null 2>&1; then
                     { 
                         printf '%s\n' "$input" > "$settings_file"
                     };
                 else
                     { 
-                        sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file";
                         cp -a "$settings_file" "$tmp_file";
-                        jq -s '.[0] * .[1]' - "$tmp_file" <<< "$input" > "$settings_file";
+                        yq ea -o=json -I2 -M '. as $item ireduce ({}; . * $item )' - "$tmp_file" <<< "$input" > "$settings_file";
                         rm -f "$tmp_file"
                     };
                 fi
@@ -1440,63 +1457,83 @@ main@bashbox%28763 ()
                 };
             fi;
         fi;
+        function dw () 
+        { 
+            if test -n "${dw_cmd:-}"; then
+                { 
+                    declare dw_path="$1";
+                    declare dw_url="$2";
+                    declare cmd="$(
+                cat <<EOF
+${dw_cmd[*]} "$dw_url" ${PIPE:-"> '$dw_path'"}
+if test -e "$dw_path"; then {
+    chmod +x "$dw_path";
+} fi
+EOF
+            )";
+                    sudo sh -c "$cmd"
+                };
+            else
+                { 
+                    log::warn "curl or wget wasn't found, some things will go wrong"
+                };
+            fi
+        };
         if test "${DOTFILES_TMUX:-true}" == true; then
             { 
-                if is::cde && test -n "${dw_cmd[0]}"; then
+                if is::cde && test -n "${dw_cmd:-}"; then
                     { 
-                        ( dw_path=/tmp/.tmuxdw;
-                        declare dw_url="https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
-                        "${dw_cmd[@]}" "${dw_url}" > "$dw_path";
-                        sudo sh -c "mv $dw_path /usr/bin/tmux && chmod +x /usr/bin/tmux";
+                        ( dw /usr/bin/tmux "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
+                        if ! command::exists yq; then
+                            { 
+                                PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz"
+                            };
+                        fi;
                         if ! command::exists jq; then
                             { 
-                                dw_path=/tmp/.jqdw;
-                                dw_url="https://github.com/stedolan/jq/releases/latest/download/jq-linux64";
-                                "${dw_cmd[@]}" "$dw_url" > "$dw_path";
-                                sudo sh -c "mv $dw_path /usr/bin/jq && chmod +x /usr/bin/jq"
+                                dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64"
                             };
                         fi ) & disown
                     };
                 else
                     { 
-                        nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq)
+                        nixpkgs_level_1+=(nixpkgs.tmux nixpkgs.yq nixpkgs.jq)
                     };
                 fi
             };
         fi;
-        nixpkgs_level_one+=(nixpkgs."${DOTFILES_SHELL:-fish}");
+        nixpkgs_level_1+=(nixpkgs."${DOTFILES_SHELL:-fish}");
         case "${DOTFILES_EDITOR:-neovim}" in 
             "emacs")
-                nixpkgs_level_two+=("nixpkgs.emacs")
+                nixpkgs_level_2+=("nixpkgs.emacs")
             ;;
             "helix")
-                nixpkgs_level_two+=("nixpkgs.helix")
+                nixpkgs_level_2+=("nixpkgs.helix")
             ;;
             "neovim")
-                if is::cde && test -n "${dw_cmd[0]}"; then
+                if is::cde; then
                     { 
-                        ( declare dw_url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz";
-                        "${dw_cmd[@]}" "${dw_url}" | sudo tar --strip-components=1 -C /usr -xpz ) & disown
+                        ( PIPE="| tar --strip-components=1 -C /usr -xpz" dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" ) & disown
                     };
                 else
                     { 
-                        nixpkgs_level_two+=("nixpkgs-unstable.neovim")
+                        nixpkgs_level_2+=("nixpkgs-unstable.neovim")
                     };
                 fi
             ;;
         esac;
         if ! command::exists git; then
             { 
-                nixpkgs_level_two+=(nixpkgs.git)
+                nixpkgs_level_2+=(nixpkgs.git)
             };
         fi;
         if is::gitpod; then
             { 
-                nixpkgs_level_two+=(nixpkgs."${gitpod_scm_cli}")
+                nixpkgs_level_2+=(nixpkgs."${gitpod_scm_cli}")
             };
         else
             { 
-                nixpkgs_level_two+=(nixpkgs.gh nixpkgs.glab)
+                nixpkgs_level_2+=(nixpkgs.gh nixpkgs.glab)
             };
         fi;
         if os::is_darwin; then
@@ -1860,8 +1897,22 @@ main@bashbox%28763 ()
         local cmdc;
         local cmdc_tmp_file="/tmp/.dotfiles_task_cmd.$((RANDOM * $$))";
         IFS='' read -rd '' cmdc <<CMDC || 
-trap "rm -f $cmdc_tmp_file 2>/dev/null || true; exec '$(get::default_shell)' -il" EXIT
-printf "$BGREEN>> Executing task:$RC\n";
+function ___exit_callback() {
+	local r=\$?;
+	rm -f "$cmdc_tmp_file" 2>/dev/null || true;
+	if test -z "\${___manual_exit:-}"; then {
+		exec '$(get::default_shell)' -il;
+	} else {
+		printf "\n${BRED}>> This task issued manual 'exit' with return code \$r${RC}\n";
+		printf "${BRED}>> Press Enter or Return to dismiss${RC}" && read -r -n 1;
+	} fi
+}
+function exit() {
+	___manual_exit=true;
+	command exit "\$@";
+}; export -f exit;
+trap "___exit_callback" EXIT;
+printf "$BGREEN>> Executing task in bash:$RC\n";
 IFS='' read -rd '' lines <<'EOF' || :;
 $task
 EOF
@@ -1980,63 +2031,95 @@ CMDC
             fi;
             ( if is::gitpod; then
                 { 
-                    if test -n "${GITPOD_TASKS:-}"; then
+                    await::until_true command::exists yq;
+                    if test -v DOTFILES_READ_GITPOD_YML; then
                         { 
-                            log::info "Spawning Gitpod tasks in tmux"
+                            declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
+                            if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then
+                                { 
+                                    if ! GITPOD_TASKS="$(yq -I0 -erM -o=json '.tasks' "$gitpod_yml" 2>&1)"; then
+                                        { 
+                                            log::error "Syntax errors found on $gitpod_yml: $GITPOD_TASKS" 1 || return
+                                        };
+                                    fi
+                                };
+                            fi
+                        };
+                    fi;
+                    if test -z "${GITPOD_TASKS:-}"; then
+                        { 
+                            return
                         };
                     else
                         { 
-                            exit
+                            log::info "Spawning Gitpod tasks in tmux"
                         };
-                    fi;
-                    await::for_file_existence "$workspace_dir/.gitpod/ready";
-                    if ! cd "${GITPOD_REPO_ROOT:-}"; then
-                        { 
-                            log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit
-                        };
-                    fi;
-                    await::until_true command::exists jq;
-                    function jqw () 
+                    fi
+                };
+            else
+                if is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then
                     { 
-                        local cmd;
-                        if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS"); then
-                            { 
-                                printf '%s\n' "$cmd"
-                            };
-                        else
-                            { 
-                                return 1
-                            };
-                        fi
-                    } 2> /dev/null;
-                    local name cmd arr_elem=0;
-                    local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
-                    while { 
-                        success=0;
-                        cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
-                        cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
-                        test $success -gt 0
-                    }; do
+                        cd "$CODESPACE_VSCODE_FOLDER" || true;
+                        return
+                    };
+                else
+                    { 
+                        return
+                    };
+                fi;
+            fi;
+            await::for_file_existence "$workspace_dir/.gitpod/ready";
+            cd "${GITPOD_REPO_ROOT:-}";
+            function jqw () 
+            { 
+                local cmd;
+                if cmd=$(yq -I0 -erM "$@" <<<"$GITPOD_TASKS"); then
+                    { 
+                        printf '%s\n' "$cmd"
+                    };
+                else
+                    { 
+                        return 1
+                    };
+                fi
+            } 2> /dev/null;
+            local name cmd arr_elem=0;
+            local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
+            while { 
+                success=0;
+                cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
+                cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
+                test $success -gt 0
+            }; do
+                { 
+                    if ! name="$(jqw ".[${arr_elem}].name")"; then
                         { 
-                            if ! name="$(jqw ".[${arr_elem}].name")"; then
-                                { 
-                                    name="AnonTask-${arr_elem}"
-                                };
-                            fi;
-                            local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
-                            cmd="$(
-						if test -e "$prebuild_log"; then {
-							printf 'cat %s\n' "$prebuild_log";
-							printf '%s\n' "${cmd_others:-}";
-						} else {
-							printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
-						} fi
-					)";
-                            cmd="$(get::task_cmd "$cmd")";
-                            WINDOW_NAME="$name" tmux_create_window -d -- bash -cli "$cmd";
-                            ((arr_elem=arr_elem+1))
+                            name="AnonTask-${arr_elem}"
                         };
-                    done;
+                    fi;
+                    local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
+                    cmd="$(
+					if test -e "$prebuild_log"; then {
+						printf 'cat %s\n' "$prebuild_log";
+						printf '%s\n' "${cmd_others:-}";
+					} else {
+						printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+					} fi
+				)";
+                    cmd="$(get::task_cmd "$cmd")";
+                    WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+                    ((arr_elem=arr_elem+1))
+                };
+            done ) || :;
+            if test "$(tmux display-message -p '#{session_windows}')" -le 2; then
+                { 
+                    sleep 1
+                };
+            fi;
+            CLOSE=true await::create_shim "${tmux_exec_path:-}";
+            await::signal send config_tmux_session;
+            if is::gitpod; then
+                { 
                     local spinner="/usr/bin/tmux-dotfiles-spinner.sh";
                     local spinner_data="$(
 				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
@@ -2053,10 +2136,10 @@ done
 current_status="$(tmux display -p '#{status-right}')";
 tmux set -g status-right "$(printf '%s\n' "$current_status" | sed "s|#(exec $0)||g")"
 EOF
-			)";
+		)";
                     local resources_indicator="/usr/bin/tmux-resources-indicator.sh";
                     local resources_indicator_data="$(
-			printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
 
 				cat <<'EOF'
 printf '\n'; # init quick draw
@@ -2064,7 +2147,7 @@ printf '\n'; # init quick draw
 while true; do {
 	# Read all properties
 	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
-		< <(gp top -j | jq -r ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
+		< <(gp top -j | yq -I0 -rM ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
 
 	# Human friendly memory numbers
 	read -r hmem_used hmem_max < <(numfmt -z --to=iec --format="%8.2f" $mem_used $mem_max);
@@ -2077,7 +2160,7 @@ while true; do {
 	sleep 3;
 } done
 EOF
-			)";
+		)";
                     { 
                         printf '%s\n' "$spinner_data" | sudo tee "$spinner";
                         printf '%s\n' "$resources_indicator_data" | sudo tee "$resources_indicator"
@@ -2085,20 +2168,7 @@ EOF
                     sudo chmod +x "$spinner" "$resources_indicator";
                     tmux set-option -g status-left-length 100\; set-option -g status-right-length 100\; set-option -ga status-right "#(exec $resources_indicator)#(exec $spinner)"
                 };
-            else
-                if is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then
-                    { 
-                        cd "$CODESPACE_VSCODE_FOLDER" || :
-                    };
-                fi;
-            fi ) || :;
-            if test "$(tmux display-message -p '#{session_windows}')" -le 2; then
-                { 
-                    sleep 2
-                };
-            fi;
-            CLOSE=true await::create_shim "${tmux_exec_path:-}";
-            await::signal send config_tmux_session
+            fi
         } & disown
     };
     function config::shell::bash () 
@@ -2281,7 +2351,12 @@ EOF
     };
     function editor::autorun_in_tmux () 
     { 
-        ( await::signal get config_tmux_session;
+        ( if test "${DOTFILES_TMUX:-true}" != true; then
+            { 
+                return
+            };
+        fi;
+        await::signal get config_tmux_session;
         tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "$@" Enter ) &
     };
     function editor::emacs::doom () 
@@ -2432,4 +2507,4 @@ EOF
     wait;
     exit
 }
-main@bashbox%28763 "$@";
+main@bashbox%11951 "$@";

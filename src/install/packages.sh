@@ -7,58 +7,72 @@ function install::packages {
         dw_cmd=(wget -qO-);
     } fi
 
+    function dw() {
+        if test -n "${dw_cmd:-}"; then {
+            declare dw_path="$1";
+            declare dw_url="$2";
+            declare cmd="$(
+                cat <<EOF
+${dw_cmd[*]} "$dw_url" ${PIPE:-"> '$dw_path'"}
+if test -e "$dw_path"; then {
+    chmod +x "$dw_path";
+} fi
+EOF
+            )"
+            sudo sh -c "$cmd";
+        } else {
+            log::warn "curl or wget wasn't found, some things will go wrong";
+        } fi
+    }
+
     # =================================================
     # = assign dynamic packages                       =
     # =================================================
     if test "${DOTFILES_TMUX:-true}" == true; then {
-        if is::cde && test -n "${dw_cmd[0]}"; then {
+        if is::cde && test -n "${dw_cmd:-}"; then {
             (
-                dw_path=/tmp/.tmuxdw;
-                declare dw_url="https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
-                "${dw_cmd[@]}" "${dw_url}" > "$dw_path";
-                sudo sh -c "mv $dw_path /usr/bin/tmux && chmod +x /usr/bin/tmux";
+                dw /usr/bin/tmux "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped";
+                if ! command::exists yq; then {
+                    PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz";
+                } fi
                 if ! command::exists jq; then {
-                    dw_path=/tmp/.jqdw;
-                    dw_url="https://github.com/stedolan/jq/releases/latest/download/jq-linux64";
-                    "${dw_cmd[@]}" "$dw_url" > "$dw_path";
-                    sudo sh -c "mv $dw_path /usr/bin/jq && chmod +x /usr/bin/jq";
+                    dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64";
                 } fi
             ) & disown;
         } else {
-            nixpkgs_level_one+=(nixpkgs.tmux nixpkgs.jq);
+            nixpkgs_level_1+=(nixpkgs.tmux nixpkgs.yq nixpkgs.jq);
         } fi
     } fi
 
-    nixpkgs_level_one+=(nixpkgs."${DOTFILES_SHELL:-fish}")
+    nixpkgs_level_1+=(nixpkgs."${DOTFILES_SHELL:-fish}");
 
     case "${DOTFILES_EDITOR:-neovim}" in
         "emacs")
-            nixpkgs_level_two+=("nixpkgs.emacs");
+            nixpkgs_level_2+=("nixpkgs.emacs");
         ;;
         "helix")
-            nixpkgs_level_two+=("nixpkgs.helix");
+            nixpkgs_level_2+=("nixpkgs.helix");
         ;;
         "neovim")
-            if is::cde && test -n "${dw_cmd[0]}"; then {
+            if is::cde; then {
                 (
-                    declare dw_url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz"
-                    "${dw_cmd[@]}" "${dw_url}" | sudo tar --strip-components=1 -C /usr -xpz;
-                    # sudo chmod +x /usr/bin/nvim;
+                    PIPE="| tar --strip-components=1 -C /usr -xpz" \
+                        dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz";
                 ) & disown;
             } else {
-                nixpkgs_level_two+=("nixpkgs-unstable.neovim");
+                nixpkgs_level_2+=("nixpkgs-unstable.neovim");
             } fi
         ;;
     esac
 
     if ! command::exists git; then {
-        nixpkgs_level_two+=(nixpkgs.git);
+        nixpkgs_level_2+=(nixpkgs.git);
     } fi
     
     if is::gitpod; then {
-        nixpkgs_level_two+=(nixpkgs."${gitpod_scm_cli}");
+        nixpkgs_level_2+=(nixpkgs."${gitpod_scm_cli}");
     } else {
-        nixpkgs_level_two+=(
+        nixpkgs_level_2+=(
             nixpkgs.gh
             nixpkgs.glab
         )

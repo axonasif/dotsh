@@ -58,7 +58,7 @@ livetest() (
 		workspace_sources+=("/workspace/.gitpod");
 	} fi
 
-	log::info "Creating a clone of ${workspace_sources[0]} at $duplicate_workspace_root" && {
+	log::info "Creating a clone of ${workspace_sources} at $duplicate_workspace_root" && {
 		if command::exists rsync; then {
 			mkdir -p "$duplicate_workspace_root";
 			rsync -ah --info=progress2 --delete "${workspace_sources[@]}" "$duplicate_workspace_root";
@@ -115,35 +115,23 @@ livetest() (
 		# } fi
 
 		if is::gitpod; then {
-			docker_args+=(
-				# Environment vars
-				-e GP_EXTERNAL_BROWSER
-				-e GP_OPEN_EDITOR
-				-e GP_PREVIEW_BROWSER
-				-e GITPOD_ANALYTICS_SEGMENT_KEY
-				-e GITPOD_ANALYTICS_WRITER
-				-e GITPOD_CLI_APITOKEN
-				-e GITPOD_GIT_USER_EMAIL
-				-e GITPOD_GIT_USER_NAME
-				-e GITPOD_HOST
-				-e GITPOD_IDE_ALIAS
-				-e GITPOD_INSTANCE_ID
-				-e GITPOD_INTERVAL
-				-e GITPOD_MEMORY
-				-e GITPOD_OWNER_ID
-				-e GITPOD_PREVENT_METADATA_ACCESS
-				-e GITPOD_REPO_ROOT
-				-e GITPOD_REPO_ROOTS
-				-e GITPOD_THEIA_PORT
-				-e GITPOD_WORKSPACE_CLASS
-				-e GITPOD_WORKSPACE_CLUSTER_HOST
-				-e GITPOD_WORKSPACE_CONTEXT
-				-e GITPOD_WORKSPACE_CONTEXT_URL
-				-e GITPOD_WORKSPACE_ID
-				-e GITPOD_WORKSPACE_URL
-				# Fake gitpod tasks for testing
-				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo"},{"name":"Test boo", "command":"echo This is boooo"}]'
+			# Pass on local environment variables
 
+			declare gitpod_env_vars="${!GITPOD_*}" && {
+				gitpod_env_vars="${gitpod_env_vars//"GITPOD_TASKS"/}";
+			}
+			declare gp_env_vars="${!GP_*}" && {
+				declare key && for key in GP_PYENV_FAKEROOT GP_PYENV_INIT GP_PYENV_MIRROR; do {
+					gp_env_vars="${gp_env_vars//"${key}"/}";
+				} done
+			}
+
+			for key in ${gitpod_env_vars:-} ${gp_env_vars:-}; do {
+				docker_args+=(-e "${key}");
+			} done
+			docker_args+=(
+				# Fake gitpod tasks for testing
+				-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]'
 				# !! Note: the DOTFILES_ env vars could be overwritten by https://gitpod.io/variables even if you set them here.
 				# Disable ssh:// protocol launch
 				-e DOTFILES_SPAWN_SSH_PROTO=false
@@ -151,6 +139,7 @@ livetest() (
 				# -e DOTFILES_SHELL=zsh
 				# -e DOTFILES_TMUX=false
 				# -e DOTFILES_EDITOR=emacs
+				# -e DOTFILES_READ_GITPOD_YML=true
 			)
 		} fi
 
@@ -164,7 +153,11 @@ livetest() (
 			local logfile="$HOME/.dotfiles.log";
 			# local tail_cmd="less -S -XR +F $logfile";
 			local tail_cmd="tail -n +0 -f $logfile";
+			# Load https://gitpod.io/variables into environment
 			eval "$(gp env -e)";
+			# Spawn the log pager
+			$tail_cmd & disown;
+
 			set +m; # Temporarily disable job control
 			{ "$HOME/.dotfiles/install.sh" 2>&1; } >"$logfile" 2>&1 & wait;
 			set -m;
@@ -183,7 +176,6 @@ livetest() (
 				# tmux detach-client;
 			) & disown;
 
-			$tail_cmd &
 			if test "${DOTFILES_TMUX:-true}" == true; then {
 				AWAIT_SHIM_PRINT_INDICATOR=true tmux attach;
 			} else {

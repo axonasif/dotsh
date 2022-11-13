@@ -63,7 +63,7 @@ function command::exists() {
 
 function vscode::add_settings() {
 	SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
-	await::until_true command::exists jq ;
+	await::until_true command::exists yq ;
 
 	# Read from standard input
 	read -t0.5 -u0 -r -d '' input || :
@@ -82,15 +82,16 @@ function vscode::add_settings() {
 		}; fi
 
 		# Check json syntax
-		if test ! -s "$settings_file" || ! jq -reM '""' "$settings_file" 1>/dev/null; then {
+		if test ! -s "$settings_file" || ! yq -o=json -reM '""' "$settings_file" >/dev/null 2>&1; then {
 			printf '%s\n' "$input" >"$settings_file"
 		}; else {
-			# Remove any trailing commas
-			sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file"
+			# Remove any trailing commas (not needed for yq)
+			# sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file"
 
 			# Merge the input settings with machine settings.json
 			cp -a "$settings_file" "$tmp_file"
-			jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" >"$settings_file"
+			# jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" >"$settings_file"
+			yq ea -o=json -I2 -M '. as $item ireduce ({}; . * $item )' - "$tmp_file" <<<"$input" >"$settings_file"
 			rm -f "$tmp_file"
 		}; fi
 
