@@ -4,6 +4,8 @@ A fast asynchronous dotfiles and system configuration installer for use on Gitpo
 
 What's special about it? Nothing. It's compilation of some automation to create consistent terminal-focused dev environment across different systems, that's all. There are no configuration files (such as `.yaml`) for this, it is meant to be edited from the source code and compiled.
 
+Development branch: [devel](https://github.com/axonasif/dotfiles-sh/tree/devel)
+
 ## Features
 
 - Dotfiles `install.sh` executes in **under 1 seconds**, thus your IDE starts quick nomatter how many things you configure/install.
