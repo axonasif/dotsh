@@ -20,8 +20,6 @@ function main() {
     } done
   } fi
 
-  exit
-
     # Ensure and preserve sudo when not CDE
     if ! is::cde; then {
         process::preserve_sudo;

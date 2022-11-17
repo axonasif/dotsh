@@ -10,7 +10,7 @@ RUN . "$HOME/.nix-profile/etc/profile.d/nix.sh" \
 	&& nix-channel --update;
 
 RUN . "$HOME/.nix-profile/etc/profile.d/nix.sh" \
-	&& nix-env -iA nixpkgs.tmux nixpkgs.fish;
+	&& nix-env -iA nixpkgs.tmux nixpkgs.fish nixpkgs.zsh nixpkgs.bashInteractive;
 
 COPY --chown=gitpod:gitpod .tmux_plugins.conf $HOME/.tmux.conf
 RUN . "$HOME/.nix-profile/etc/profile.d/nix.sh" \

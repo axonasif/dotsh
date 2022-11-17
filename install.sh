@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3564 () 
+main@bashbox%22522 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%3564 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%3564';
+    ___MAIN_FUNCNAME='main@bashbox%22522';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2723,7 +2723,6 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
                 done
             };
         fi;
-        exit;
         if ! is::cde; then
             { 
                 process::preserve_sudo
@@ -2765,4 +2764,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%3564 "$@";
+main@bashbox%22522 "$@";
