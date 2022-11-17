@@ -13,11 +13,13 @@ use variables;
 function main() {
 
   # Hook CLIs
-  if test -n "${*:-}"; then {
+  if test "${___self##*/}" == "dotsh" && test -n "${*:-}"; then {
     declare cli;
     for cli in filesync config; do {
       "${cli}::cli" "$@";
     } done
+  } elif test -n "${*:-}"; then {
+    exit 0;
   } fi
 
     # Ensure and preserve sudo when not CDE
@@ -56,6 +58,9 @@ function main() {
     if is::gitpod; then {
         # Install and login into gh
         config::scm_cli & disown;
+
+        # Install self shim
+        install::dotsh & disown;
     } fi
 
     # Configure neovim

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%22522 () 
+main@bashbox%9910 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%22522 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%22522';
+    ___MAIN_FUNCNAME='main@bashbox%9910';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1906,6 +1906,10 @@ EOF
         esac;
         exit
     };
+    function install::dotsh () 
+    { 
+        try_sudo ln -sf "$___self_DIR/${___self##*/}" "/usr/bin/dotsh"
+    };
     readonly RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m';
     readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
     readonly WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m';
@@ -2712,7 +2716,7 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
-        if test -n "${*:-}"; then
+        if test "${___self##*/}" == "dotsh" && test -n "${*:-}"; then
             { 
                 declare cli;
                 for cli in filesync config;
@@ -2722,6 +2726,12 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
                     };
                 done
             };
+        else
+            if test -n "${*:-}"; then
+                { 
+                    exit 0
+                };
+            fi;
         fi;
         if ! is::cde; then
             { 
@@ -2747,7 +2757,8 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
         fi;
         if is::gitpod; then
             { 
-                config::scm_cli & disown
+                config::scm_cli & disown;
+                install::dotsh & disown
             };
         fi;
         config::editor & disown;
@@ -2764,4 +2775,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%22522 "$@";
+main@bashbox%9910 "$@";
