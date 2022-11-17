@@ -1,6 +1,6 @@
 # Introduction
 
-A fast dotfiles and system-configuration installer optimized for Gitpod (can be used locally too). Is this another dotfiles-manager? Nope. In fact, it will try to detect your dotfiles-manager and install your raw files through it if you're using one, otherwise it tries to symlink with it's own tiny implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience.
+A fast dotfiles and system-configuration installer optimized for Gitpod (can be used locally too). Is this another dotfiles-manager? Nope. In fact, it will try to detect your dotfiles-manager and install your raw files through it if you're using one, otherwise it tries to symlink with it's own tiny implementation. This is essentially a script, it is meant to be modularly customized from source code and compiled for convenience. You can even call it a "framework" if you like 🙃
 
 # Quickstart for Gitpod
 
