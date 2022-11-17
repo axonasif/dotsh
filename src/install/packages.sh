@@ -4,29 +4,50 @@ function install::packages {
     # =================================================
     # = assign dynamic packages                       =
     # =================================================
-    nixpkgs_level_one+=(nixpkgs."${DOTFILES_SHELL:-fish}")
+    if test "${DOTFILES_TMUX:-true}" == true; then {
+        if is::cde; then {
+            (
+                dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
+
+                if ! command::exists yq; then {
+                    PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
+                } fi
+                if ! command::exists jq; then {
+                    dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown;
+                } fi
+            ) & disown;
+        } else {
+            nixpkgs_level_1+=(nixpkgs.tmux nixpkgs.yq nixpkgs.jq);
+        } fi
+    } fi
+
+    nixpkgs_level_1+=(nixpkgs."${DOTFILES_SHELL:-fish}");
 
     case "${DOTFILES_EDITOR:-neovim}" in
         "emacs")
-            : "nixpkgs.emacs";
+            nixpkgs_level_2+=("nixpkgs.emacs");
         ;;
         "helix")
-            : "nixpkgs.helix";
+            nixpkgs_level_2+=("nixpkgs.helix");
         ;;
         "neovim")
-            : "nixpkgs-unstable.neovim";
+            if is::cde; then {
+                PIPE="| tar --strip-components=1 -C /usr -xpz" \
+                    dw /usr/bin/nvim "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" & disown;
+            } else {
+                nixpkgs_level_2+=("nixpkgs-unstable.neovim");
+            } fi
         ;;
     esac
-    nixpkgs_level_two+=("$_")
 
-    if ! command -v git 1>/dev/null; then {
-        nixpkgs_level_two+=(nixpkgs.git);
+    if ! command::exists git; then {
+        nixpkgs_level_2+=(nixpkgs.git);
     } fi
     
     if is::gitpod; then {
-        nixpkgs_level_two+=(nixpkgs."${gitpod_scm_cli}");
+        nixpkgs_level_2+=(nixpkgs."${gitpod_scm_cli}");
     } else {
-        nixpkgs_level_two+=(
+        nixpkgs_level_2+=(
             nixpkgs.gh
             nixpkgs.glab
         )
@@ -41,19 +62,25 @@ function install::packages {
         } fi
 
         log::info "Installing userland packages with brew";
-        if ! command -v brew 1>/dev/null; then {
+        if ! command::exists brew; then {
             PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"; # Intentionally low-prio
             eval "$(brew shellenv)";
         } fi
-        NONINTERACTIVE=1 brew install -q "${brewpkgs_level_one[@]}" || true; # Do not halt the rest of the process
+
+        for level in ${!brewpkgs_level_*}; do {
+            declare -n ref="$level";
+            if test -n "${ref:-}"; then {
+                NONINTERACTIVE=1 brew install -q "${ref[@]}" || true; # Do not halt the rest of the process
+            } fi
+        } done
     } fi
 
-    if distro::is_ubuntu; then {
+    if command::exists apt; then {
         log::info "Installing ubuntu system packages";
         (
             sudo apt-get update;
             sudo debconf-set-selections <<<'debconf debconf/frontend select Noninteractive';
-            for level in aptpkgs; do {
+            for level in ${!aptpkgs_level_*}; do {
                 declare -n ref="$level";
                 if test -n "${ref:-}"; then {
                     sudo apt-get install -yq --no-install-recommends "${ref[@]}";
@@ -76,22 +103,20 @@ function install::packages {
         source "$HOME/.nix-profile/etc/profile.d/nix.sh" 2>/dev/null || source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh;
 
         function nix-install() {
+            if test ! -v nix_unstable_installed && [[ "$*" == *nixpkgs-unstable.* ]]; then {
+                nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs-unstable;
+                nix-channel --update;
+                nix_unstable_installed=true;
+            } fi
             command nix-env -iAP "$@" 2>&1 \
-                | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these)';
+                | grep --line-buffered -vE '^(copying|building|generating|  /nix/store|these|this path will be fetched)';
         }
 
-        if test -n "${nixpkgs_level_one:-}"; then {
-            nix-install "${nixpkgs_level_one[@]}";
-        } fi
-
-        nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs-unstable;
-        nix-channel --update;
-        if test -n "${nixpkgs_level_two:-}"; then {
-            nix-install "${nixpkgs_level_two[@]}";
-        } fi
-
-        if test -n "${nixpkgs_level_three:-}"; then {
-            nix-install "${nixpkgs_level_three[@]}";
-        } fi
+        for level in ${!nixpkgs_level_*}; do {
+            declare -n ref="$level";
+            if test -n "${ref:-}"; then {
+                nix-install "${ref[@]}";
+            } fi
+        } done
     ) & disown;
 }

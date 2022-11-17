@@ -1,18 +1,24 @@
 use std::term::colors;
+use libtmux::session;
+use libtmux::window;
 
-function tmux::create_session() {
-	tmux new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -n editor -ds "${tmux_first_session_name}" "$(get::default_shell)" -li 2>/dev/null || :;
-	#\; send-keys -t :${tmux_first_window_num} "cat $HOME/.dotfiles.log" Enter 
+function tmux_create_session() {
+	SESSION_NAME="$tmux_first_session_name" \
+  WINDOW_NAME="editor" \
+    tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" \
+      -- "$(get::default_shell)" -li 2>/dev/null || :;
 }
 
-function tmux::create_window() {
-	tmux new-window -n "${WINDOW_NAME:-vs:${PWD##*/}}" -t "$tmux_first_session_name" "$@";
+function tmux_create_window() {
+  SESSION_NAME="$tmux_first_session_name" tmux::new-window "$@";
 }
 
+# TODO: Decouple it from here
 function tmux::start_vimpod() {
-	local lockfile=/tmp/.vimpod;
-	if test -e "$lockfile"; then return 0; fi
-	touch "$lockfile"
+	if ! (set -o noclobber && printf '' > /tmp/.dotsh_spawn_ssh) 2>/dev/null; then {
+		return;
+	} fi
+
 	"$___self_DIR/src/utils/vimpod.py" & disown;
 	(
 		{ gp ports await 23000 && gp ports await 22000; } 1>/dev/null && gp preview "$(gp url 22000)" --external && {
@@ -29,10 +35,23 @@ function get::task_cmd() {
 	local task="$1";
 	local cmdc;
 	local cmdc_tmp_file="/tmp/.dotfiles_task_cmd.$((RANDOM * $$))";
-
 	IFS='' read -rd '' cmdc <<CMDC || :;
-trap "rm -f $cmdc_tmp_file 2>/dev/null || true; exec '$(get::default_shell)' -il" EXIT
-printf "$BGREEN>> Executing task:$RC\n";
+function ___exit_callback() {
+	local r=\$?;
+	rm -f "$cmdc_tmp_file" 2>/dev/null || true;
+	if test -z "\${___manual_exit:-}"; then {
+		exec '$(get::default_shell)' -il;
+	} else {
+		printf "\n${BRED}>> This task issued manual 'exit' with return code \$r${RC}\n";
+		printf "${BRED}>> Press Enter or Return to dismiss${RC}" && read -r -n 1;
+	} fi
+}
+function exit() {
+	___manual_exit=true;
+	command exit "\$@";
+}; export -f exit;
+trap "___exit_callback" EXIT;
+printf "$BGREEN>> Executing task in bash:$RC\n";
 IFS='' read -rd '' lines <<'EOF' || :;
 $task
 EOF
@@ -74,7 +93,7 @@ function config::tmux::hijack_gitpod_task_terminals {
 					# or tell tmux to allways use the largest size, which can confuse some people sometimes.
 					# I'll go with the second option for now
 					# (for i in {1..5}; do sleep 2 && tmux set-window-option -g -t main window-size largest; done) & disown
-					AWAIT_SHIM_PRINT_INDICATOR=true tmux::create_session;
+					AWAIT_SHIM_PRINT_INDICATOR=true tmux_create_session;
 					exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
 				} else {
 					exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
@@ -100,9 +119,11 @@ function config::tmux::hijack_gitpod_task_terminals {
 	if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2>/dev/null; then {
 		# log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		local function_exports=(
-			tmux::create_session
+      tmux::new-session
+			tmux_create_session
 			tmux::inject
 			get::task_cmd
+      tmux::show-option
 			get::default_shell
 			await::signal
 		)
@@ -129,19 +150,22 @@ function config::tmux() {
 	
 	if is::cde; then {
 		# Lock on tmux binary
-		local check_file=(/nix/store/*-tmux-*/bin/tmux);
-		local tmux_exec_path;
+		# local check_file=(/nix/store/*-tmux-*/bin/tmux);
+		# local tmux_exec_path;
 
-		if test -n "${check_file:-}"; then {
-			tmux_exec_path="${check_file[0]}";
-			KEEP=true await::create_shim "$tmux_exec_path";
-		} else {
-			tmux_exec_path="/usr/bin/tmux";
-			KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
-				await::create_shim "$tmux_exec_path";
-		} fi
+		# if test -n "${check_file:-}"; then {
+		# 	tmux_exec_path="${check_file[0]}";
+		# 	KEEP=true await::create_shim "$tmux_exec_path";
+		# } else {
+		# 	tmux_exec_path="/usr/bin/tmux";
+		# 	KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
+		# 		await::create_shim "$tmux_exec_path";
+		# } fi
+		declare tmux_exec_path=/usr/bin/tmux;
+		# await::until_true command::exists "$tmux_exec_path";
+		KEEP=true SHIM_MIRROR="/usr/bin/.dw/tmux" await::create_shim "$tmux_exec_path";
 	} else {
-		await::until_true command -v tmux 1>/dev/null;
+		await::until_true command::exists tmux;
 	} fi
 
 	if is::gitpod; then {
@@ -153,69 +177,97 @@ function config::tmux() {
 
 	{
 		await::signal get install_dotfiles;
-
 		local target="$HOME/.tmux/plugins/tpm";
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
-			bash "$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true;
 		} fi
-
+		"$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+	
 		await::signal send config_tmux;
 
 		if is::cde; then {
-			tmux::create_session;
+			tmux_create_session;
 		} fi
+
+		CLOSE=true await::create_shim "${tmux_exec_path:-}";
 	
 		(
 			if is::gitpod; then {
-				if test -n "${GITPOD_TASKS:-}"; then {
-					log::info "Spawning Gitpod tasks in tmux";
-				} else {
-					exit;
-				} fi
+				await::until_true command::exists yq;
 
-				await::for_file_existence "$workspace_dir/.gitpod/ready";
-				if ! cd "${GITPOD_REPO_ROOT:-}"; then {
-					log::error "Can't cd into ${GITPOD_REPO_ROOT:-}" 1 || exit;
-				} fi
-
-				function jqw() {
-					local cmd;
-					if cmd=$(jq -er "$@" <<<"$GITPOD_TASKS"); then {
-						printf '%s\n' "$cmd";
-					} else {
-						return 1;
-					} fi
-				} 2>/dev/null
-
-				local name cmd arr_elem=0;
-				local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
-				while {
-					success=0;
-					cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
-					cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
-					test $success -gt 0;
-				}; do {
-					if ! name="$(jqw ".[${arr_elem}].name")"; then {
-						name="AnonTask-${arr_elem}";
-					} fi
-
-					local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
-					
-					cmd="$(
-						if test -e "$prebuild_log"; then {
-							printf 'cat %s\n' "$prebuild_log";
-							printf '%s\n' "${cmd_others:-}";
-						} else {
-							printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+				if test "${DOTFILES_READ_GITPOD_YML:-}" == true; then {
+					declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
+					if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then {
+						if ! GITPOD_TASKS="$(yq -I0 -erM -o=json '.tasks' "$gitpod_yml" 2>&1)"; then {
+							log::error "Syntax errors found on $gitpod_yml: $GITPOD_TASKS" 1 || return;
 						} fi
-					)";
-					cmd="$(get::task_cmd "$cmd")";
+					} fi
+				} fi
 
-					WINDOW_NAME="$name" tmux::create_window -d bash -cli "$cmd";
+				if test -z "${GITPOD_TASKS:-}"; then {
+					return;
+				} else {
+					log::info "Spawning Gitpod tasks in tmux";
+				} fi
 
-					((arr_elem=arr_elem+1));
-				} done
+			} elif is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then {
+				cd "$CODESPACE_VSCODE_FOLDER" || true;
+				return;
+			} else {
+				return;
+			} fi
+
+			await::for_file_existence "$workspace_dir/.gitpod/ready";
+			cd "${GITPOD_REPO_ROOT:-}";
+
+			function jqw() {
+				local cmd;
+				if cmd=$(yq -I0 -erM "$@" <<<"$GITPOD_TASKS"); then {
+					printf '%s\n' "$cmd";
+				} else {
+					return 1;
+				} fi
+			} 2>/dev/null
+
+			local name cmd arr_elem=0;
+			local cmd_tmp_file="/tmp/.tmux_gpt_cmd";
+			while {
+				success=0;
+				cmd_prebuild="$(jqw ".[${arr_elem}] | [.init] | map(select(. != null)) | .[]")" && ((success=success+1));
+				cmd_others="$(jqw ".[${arr_elem}] | [.before, .command] | map(select(. != null)) | .[]")" && ((success=success+1));
+				test $success -gt 0;
+			}; do {
+				if ! name="$(jqw ".[${arr_elem}].name")"; then {
+					name="AnonTask-${arr_elem}";
+				} fi
+
+				local prebuild_log="$workspace_dir/.gitpod/prebuild-log-${arr_elem}";
+				
+				cmd="$(
+					if test -e "$prebuild_log"; then {
+						printf 'cat %s\n' "$prebuild_log";
+						printf '%s\n' "${cmd_others:-}";
+					} else {
+						printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
+					} fi
+				)";
+				cmd="$(get::task_cmd "$cmd")";
+
+				WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+
+				((arr_elem=arr_elem+1));
+			} done
+
+		) & disown;
+		
+		# if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
+		# 	sleep 1;
+		# } fi 
+
+		
+		await::signal send config_tmux_session;
+
+		if is::gitpod; then {
 
 			# Install gitpod specific ephemeral plugins
 			## Dotfiles loading indicator (spinner)
@@ -235,11 +287,11 @@ done
 current_status="$(tmux display -p '#{status-right}')";
 tmux set -g status-right "$(printf '%s\n' "$current_status" | sed "s|#(exec $0)||g")"
 EOF
-			)"
+		)"
 
 			local resources_indicator="/usr/bin/tmux-resources-indicator.sh";
 			local resources_indicator_data="$(
-			printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
+				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
 
 				cat <<'EOF'
 printf '\n'; # init quick draw
@@ -247,7 +299,7 @@ printf '\n'; # init quick draw
 while true; do {
 	# Read all properties
 	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
-		< <(gp top -j | jq -r ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
+		< <(gp top -j | yq -I0 -rM ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
 
 	# Human friendly memory numbers
 	read -r hmem_used hmem_max < <(numfmt -z --to=iec --format="%8.2f" $mem_used $mem_max);
@@ -260,7 +312,7 @@ while true; do {
 	sleep 3;
 } done
 EOF
-			)"
+		)"
 
 			{
 				printf '%s\n' "$spinner_data" | sudo tee "$spinner";
@@ -271,18 +323,6 @@ EOF
 			tmux set-option -g status-left-length 100\; set-option -g status-right-length 100\; \
 				set-option -ga status-right "#(exec $resources_indicator)#(exec $spinner)";
 
-			} elif is::codespaces && test -e "${CODESPACES_VSCODE_FOLDER:-}"; then {
-				cd "$CODESPACE_VSCODE_FOLDER" || :;
-			} fi
-		) || :;
-		
-		if test "$(tmux display-message -p '#{session_windows}')" -le 2; then {
-			sleep 2;
-		} fi 
-
-		CLOSE=true await::create_shim "${tmux_exec_path:-}";
-		
-		await::signal send config_tmux_session;
-		
+		} fi
 	 } & disown;
 }

@@ -30,6 +30,9 @@ function editor::is() {
 function editor::autorun_in_tmux() {
 	(
 		# Wait for tmux to start
+		if test "${DOTFILES_TMUX:-true}" != true; then {
+			return
+		} fi
 		await::signal get config_tmux_session;
 		# until pgrep lvim 1>/dev/null; do
 		tmux send-keys -t "${tmux_first_session_name}:${tmux_first_window_num}" "$@" Enter;
@@ -79,8 +82,8 @@ function editor::neovim::lunar {
 		# 	NOCLOBBER=true KEEP=true SHIM_MIRROR="$HOME/.local/bin/lvim" await::create_shim "$lvim_exec_path";
 		# } fi
 
-		await::until_true command -v git 1>/dev/null;
-		await::until_true command -v $HOME/.nix-profile/bin/nvim 1>/dev/null;
+		await::until_true command::exists git;
+		await::until_true command::exists nvim;
 
 		curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
 		

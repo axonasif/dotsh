@@ -1,23 +1,4 @@
-function await::until_true() {
-	local time="${TIME:-0.5}";
-	local input=("$@");
-	until "${input[@]}"; do {
-		sleep "$time"
-	} done
-}
-
-function await::while_true() {
-	local time="${TIME:-0.5}";
-	local input=("$@");
-	while "${input[@]}"; do {
-		sleep "$time"
-	} done
-}
-
-function await::for_file_existence() {
-	local file="$1";
-	await::until_true test -e "$file";
-}
+use std::async::await;
 
 function await::for_vscode_ide_start() {
 	if grep -q 'supervisor' /proc/1/cmdline; then {
@@ -25,27 +6,11 @@ function await::for_vscode_ide_start() {
 	} fi
 }
 
-function await::signal() {
-	local kind="$1";
-	local target="$2";
-	local status_file="/tmp/.asignal_${target}";
-
-	case "$kind" in
-		"get")
-			until test -s "$status_file"; do {
-				sleep 0.2;
-			} done
-		;;
-		send)
-			printf 'done\n' >> "$status_file";
-		;;
-	esac
-}
-
 function await::create_shim() {
 	declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call);
 	declare +x CLOSE KEEP DIRECT_CMD; # Keep local, do not export into env
 	export SHIM_MIRROR; # Reuse previoulsy exported SHIM_MIRROR before CLOSE'ing
+	declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {
@@ -58,10 +23,12 @@ function await::create_shim() {
 			try_sudo touch "$shim_tombstone";
 
 			if ! is::custom_shim; then {
-				try_sudo mv "$shim_source" "$target";
+				# try_sudo mv "$shim_source" "$target";
+				try_sudo ln -sf "$shim_source" "$target";
 			} else {
-				try_sudo mv "$shim_source" "$SHIM_MIRROR";
-				try_sudo ln -sf "$SHIM_MIRROR" "$target";
+				# try_sudo ln -sf "$shim_source" "$SHIM_MIRROR";
+				try_sudo ln -sf "$shim_source" "$target";
+				# try_sudo ln -sf "$SHIM_MIRROR" "$target";
 
 			} fi
 
@@ -75,7 +42,7 @@ function await::create_shim() {
 				# if is::custom_shim; then {
 				# 	try_sudo rm -f "$target" || true;
 				# } fi
-				try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
+				# try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
 			) & disown;
 		} fi
 	}
@@ -84,7 +51,7 @@ function await::create_shim() {
 	function create_self() {
 		declare +x NO_PRINT;
 		cmd() {
-			printf '%s\n' '#!/usr/bin/env bash' "$(declare -f main)" 'main "$@"'
+			printf '%s\n' '#!/usr/bin/env bash' "$SHIM_HEADER_SIGNATURE" "$(declare -f main)" 'main "$@"'
 		}
 		if ! test -v NO_PRINT; then {
 			cmd > "${1:-"${BASH_SOURCE[0]}"}";
@@ -172,15 +139,23 @@ function await::create_shim() {
 		# } fi
 
 		# TODO: Improve this, too many garbage left behind
-		diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
-		if test ! -e "$diff_target"; then {
-			create_self "$diff_target";
-		} fi
+		# diff_target="/tmp/.diff_${RANDOM}.${RANDOM}";
+		# if test ! -e "$diff_target"; then {
+		# 	create_self "$diff_target";
+		# } fi
 
-		await_for_no_open_writes() {
-			while lsof -F 'f' -- "$1" 2>/dev/null | grep -q '^f.*w$'; do
-				sleep 0.5${RANDOM};
+		await_nowrite_executable() {
+			declare input="$1";
+			while lsof -F 'f' -- "$input" 2>/dev/null | grep -q '^f.*w$'; do
+				sleep 0.5;
 			done
+			await::until_true test -x "$input";
+		}
+
+		await_nowrite_executable_symlink() {
+			declare input="$1";
+			await_nowrite_executable "$input";
+			await::until_true test -L "$input";
 		}
 
 		exec_bin() {
@@ -198,17 +173,17 @@ function await::create_shim() {
 			# if test "${KEEP_internal_call:-}" == false; then set -x; fi
 
 			# Refer to revert_shim for this if-code-block
-			# if is::custom_shim; then {
-			#	: "$target";
-			# } else {
+			if is::custom_shim; then {
+				: "$target";
+			} else {
 				: "$shim_source";
-			# } fi
+			} fi
 
 			local checkf="$_";
 
 			for _i in {1..3}; do {
 				sleep 0.2${RANDOM};
-				TIME="0.5${RANDOM}" await::while_true test -e "$checkf";
+				while test -e "$checkf" && test ! -L "$checkf"; do sleep 0.5${RANDOM}; done
 				# DEBUG
 				# while test -e "$checkf"; do {
 					# if test "${KEEP_internal_call:-}" == false; then
@@ -237,12 +212,23 @@ function await::create_shim() {
 				await_while_shim_exists;
 			} fi
 		} elif ! is::custom_shim; then {
-			TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
-			rm -f "$diff_target" 2>/dev/null || :;
-			TIME="0.5${RANDOM}" await_for_no_open_writes "$target";
+			# TIME="0.5${RANDOM}" await::while_true cmp --silent -- "$target" "$diff_target";
+			while test "$(sed -n '2p;3q' "$target" 2>/dev/null)" == "$SHIM_HEADER_SIGNATURE"; do {
+				sleep 0.5;
+			} done
+			# rm -f "$diff_target" 2>/dev/null || :;
+			# TIME="0.5${RANDOM}" await_nowrite_executable_symlink "$target";
+			await_nowrite_executable "$target";
 		} else {
-			TIME="0.5${RANDOM}" await::for_file_existence "$SHIM_MIRROR";
-			await_for_no_open_writes "$SHIM_MIRROR";
+			# TIME="0.5${RANDOM}" await::for_file_existence "$SHIM_MIRROR";
+			# await_nowrite_executable_symlink "$SHIM_MIRROR";
+
+			# Refer to revert_shim for reasoning
+			if test "${KEEP_internal_call:-}" == true; then {
+				await_nowrite_executable "$SHIM_MIRROR";
+			} else {
+				await_nowrite_executable_symlink "$target";
+			} fi
 		} fi
 
 
@@ -253,7 +239,7 @@ function await::create_shim() {
 
 				# For internal calls
 				if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then {
-						try_sudo mkdir -p "${shim_source%/*}";
+						try_sudo mkdir -p "${shim_dir}";
 
 						if ! is::custom_shim; then {
 							try_sudo mv "$target" "$shim_source";
@@ -275,13 +261,13 @@ function await::create_shim() {
 		} fi
 
 		# At this point it's not not an KEEP_internal_call=true thing
-		if is::custom_shim; then {
-			# We need to revert some magic manually here for external calls when KEEP= wasn't used
-			# if ! test -v KEEP_internal_call; then
-			# 	revert_shim;
-			# fi
-			target="$SHIM_MIRROR"; # Set target to SHIM_MIRROR
-		} fi
+		# if is::custom_shim; then {
+		# 	# We need to revert some magic manually here for external calls when KEEP= wasn't used
+		# 	# if ! test -v KEEP_internal_call; then
+		# 	# 	revert_shim;
+		# 	# fi
+		# 	target="$SHIM_MIRROR"; # Set target to SHIM_MIRROR
+		# } fi
 
 		exec_bin "$target" "$@";
 	}
@@ -292,7 +278,9 @@ function await::create_shim() {
 		printf '%s="%s"\n' \
 							target "$target" \
 							shim_source "$shim_source" \
-							shim_dir "$shim_dir";
+							shim_dir "$shim_dir"\
+							SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE";
+
 		printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
 		if test -v SHIM_MIRROR; then {
 			printf '%s="%s"\n' SHIM_MIRROR "$SHIM_MIRROR";
@@ -314,4 +302,23 @@ function await::create_shim() {
 	)
 
 	chmod +x "$target";
+}
+
+function await::create_shim_nix_common_wrapper() {
+	declare name="$1";
+	if is::cde; then {
+		declare check_file=(/nix/store/*-"${name}"-*/bin/"${name}");
+
+		# Lock on binary
+		if test -n "${check_file:-}"; then {
+			exec_path="${check_file[0]}";
+			KEEP=true await::create_shim "$exec_path";
+		} else {
+			exec_path="/usr/bin/${name}";
+			KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/${name}" \
+				await::create_shim "$exec_path";
+		} fi
+	} else {
+		await::until_true command::exists "$HOME/.nix-profile/bin/${name}";
+	} fi
 }

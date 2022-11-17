@@ -2,17 +2,17 @@
 
 # UPPERCASE variables may be supplied as environment variables instead.
 
-# Add nix bin PATH in advance
-export PATH="$PATH:$HOME/.nix-profile/bin";
+# Add nix, .local and ide bindir to PATH in advance
+export PATH="$PATH:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
 
 
 # =================================================
 # = DOTFILES REPO TREES                           =
 # =================================================
-# As many dotfiles repo you want to install and merge together.
+# As many dotfiles repo you want to install together.
 declare dotfiles_repos=(
-    # Defaults to axonasif's repo, you may remove below line
-    "${DOTFILES_PRIMARY_REPO:-https://github.com/axonasif/dotfiles.public}"
+    # Defaults to axonasif's repo, you may remove below line and put your own
+    https://github.com/axonasif/dotfiles.public
 )
 
 
@@ -29,6 +29,7 @@ declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
 declare fish_plugins+=(
     PatrickF1/fzf.fish
     jorgebucaran/fisher
+    axonasif/bashenv.fish
 )
 
 
@@ -39,7 +40,7 @@ declare fish_plugins+=(
 : "${DOTFILES_TMUX:=true}";
 # Tmux integration for VSCode
 : "${DOTFILES_TMUX_VSCODE:=true}";
-declare -r tmux_first_session_name="main";
+declare -r tmux_first_session_name="gitpod";
 declare -r tmux_first_window_num="1";
 
 
@@ -66,25 +67,27 @@ declare -r tmux_first_window_num="1";
 # =================================================
 # Defaults to lunarvim (editor dependant)
 # Supported value(s): lunarvim, nvchad, doomemacs, spacemacs
-# You may not use any preset when you have your own config
-# You should use a preset based on your EDITOR
+# You may not use any preset when you have your own config.
+# Preset should be based on your EDITOR.
 : "${DOTFILES_EDITOR_PRESET:=lunarvim}";
 
 
 # =================================================
 # = PACKAGES                                      =
 # =================================================
-# Packages are chunked into different levels to optimize terminal readiness.
+# Packages are chunked into different levels to
+# optimize terminal readiness, you can have as many levels you want.
 # You can find packages at https://search.nixos.org/packages
 # =================================================
 # = IMMIDIATE PACKAGES                            =
 # =================================================
 # It is adviced to add very less packages in this array.
-# Things that you need immediately should be added here.
-# Your DOTFILES_SHELL is internally included.
-declare nixpkgs_level_one+=(
-    nixpkgs.tmux
-    nixpkgs.jq
+# Things that you need ASAP should be added here.
+# DOTFILES_TMUX and DOTFILES_SHELL are internally included.
+declare nixpkgs_level_1+=(
+    nixpkgs.ripgrep
+    nixpkgs.fd
+    nixpkgs.fzf
 )
 # =================================================
 # = SEMI-BIG PACKAGES                             =
@@ -92,52 +95,63 @@ declare nixpkgs_level_one+=(
 # Mostly shell dependencies.
 # Your DOTFILES_EDITOR is internally included.
 # gh/glab CLI is internally included based on git context.
-declare nixpkgs_level_two+=(
-    nixpkgs.rclone
+declare nixpkgs_level_2+=(
     nixpkgs.zoxide
+    nixpkgs.rclone
     nixpkgs.bat
-    nixpkgs.fzf
     nixpkgs.exa
 )
 # =================================================
 # = BIG PACKAGES                                  =
 # =================================================
-declare nixpkgs_level_three+=(
-    nixpkgs.gnumake
-    nixpkgs.gcc
+# yq is included internally
+declare nixpkgs_level_3+=(
     nixpkgs.shellcheck
     nixpkgs.file
-    nixpkgs.fd
     nixpkgs.bottom
     nixpkgs.coreutils
     nixpkgs.htop
     nixpkgs.lsof
     nixpkgs.neofetch
     nixpkgs.p7zip
-    nixpkgs.ripgrep
     nixpkgs.rsync # Useful for 'bashbox livetest' command
-    # nixpkgs.yq
+    nixpkgs.helm
+    nixpkgs.kubectl
+    nixpkgs.k9s
+    nixpkgs.google-cloud-sdk
 )
+if command::exists apt; then {
+    aptpkgs_level_1+=(
+        build-essential
+        make
+        gcc
+    )
+} else {
+    nixpkgs_level_3+=(
+        nixpkgs.gnumake
+        nixpkgs.gcc
+    )
+} fi
 # =================================================
 # = EXTRA MACOS-SPECIFIC PACKAGES                 =
 # =================================================
 if os::is_darwin; then {
     # Additional nix packages
-    nixpkgs_level_three+=(
+    nixpkgs_level_3+=(
         nixpkgs.gawk
         nixpkgs.bashInteractive # macos still stuck with old bash... so...
         nixpkgs.reattach-to-user-namespace
     )
     
     # Brew packages
-    declare brewpkgs_level_one+=(
+    declare brewpkgs_level_1+=(
         osxfuse
     )
 } fi
 # =================================================
 # = UBUNTU/DEBIAN SYSTEM PACKAGES                 =
 # =================================================
-declare aptpkgs+=(
+declare aptpkgs_level_1+=(
     fuse
 )
 
@@ -168,7 +182,6 @@ declare -r gitpod_scm_cli="$(
     } fi
 	printf '%s\n' "$_";
 )";
-
 
 # Dotfiles specific
 #declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";

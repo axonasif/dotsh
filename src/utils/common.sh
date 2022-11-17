@@ -1,3 +1,40 @@
+use libtmux::common;
+
+function dw() {
+	declare -a dw_cmd;
+	if command::exists curl; then {
+		dw_cmd=(curl -sSL);
+	} elif command::exists wget; then {
+		dw_cmd=(wget -qO-);
+	} fi
+
+	if test -n "${dw_cmd:-}"; then {
+		declare dw_path="$1";
+		declare dw_url="$2";
+		declare cmd="$(
+			cat <<EOF
+mkdir -m 0755 -p "${dw_path%/*}" && until ${dw_cmd[*]} "$dw_url" ${PIPE:-"> '$dw_path'"}; do continue; done
+if test -e "$dw_path"; then chmod +x "$dw_path"; fi
+EOF
+		)"
+		sudo sh -c "$cmd";
+	} else {
+		log::error "curl or wget wasn't found, some things will go wrong" 1 || exit;
+	} fi
+}
+
+function get::dotfiles-sh_dir() {
+  if test -e "${GITPOD_REPO_ROOT:-}/src/variables.sh"; then {
+    : "$GITPOD_REPO_ROOT";
+  } elif test -e "$HOME/.dotfiles/src/variables.sh"; then {
+    : "$HOME/.dotfiles";
+  } else {
+    log::error "Couldn't locate variables.sh" 1 || return;
+  } fi
+
+  printf '%s\n' "$_";
+}
+
 function is::gitpod() {
       # Check for existent of this gitpod-specific file and the ENV var.
       test -e /usr/bin/gp && test -v GITPOD_REPO_ROOT;
@@ -16,20 +53,6 @@ function try_sudo() {
 }
 
 function get::default_shell {
-	function get_tmux_shell {
-		local shell;
-		shell="$(tmux start-server\; display -p '#{default-shell}' 2>/dev/null)" || true;
-		
-		if test -z "${shell:-}"; then {
-			shell="$(tmux start-server\; run-shell '\echo #{default-shell}' 2>/dev/null)" || true;
-		} fi
-
-		if test -n "${shell:-}"; then {
-			printf '%s\n' "${shell}";
-		} else {
-			false;
-		} fi
-	}
 
 	await::signal get install_dotfiles;
 	
@@ -43,7 +66,7 @@ function get::default_shell {
 
 		if test "${DOTFILES_TMUX:-true}" == true; then {
 			local tmux_shell;
-			if tmux_shell="$(get_tmux_shell)" \
+			if tmux_shell="$(tmux::show-option default-shell)" \
 			&& [ "$tmux_shell" != "$custom_shell" ]; then {
 				(
 					exec 1>&-;
@@ -56,7 +79,7 @@ function get::default_shell {
 		} fi
 
 	} elif test "${DOTFILES_TMUX:-true}" == true; then {
-		if custom_shell="$(get_tmux_shell)" \
+		if custom_shell="$(tmux::show-option default-shell)" \
 		&& [ "${custom_shell}" == "/bin/sh" ]; then {
 			custom_shell="$(command -v bash)";
 		} fi
@@ -68,8 +91,14 @@ function get::default_shell {
 	printf '%s\n' "${custom_shell:-/bin/bash}";
 }
 
+function command::exists() {
+	declare cmd="$1";
+	cmd="$(command -v "$cmd")" && test -x "$cmd";
+}
+
 function vscode::add_settings() {
 	SIGNALS="RETURN ERR EXIT" lockfile "vscode_addsettings";
+	await::until_true command::exists yq ;
 
 	# Read from standard input
 	read -t0.5 -u0 -r -d '' input || :
@@ -88,15 +117,16 @@ function vscode::add_settings() {
 		}; fi
 
 		# Check json syntax
-		if test ! -s "$settings_file" || ! jq -reM '""' "$settings_file" 1>/dev/null; then {
+		if test ! -s "$settings_file" || ! yq -o=json -reM '""' "$settings_file" >/dev/null 2>&1; then {
 			printf '%s\n' "$input" >"$settings_file"
 		}; else {
-			# Remove any trailing commas
-			sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file"
+			# Remove any trailing commas (not needed for yq)
+			# sed -i -e 's|,}|\n}|g' -e 's|, }|\n}|g' -e ':begin;$!N;s/,\n}/\n}/g;tbegin;P;D' "$settings_file"
 
 			# Merge the input settings with machine settings.json
 			cp -a "$settings_file" "$tmp_file"
-			jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" >"$settings_file"
+			# jq -s '.[0] * .[1]' - "$tmp_file" <<<"$input" >"$settings_file"
+			yq ea -o=json -I2 -M '. as $item ireduce ({}; . * $item )' - "$tmp_file" <<<"$input" >"$settings_file"
 			rm -f "$tmp_file"
 		}; fi
 
@@ -105,7 +135,7 @@ function vscode::add_settings() {
 }
 
 function dotfiles::initialize() {
-	await::until_true command -v git 1>/dev/null;
+	await::until_true command::exists git;
 	
 	local installation_target="${INSTALL_TARGET:-"$HOME"}";
 	local last_applied_filelist="$installation_target/.last_applied_dotfiles";
