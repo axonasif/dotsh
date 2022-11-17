@@ -13,12 +13,15 @@ use variables;
 function main() {
 
   # Hook CLIs
-  if test "${___self##*/}" == "dotsh" && test -n "${*:-}"; then {
-    declare cli;
-    for cli in filesync config; do {
-      "${cli}::cli" "$@";
-    } done
-  } elif test -n "${*:-}"; then {
+  if test "${___self##*/}" == "dotsh" || test -v DEBUG; then {
+
+    if test -n "${*:-}"; then {
+      declare cli;
+      for cli in filesync config; do {
+        "${cli}::cli" "$@";
+      } done
+    } fi
+
     exit 0;
   } fi
 

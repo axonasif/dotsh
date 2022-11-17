@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%9910 () 
+main@bashbox%23990 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%9910 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%9910';
+    ___MAIN_FUNCNAME='main@bashbox%23990';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2716,22 +2716,21 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
-        if test "${___self##*/}" == "dotsh" && test -n "${*:-}"; then
+        if test "${___self##*/}" == "dotsh" || test -v DEBUG; then
             { 
-                declare cli;
-                for cli in filesync config;
-                do
+                if test -n "${*:-}"; then
                     { 
-                        "${cli}::cli" "$@"
+                        declare cli;
+                        for cli in filesync config;
+                        do
+                            { 
+                                "${cli}::cli" "$@"
+                            };
+                        done
                     };
-                done
+                fi;
+                exit 0
             };
-        else
-            if test -n "${*:-}"; then
-                { 
-                    exit 0
-                };
-            fi;
         fi;
         if ! is::cde; then
             { 
@@ -2775,4 +2774,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%9910 "$@";
+main@bashbox%23990 "$@";
