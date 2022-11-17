@@ -13,9 +13,14 @@ use variables;
 function main() {
 
   # Hook CLIs
-  if test -n "${@:-}"; then {
-    filesync::cli "$@";
+  if test -n "${*:-}"; then {
+    declare cli;
+    for cli in filesync config; do {
+      "${cli}::cli" "$@";
+    } done
   } fi
+
+  exit
 
     # Ensure and preserve sudo when not CDE
     if ! is::cde; then {

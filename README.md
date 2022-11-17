@@ -58,7 +58,7 @@ Most of these features stemmed from my personal needs, I simply couldn't wait bu
 
 ## Fast installation
 
-The [install.sh](./install.sh) executes **everything** in parallel without crashing for mutability between multiple `jobs`, this leads to a reasonably fast installation and workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unusable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed/configured in the background.
+The installation is highly parallelized. Careful scheduling is also done to maximize the performance. This leads to a reasonably fast Gitpod workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unusable. Several [tricks](#awaitcreate_shim-unstable) are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed/configured in the background.
 
 <insert-gif-of-bashbox-live>
 
@@ -89,7 +89,7 @@ For testing `.gitpod.yml` changes of a repo you're working on:
 
 **Note:** This is optimized for Gitpod and will not work elsewhere. Use [run-gp](https://github.com/gitpod-io/run-gp) if you want to run a Gitpod workspace locally.
 
-Official issue: https://github.com/gitpod-io/gitpod/issues/7671. I've made a proposal there for a native implementation.
+Official issue: https://github.com/gitpod-io/gitpod/issues/7671. A proposal will be made there for a native implementation.
 
 ## Tmux integration
 

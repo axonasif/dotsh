@@ -114,7 +114,7 @@ function filesync::cli() {
 
   function cli::save {
 
-    case "$1" in
+    case "${1:-}" in
       -h|--help)
         printf '%s\t%s\n' \
           "-rh" "Save in global home" \
@@ -140,7 +140,7 @@ function filesync::cli() {
     } fi
   }
 
-    case "$1" in
+    case "${1:-}" in
       "filesync")
         shift;
       ;;
@@ -150,7 +150,7 @@ function filesync::cli() {
     esac
       
 
-    case "$1" in
+    case "${1:-}" in
       -h|--help)
         printf '%s\t%s\n' \
           "save" "Start syncing selected files" \

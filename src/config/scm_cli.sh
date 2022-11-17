@@ -7,17 +7,20 @@ function config::scm_cli() {
 	# Login into scm_cli (i.e. gh or glab)
 	await::for_vscode_ide_start;
 
-	local scm_cli_args=("${gitpod_scm_cli}" auth login);
+	declare -a scm_cli_args=("${gitpod_scm_cli}" auth login);
+  declare scm_host;
 	case "$gitpod_scm_cli" in
 		"gh")
 			scm_cli_args+=(
 				--with-token
 			)
+      scm_host="github.com";
 		;;
 		"glab")
 			scm_cli_args+=(
 				--stdin
 			)
+      scm_host="gitlab.com";
 		;;
 	esac
 

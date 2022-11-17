@@ -19,8 +19,20 @@ EOF
 		)"
 		sudo sh -c "$cmd";
 	} else {
-		log::warn "curl or wget wasn't found, some things will go wrong";
+		log::error "curl or wget wasn't found, some things will go wrong" 1 || exit;
 	} fi
+}
+
+function get::dotfiles-sh_dir() {
+  if test -e "${GITPOD_REPO_ROOT:-}/src/variables.sh"; then {
+    : "$GITPOD_REPO_ROOT";
+  } elif test -e "$HOME/.dotfiles/src/variables.sh"; then {
+    : "$HOME/.dotfiles";
+  } else {
+    log::error "Couldn't locate variables.sh" 1 || return;
+  } fi
+
+  printf '%s\n' "$_";
 }
 
 function is::gitpod() {

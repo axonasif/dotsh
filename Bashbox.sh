@@ -1,14 +1,14 @@
 # shellcheck disable=SC2034
 
-NAME="dotfiles"
-CODENAME="dotfiles"
+NAME="dotfiles-sh"
+CODENAME="dotfiles-sh"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
 	std::23ec8e3
   https://github.com/bashbox/libtmux::fa10570
 )
-REPOSITORY="https://github.com/axonasif/dotfiles.git"
+REPOSITORY="https://github.com/axonasif/dotfiles-sh.git"
 BASHBOX_COMPAT="0.3.9~"
 
 bashbox::build::after() {
