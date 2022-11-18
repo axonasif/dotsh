@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%23990 () 
+main@bashbox%21208 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%23990 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%23990';
+    ___MAIN_FUNCNAME='main@bashbox%21208';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1271,25 +1271,35 @@ EOF
         };
         function revert_shim () 
         { 
-            if test -e "$shim_source"; then
+            try_sudo touch "$shim_tombstone" || true;
+            if ! is::custom_shim; then
                 { 
-                    try_sudo touch "$shim_tombstone";
-                    if ! is::custom_shim; then
+                    if test -e "$shim_source"; then
                         { 
                             try_sudo ln -sf "$shim_source" "$target"
+                        };
+                    fi
+                };
+            else
+                { 
+                    if test -e "$SHIM_MIRROR" || [[ "$shim_source" == *.nix-profile* ]]; then
+                        { 
+                            try_sudo ln -sf "$SHIM_MIRROR" "$target"
                         };
                     else
-                        { 
-                            try_sudo ln -sf "$shim_source" "$target"
-                        };
-                    fi;
-                    unset "${vars_to_unset[@]}";
-                    unset -f "$target_name";
-                    export PATH="${PATH//"${shim_dir}:"/}";
-                    ( sleep 3;
-                    try_sudo rm -f "$shim_tombstone" || true ) & disown
+                        if test -e "$shim_source"; then
+                            { 
+                                try_sudo ln -sf "$shim_source" "$target"
+                            };
+                        fi;
+                    fi
                 };
-            fi
+            fi;
+            unset "${vars_to_unset[@]}";
+            unset -f "$target_name";
+            export PATH="${PATH//"${shim_dir}:"/}";
+            ( sleep 3;
+            try_sudo rm -f "$shim_tombstone" || true ) & disown
         };
         function create_self () 
         { 
@@ -1756,10 +1766,6 @@ EOF
                 log::info "Performing cloud filesync, scoped globally";
                 mkdir -p "${rclone_mount_dir}";
                 sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
-                declare rclone_dotfiles_sh_dir="$rclone_mount_dir/.dotfiles-sh";
-                declare rclone_dotfiles_sh_sync_dir="$rclone_dotfiles_sh_dir/sync";
-                declare rclone_dotfiles_sh_sync_relative_home_dir="$rclone_dotfiles_sh_sync_dir/relhome";
-                declare rclone_dotfiles_sh_sync_rootfs_dir="$rclone_dotfiles_sh_sync_dir/rootfs";
                 declare times=0;
                 until test -e "$rclone_dotfiles_sh_dir"; do
                     { 
@@ -1875,11 +1881,11 @@ EOF
             done;
             if test ! -v arg_rel_home; then
                 { 
-                    filesync::save_local "${filelist[@]}"
+                    TARGET="$rclone_dotfiles_sh_sync_rootfs_dir" filesync::save_local "${filelist[@]}"
                 };
             else
                 { 
-                    RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}"
+                    TARGET="$rclone_dotfiles_sh_sync_relative_home_dir" RELATIVE_HOME="true" filesync::save_local "${filelist[@]}"
                 };
             fi
         };
@@ -1895,13 +1901,10 @@ EOF
             -h | --help)
                 printf '%s\t%s\n' "save" "Start syncing selected files" "restore" "Manual file sync trigger" "-h|--help" "This help message"
             ;;
-            save)
+            save | restore)
+                declare cmd="$1";
                 shift;
-                cli::save "$@"
-            ;;
-            restore)
-                shift;
-                cli::restore "$@"
+                cli::"$cmd" "$@"
             ;;
         esac;
         exit
@@ -2206,7 +2209,7 @@ EOF
 				cat <<'EOF'
 printf '\n'; # init quick draw
 
-while true; do {
+i=1 && while true; do {
 	# Read all properties
 	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
 		< <(gp top -j | yq -I0 -rM ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
@@ -2217,9 +2220,15 @@ while true; do {
 	# CPU percentage
 	cpu_perc="$(( (cpu_used * 100) / cpu_max ))";
 
+  # Disk usage
+  if test "${i:0-1}" == 1; then
+    read -r dsize dused < <(df -h --output=size,used /workspace | tail -n1)
+  fi
+
 	# Print to tmux
-	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} ";
+	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} #[bg=green,fg=#282a36,bold] DISK: ${dused}/${dsize} ";
 	sleep 3;
+  ((i=i+1));
 } done
 EOF
 		)";
@@ -2713,6 +2722,10 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     declare -r rclone_conf_file="$HOME/.config/rclone/rclone.conf";
     declare -r rclone_profile_name="cloudsync";
     declare rclone_cmd_args=(--config="$rclone_conf_file" mount --allow-other --async-read --vfs-cache-mode=full "${rclone_profile_name}:" "$rclone_mount_dir");
+    declare rclone_dotfiles_sh_dir="$rclone_mount_dir/.dotfiles-sh";
+    declare rclone_dotfiles_sh_sync_dir="$rclone_dotfiles_sh_dir/sync";
+    declare rclone_dotfiles_sh_sync_relative_home_dir="$rclone_dotfiles_sh_sync_dir/relhome";
+    declare rclone_dotfiles_sh_sync_rootfs_dir="$rclone_dotfiles_sh_sync_dir/rootfs";
     declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
@@ -2774,4 +2787,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%23990 "$@";
+main@bashbox%21208 "$@";

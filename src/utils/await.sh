@@ -18,33 +18,34 @@ function await::create_shim() {
 	}
 
 	function revert_shim() {
-		if test -e "$shim_source"; then {
-			
-			try_sudo touch "$shim_tombstone";
+		try_sudo touch "$shim_tombstone" || true;
 
-			if ! is::custom_shim; then {
-				# try_sudo mv "$shim_source" "$target";
+		if ! is::custom_shim; then {
+			if test -e "$shim_source"; then {
 				try_sudo ln -sf "$shim_source" "$target";
-			} else {
-				# try_sudo ln -sf "$shim_source" "$SHIM_MIRROR";
-				try_sudo ln -sf "$shim_source" "$target";
-				# try_sudo ln -sf "$SHIM_MIRROR" "$target";
-
 			} fi
-
-			unset "${vars_to_unset[@]}";
-			unset -f "$target_name";
-			export PATH="${PATH//"${shim_dir}:"/}";
-
-			(
-				sleep 3;
-				try_sudo rm -f "$shim_tombstone" || true;
-				# if is::custom_shim; then {
-				# 	try_sudo rm -f "$target" || true;
-				# } fi
-				# try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
-			) & disown;
+		} else {
+			# try_sudo ln -sf "$shim_source" "$SHIM_MIRROR";
+			if test -e "$SHIM_MIRROR" || [[ "$shim_source" == *.nix-profile* ]]; then {
+				try_sudo ln -sf "$SHIM_MIRROR" "$target";
+			} elif test -e "$shim_source"; then {
+				try_sudo ln -sf "$shim_source" "$target";
+			} fi
+			# try_sudo ln -sf "$SHIM_MIRROR" "$target";
 		} fi
+
+		unset "${vars_to_unset[@]}";
+		unset -f "$target_name";
+		export PATH="${PATH//"${shim_dir}:"/}";
+
+		(
+			sleep 3;
+			try_sudo rm -f "$shim_tombstone" || true;
+			# if is::custom_shim; then {
+			# 	try_sudo rm -f "$target" || true;
+			# } fi
+			# try_sudo rmdir --ignore-fail-on-non-empty "$shim_dir" 2>/dev/null || :;
+		) & disown;
 	}
 
 	# shellcheck disable=SC2120

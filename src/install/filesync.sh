@@ -21,16 +21,10 @@ function install::filesync() {
         await::until_true command::exists rclone;
 
         log::info "Performing cloud filesync, scoped globally";
-        # Mount your cloud provider at $rclone_mount_dir
 
+        # Mount your cloud provider at $rclone_mount_dir
         mkdir -p "${rclone_mount_dir}";
         sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
-
-        # Install dotfiles from the cloud provider
-        declare rclone_dotfiles_sh_dir="$rclone_mount_dir/.dotfiles-sh";
-        declare rclone_dotfiles_sh_sync_dir="$rclone_dotfiles_sh_dir/sync";
-        declare rclone_dotfiles_sh_sync_relative_home_dir="$rclone_dotfiles_sh_sync_dir/relhome";
-        declare rclone_dotfiles_sh_sync_rootfs_dir="$rclone_dotfiles_sh_sync_dir/rootfs";
 
         declare times=0;
         until test -e "$rclone_dotfiles_sh_dir"; do {
@@ -44,6 +38,7 @@ function install::filesync() {
         # Relative home dotfiles
         if test -e "$rclone_dotfiles_sh_sync_relative_home_dir"; then {
             #  WHERE-TO          FUNCTION                         SOURCE
+            # Install dotfiles from the cloud provider
             TARGET="$HOME" dotfiles::initialize "$rclone_dotfiles_sh_sync_relative_home_dir";
         } fi
 
@@ -134,9 +129,9 @@ function filesync::cli() {
     } done
     
     if test ! -v arg_rel_home; then {
-      filesync::save_local "${filelist[@]}";
+      TARGET="$rclone_dotfiles_sh_sync_rootfs_dir" filesync::save_local "${filelist[@]}";
     } else {
-      RELATIVE_HOME="$arg_rel_home" filesync::save_local "${filelist[@]}";
+      TARGET="$rclone_dotfiles_sh_sync_relative_home_dir" RELATIVE_HOME="true" filesync::save_local "${filelist[@]}";
     } fi
   }
 
@@ -157,13 +152,10 @@ function filesync::cli() {
           "restore" "Manual file sync trigger" \
           "-h|--help" "This help message";
         ;;
-      save)
+      save|restore)
+        declare cmd="$1";
         shift;
-        cli::save "$@";
-        ;;
-      restore)
-        shift;
-        cli::restore "$@";
+        cli::"$cmd" "$@";
         ;;
     esac
 

@@ -199,6 +199,10 @@ declare rclone_cmd_args=(
     --vfs-cache-mode=full
     "${rclone_profile_name}:" "$rclone_mount_dir"
 )
+declare rclone_dotfiles_sh_dir="$rclone_mount_dir/.dotfiles-sh";
+declare rclone_dotfiles_sh_sync_dir="$rclone_dotfiles_sh_dir/sync";
+declare rclone_dotfiles_sh_sync_relative_home_dir="$rclone_dotfiles_sh_sync_dir/relhome";
+declare rclone_dotfiles_sh_sync_rootfs_dir="$rclone_dotfiles_sh_sync_dir/rootfs";
 declare files_to_persist_locally=(
     "${HISTFILE:-"$HOME/.bash_history"}"
     "${HISTFILE:-"$HOME/.zsh_history"}"

@@ -296,7 +296,7 @@ EOF
 				cat <<'EOF'
 printf '\n'; # init quick draw
 
-while true; do {
+i=1 && while true; do {
 	# Read all properties
 	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
 		< <(gp top -j | yq -I0 -rM ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
@@ -307,9 +307,15 @@ while true; do {
 	# CPU percentage
 	cpu_perc="$(( (cpu_used * 100) / cpu_max ))";
 
+  # Disk usage
+  if test "${i:0-1}" == 1; then
+    read -r dsize dused < <(df -h --output=size,used /workspace | tail -n1)
+  fi
+
 	# Print to tmux
-	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} ";
+	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} #[bg=green,fg=#282a36,bold] DISK: ${dused}/${dsize} ";
 	sleep 3;
+  ((i=i+1));
 } done
 EOF
 		)"
