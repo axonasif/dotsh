@@ -195,6 +195,7 @@ livetest() (
 
 			if test "${DOTFILES_TMUX:-true}" == true; then {
 				AWAIT_SHIM_PRINT_INDICATOR=true tmux attach;
+				# exec bash -li;
 			} else {
 				exec bash -li;
 			} fi

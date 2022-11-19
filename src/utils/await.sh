@@ -133,9 +133,11 @@ function await::create_shim() {
 	if test ! -v NOCLOBBER; then {
 		if test -e "$target" && ! is::custom_shim; then {
 			try_sudo mkdir -p "$shim_dir";
+			await::until_true test -x "$target";
 			try_sudo mv "$target" "$shim_source";
 		} elif test -e "${SHIM_MIRROR:-}" && is::custom_shim; then {
 			try_sudo mkdir -p "$shim_dir";
+			await::until_true test -x "$SHIM_MIRROR";
 			try_sudo mv "$SHIM_MIRROR" "$shim_source";
 		} fi
 	} elif test -v NOCLOBBER && { test -e "$target" || test -e "${SHIM_MIRROR:-}"; }; then {
@@ -187,7 +189,7 @@ function await::create_shim() {
 		exec_bin() {
 			local args=("$@");
 			local bin="${args[0]}";
-			await::until_true test -x "$bin";			
+			await::until_true test -x "$bin";
 			# DEBUG
 			unset "${vars_to_unset[@]}";
 			export PATH="${bin%/*}:$PATH";
@@ -273,6 +275,7 @@ function await::create_shim() {
 							try_sudo mv "$target" "$shim_source";
 							try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
 						} else {
+							await::until_true test -x "$SHIM_MIRROR";
 							try_sudo mv "${SHIM_MIRROR}" "$shim_source";
 						} fi
 				} fi

@@ -8,15 +8,15 @@ function install::packages {
         if is::cde; then {
             dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
 
-            # if ! command::exists yq; then {
+            if command::exists yq; then {
                 try_sudo rm -f /usr/bin/yq;
-                PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
-            # } fi
+            } fi
+            PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
 
-            # if ! command::exists jq; then {
+            if command::exists jq; then {
                 try_sudo rm -f /usr/bin/jq;
-                dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown;
-            # } fi
+            } fi
+            dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown;
         } else {
             nixpkgs_level_1+=(nixpkgs.tmux nixpkgs.yq nixpkgs.jq);
         } fi

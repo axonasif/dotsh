@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%25654 () 
+main@bashbox%14112 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%25654 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%25654';
+    ___MAIN_FUNCNAME='main@bashbox%14112';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1379,12 +1379,14 @@ EOF
                 if test -e "$target" && ! is::custom_shim; then
                     { 
                         try_sudo mkdir -p "$shim_dir";
+                        await::until_true test -x "$target";
                         try_sudo mv "$target" "$shim_source"
                     };
                 else
                     if test -e "${SHIM_MIRROR:-}" && is::custom_shim; then
                         { 
                             try_sudo mkdir -p "$shim_dir";
+                            await::until_true test -x "$SHIM_MIRROR";
                             try_sudo mv "$SHIM_MIRROR" "$shim_source"
                         };
                     fi;
@@ -1514,6 +1516,7 @@ EOF
                                         };
                                     else
                                         { 
+                                            await::until_true test -x "$SHIM_MIRROR";
                                             try_sudo mv "${SHIM_MIRROR}" "$shim_source"
                                         };
                                     fi
@@ -1586,9 +1589,17 @@ EOF
                 if is::cde; then
                     { 
                         dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
-                        try_sudo rm -f /usr/bin/yq;
+                        if command::exists yq; then
+                            { 
+                                try_sudo rm -f /usr/bin/yq
+                            };
+                        fi;
                         PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
-                        try_sudo rm -f /usr/bin/jq;
+                        if command::exists jq; then
+                            { 
+                                try_sudo rm -f /usr/bin/jq
+                            };
+                        fi;
                         dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown
                     };
                 else
@@ -2809,4 +2820,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%25654 "$@";
+main@bashbox%14112 "$@";
