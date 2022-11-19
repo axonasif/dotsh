@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14521 () 
+main@bashbox%6694 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%14521 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%14521';
+    ___MAIN_FUNCNAME='main@bashbox%6694';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2203,7 +2203,11 @@ CMDC
         if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2> /dev/null; then
             { 
                 local function_exports=(tmux::new-session tmux_create_session tmux::inject get::task_cmd tmux::show-option get::default_shell await::signal);
-                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "$(declare -f "${function_exports[@]}")" "DOTFILES_TMUX=${DOTFILES_TMUX:-true}" "dotfiles_notmux_sig=$dotfiles_notmux_sig" "DOTFILES_TMUX_NO_VSCODE=${DOTFILES_TMUX_NO_VSCODE:-false}" 'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                { 
+                    printf '%s="%s"\n' tmux_first_session_name "$tmux_first_session_name" tmux_first_window_num "$tmux_first_window_num" dotfiles_notmux_sig "$dotfiles_notmux_sig" PROMPT_COMMAND 'tmux::inject; $PROMPT_COMMAND';
+                    printf '%s="${%s:-%s}"' DOTFILES_TMUX DOTFILES_TMUX "${DOTFILES_TMUX:-true}" DOTFILES_TMUX_NO_VSCODE DOTFILES_TMUX_NO_VSCODE "${DOTFILES_TMUX_NO_VSCODE:-false}";
+                    printf '%s\n' "$(declare -f "${function_exports[@]}")"
+                } >> "$HOME/.bashrc"
             };
         fi
     };
@@ -2944,4 +2948,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%14521 "$@";
+main@bashbox%6694 "$@";
