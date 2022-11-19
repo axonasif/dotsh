@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21649 () 
+main@bashbox%18705 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21649 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21649';
+    ___MAIN_FUNCNAME='main@bashbox%18705';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2340,10 +2340,19 @@ CMDC
 				)";
                     if ! grep -q "^${dotfiles_notmux_sig}\$" <<< "$cmd"; then
                         { 
-                            cmd="$(get::task_cmd "$cmd")";
-                            WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd"
+                            cmd="$(get::task_cmd "$cmd")"
+                        };
+                    else
+                        { 
+                            cmd="$(
+						cat <<-EOF
+						printf '>> %s\n' 							"This was ignored to be run inside tmux via '$dotfiles_notmux_sig' flag inside the task codeblock" 							"If you wish to open this on tmux, you may use 'gp tasks list' to get the running TaskID, and then 'gp tasks attach <TaskID>'";
+						read -r -n 1 -p ">> Press Enter to dismiss";
+						EOF
+					)"
                         };
                     fi;
+                    WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
                     ((arr_elem=arr_elem+1))
                 };
             done ) & disown;
@@ -2952,4 +2961,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%21649 "$@";
+main@bashbox%18705 "$@";

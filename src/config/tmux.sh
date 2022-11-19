@@ -270,8 +270,18 @@ function config::tmux() {
 
 				if ! grep -q "^${dotfiles_notmux_sig}\$" <<<"$cmd"; then {
 					cmd="$(get::task_cmd "$cmd")";
-					WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+				} else {
+					cmd="$(
+						cat <<-EOF
+						printf '>> %s\n' \
+							"This was ignored to be run inside tmux via '$dotfiles_notmux_sig' flag inside the task codeblock" \
+							"If you wish to open this on tmux, you may use 'gp tasks list' to get the running TaskID, and then 'gp tasks attach <TaskID>'";
+						read -r -n 1 -p ">> Press Enter to dismiss";
+						EOF
+					)";
 				} fi
+
+				WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
 
 				((arr_elem=arr_elem+1));
 			} done
