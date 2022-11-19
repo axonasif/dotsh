@@ -229,15 +229,6 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
   }
 
     case "${1:-}" in
-      "config")
-        shift;
-      ;;
-      *) 
-        return;
-      ;;
-    esac
-
-    case "${1:-}" in
       -h|--help)
         printf '%s\t%s\n' \
           "set" "Set and update option values on the fly" \

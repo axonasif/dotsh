@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%18705 () 
+main@bashbox%3638 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%18705 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%18705';
+    ___MAIN_FUNCNAME='main@bashbox%3638';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1954,19 +1954,21 @@ EOF
             { 
                 if test ! -v RELATIVE_HOME; then
                     { 
-                        _persisted_node="${target_persist_dir}/${_input}";
-                        _persisted_node="${_persisted_node//\/\//\/}";
-                        _persisted_node_dir="${_persisted_node%/*}";
-                        _input_dir="${_input%/*}"
+                        _persisted_node="${target_persist_dir}/${_input}"
                     };
                 else
                     { 
-                        _persisted_node="${target_persist_dir}/${_input#"$HOME"}";
-                        _persisted_node="${_persisted_node//\/\//\/}";
-                        _persisted_node_dir="${_persisted_node%/*}";
-                        _input_dir="${_input%/*}"
+                        if ! [[ "$_input" == $HOME/* ]]; then
+                            { 
+                                log::error "$_input is not inside your \$HOME directory" 1 || return
+                            };
+                        fi;
+                        _persisted_node="${target_persist_dir}/${_input#"$HOME"}"
                     };
                 fi;
+                _persisted_node="${_persisted_node//\/\//\/}";
+                _persisted_node_dir="${_persisted_node%/*}";
+                _input_dir="${_input%/*}";
                 if test "$_input_dir" == "$_input"; then
                     { 
                         log::error "Something went wrong, _input_dir is same as _input" 1 || return
@@ -2010,7 +2012,7 @@ EOF
             for file in "$@";
             do
                 { 
-                    filelist+=("$(readlink "$file")") || true
+                    filelist+=("$(realpath -s "$file")") || true
                 };
             done;
             if test ! -v arg_rel_home; then
@@ -2023,14 +2025,6 @@ EOF
                 };
             fi
         };
-        case "${1:-}" in 
-            "filesync")
-                shift
-            ;;
-            *)
-                return
-            ;;
-        esac;
         case "${1:-}" in 
             -h | --help)
                 printf '%s\t%s\n' "save" "Start syncing selected files" "restore" "Manual file sync trigger" "-h|--help" "This help message"
@@ -2809,14 +2803,6 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
             fi
         };
         case "${1:-}" in 
-            "config")
-                shift
-            ;;
-            *)
-                return
-            ;;
-        esac;
-        case "${1:-}" in 
             -h | --help)
                 printf '%s\t%s\n' "set" "Set and update option values on the fly" "wizard" "Quick interactive onboarding" "rclone" "Configure rclone for filesync" "-h|--help" "This help message"
             ;;
@@ -2903,17 +2889,20 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     declare files_to_persist_locally=("${HISTFILE:-"$HOME/.bash_history"}" "${HISTFILE:-"$HOME/.zsh_history"}" "$fish_hist_file");
     function main () 
     { 
-        if test "${___self##*/}" == "dotsh" || test -v DEBUG; then
+        if test "${___self##*/}" == "dotsh" || test -v DEBUG_DOTSH; then
             { 
-                if test -n "${*:-}"; then
+                if test -n "${1:-}"; then
                     { 
-                        declare cli;
-                        for cli in filesync config dotsh;
-                        do
+                        declare cli_func="${1}::cli";
+                        if declare -F "${cli_func}" > /dev/null; then
                             { 
-                                "${cli}::cli" "$@"
+                                shift && "${cli_func}" "$@"
                             };
-                        done
+                        else
+                            { 
+                                log::warn "Unkown subcommand: ${1}"
+                            };
+                        fi
                     };
                 fi;
                 exit 0
@@ -2961,4 +2950,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%18705 "$@";
+main@bashbox%3638 "$@";

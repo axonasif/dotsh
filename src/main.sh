@@ -14,13 +14,15 @@ use variables;
 function main() {
 
   # Hook CLIs
-  if test "${___self##*/}" == "dotsh" || test -v DEBUG; then {
+  if test "${___self##*/}" == "dotsh" || test -v DEBUG_DOTSH; then {
 
-    if test -n "${*:-}"; then {
-      declare cli;
-      for cli in filesync config dotsh; do {
-        "${cli}::cli" "$@";
-      } done
+    if test -n "${1:-}"; then {
+      declare cli_func="${1}::cli";
+      if declare -F "${cli_func}" 1>/dev/null; then {
+          shift && "${cli_func}" "$@";
+      } else {
+        log::warn "Unkown subcommand: ${1}";
+      } fi
     } fi
 
     exit 0;

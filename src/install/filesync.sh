@@ -78,15 +78,15 @@ function filesync::save_local() {
     for _input in "$@"; do {
         if test ! -v RELATIVE_HOME; then {
           _persisted_node="${target_persist_dir}/${_input}";
-          _persisted_node="${_persisted_node//\/\//\/}";
-          _persisted_node_dir="${_persisted_node%/*}";
-          _input_dir="${_input%/*}";
         } else {
+          if ! [[ "$_input" == $HOME/* ]]; then {
+            log::error "$_input is not inside your \$HOME directory" 1 || return;
+          } fi
           _persisted_node="${target_persist_dir}/${_input#"$HOME"}";
-          _persisted_node="${_persisted_node//\/\//\/}";
-          _persisted_node_dir="${_persisted_node%/*}";
-          _input_dir="${_input%/*}";
         } fi
+        _persisted_node="${_persisted_node//\/\//\/}";
+        _persisted_node_dir="${_persisted_node%/*}";
+        _input_dir="${_input%/*}";
 
         if test "$_input_dir" == "$_input"; then { 
           log::error "Something went wrong, _input_dir is same as _input" 1 || return;
@@ -128,7 +128,7 @@ function filesync::cli() {
     declare file filelist;
 
     for file in "$@"; do {
-      filelist+=("$(readlink "$file")") || true;
+      filelist+=("$(realpath -s "$file")") || true;
     } done
     
     if test ! -v arg_rel_home; then {
@@ -137,16 +137,6 @@ function filesync::cli() {
       TARGET="$rclone_dotfiles_sh_sync_relative_home_dir" RELATIVE_HOME="true" filesync::save_local "${filelist[@]}";
     } fi
   }
-
-    case "${1:-}" in
-      "filesync")
-        shift;
-      ;;
-      *) 
-        return;
-      ;;
-    esac
-      
 
     case "${1:-}" in
       -h|--help)
