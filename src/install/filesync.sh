@@ -58,6 +58,7 @@ function filesync::restore_local {
 
     while read -r _input; do {
         _persisted_node="${_input#"${target_persist_dir}"}"
+        _persisted_node="${_persisted_node//\/\//\/}";
         _persisted_node_dir="${_persisted_node%/*}";
 
         if test -e "$_persisted_node"; then {
@@ -77,10 +78,12 @@ function filesync::save_local() {
     for _input in "$@"; do {
         if test ! -v RELATIVE_HOME; then {
           _persisted_node="${target_persist_dir}/${_input}";
+          _persisted_node="${_persisted_node//\/\//\/}";
           _persisted_node_dir="${_persisted_node%/*}";
           _input_dir="${_input%/*}";
         } else {
           _persisted_node="${target_persist_dir}/${_input#"$HOME"}";
+          _persisted_node="${_persisted_node//\/\//\/}";
           _persisted_node_dir="${_persisted_node%/*}";
           _input_dir="${_input%/*}";
         } fi

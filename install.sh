@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%31787 () 
+main@bashbox%529 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%31787 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%31787';
+    ___MAIN_FUNCNAME='main@bashbox%529';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1833,6 +1833,7 @@ EOF
         while read -r _input; do
             { 
                 _persisted_node="${_input#"${target_persist_dir}"}";
+                _persisted_node="${_persisted_node//\/\//\/}";
                 _persisted_node_dir="${_persisted_node%/*}";
                 if test -e "$_persisted_node"; then
                     { 
@@ -1856,12 +1857,14 @@ EOF
                 if test ! -v RELATIVE_HOME; then
                     { 
                         _persisted_node="${target_persist_dir}/${_input}";
+                        _persisted_node="${_persisted_node//\/\//\/}";
                         _persisted_node_dir="${_persisted_node%/*}";
                         _input_dir="${_input%/*}"
                     };
                 else
                     { 
                         _persisted_node="${target_persist_dir}/${_input#"$HOME"}";
+                        _persisted_node="${_persisted_node//\/\//\/}";
                         _persisted_node_dir="${_persisted_node%/*}";
                         _input_dir="${_input%/*}"
                     };
@@ -2820,4 +2823,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%31787 "$@";
+main@bashbox%529 "$@";
