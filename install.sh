@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%21208 () 
+main@bashbox%31342 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%21208 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%21208';
+    ___MAIN_FUNCNAME='main@bashbox%31342';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1265,6 +1265,7 @@ EOF
         declare +x CLOSE KEEP DIRECT_CMD;
         export SHIM_MIRROR;
         declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
+        declare TARGER_SHIM_HEADER_SIGNATURE="# TARGET_REDIRECT_SHIM";
         function is::custom_shim () 
         { 
             test -v SHIM_MIRROR
@@ -1282,9 +1283,27 @@ EOF
                 };
             else
                 { 
-                    if test -e "$SHIM_MIRROR" || [[ "$shim_source" == *.nix-profile* ]]; then
+                    if [[ "$shim_source" == *.nix-profile* ]]; then
                         { 
-                            try_sudo ln -sf "$SHIM_MIRROR" "$target"
+                            ( function main () 
+                            { 
+                                set -e;
+                                if test -x "${shim_source:-}"; then
+                                    : "$shim_source";
+                                else
+                                    if test -x "${SHIM_MIRROR:-}"; then
+                                        ( sleep 10 && sudo rm -f "$0" 2> /dev/null ) & disown;
+                                        : "$SHIM_MIRROR";
+                                    fi;
+                                fi;
+                                exec "$_" "$@"
+                            };
+                            body="$(
+						printf '%s\n' '#!/usr/bin/env bash' "$TARGER_SHIM_HEADER_SIGNATURE" "$(declare -f main)";
+						printf '%s="%s"\n' 										"shim_source" "$shim_source" 										SHIM_MIRROR "$SHIM_MIRROR";
+						printf '%s "$@";\n' main;
+					)";
+                            try_sudo env self="$body" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target' )
                         };
                     else
                         if test -e "$shim_source"; then
@@ -1398,7 +1417,13 @@ EOF
             { 
                 declare input="$1";
                 await_nowrite_executable "$input";
-                await::until_true test -L "$input"
+                until test -L "$input" || { 
+                    test "$(sed -n '2p;3q' "$input" 2>/dev/null)" == "$TARGER_SHIM_HEADER_SIGNATURE" && NO_AWAIT_SHIM=true
+                }; do
+                    { 
+                        sleep 0.5
+                    };
+                done
             };
             function exec_bin () 
             { 
@@ -1411,6 +1436,9 @@ EOF
             };
             function await_while_shim_exists () 
             { 
+                if test -v NO_AWAIT_SHIM; then
+                    return;
+                fi;
                 if is::custom_shim; then
                     { 
                         : "$target"
@@ -1508,7 +1536,7 @@ EOF
         };
         { 
             printf 'function main() {\n';
-            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir" SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE";
+            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir" SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE" TARGER_SHIM_HEADER_SIGNATURE "$TARGER_SHIM_HEADER_SIGNATURE";
             printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
             if test -v SHIM_MIRROR; then
                 { 
@@ -2787,4 +2815,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%21208 "$@";
+main@bashbox%31342 "$@";

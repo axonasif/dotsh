@@ -11,6 +11,7 @@ function await::create_shim() {
 	declare +x CLOSE KEEP DIRECT_CMD; # Keep local, do not export into env
 	export SHIM_MIRROR; # Reuse previoulsy exported SHIM_MIRROR before CLOSE'ing
 	declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
+	declare TARGER_SHIM_HEADER_SIGNATURE="# TARGET_REDIRECT_SHIM";
 
 	# shellcheck disable=SC2120
 	function is::custom_shim() {
@@ -25,13 +26,32 @@ function await::create_shim() {
 				try_sudo ln -sf "$shim_source" "$target";
 			} fi
 		} else {
-			# try_sudo ln -sf "$shim_source" "$SHIM_MIRROR";
-			if test -e "$SHIM_MIRROR" || [[ "$shim_source" == *.nix-profile* ]]; then {
-				try_sudo ln -sf "$SHIM_MIRROR" "$target";
+				# try_sudo ln -sf "$shim_source" "$SHIM_MIRROR";
+				# try_sudo ln -sf "$SHIM_MIRROR" "$target";
+			if [[ "$shim_source" == *.nix-profile* ]]; then {
+				(
+					function main() {
+						set -e
+						if test -x "${shim_source:-}"; then
+							: "$shim_source";
+						elif test -x "${SHIM_MIRROR:-}"; then
+							(sleep 10 && sudo rm -f "$0" 2>/dev/null) & disown;
+							: "$SHIM_MIRROR";
+						fi
+						exec "$_" "$@";
+					}
+					body="$(
+						printf '%s\n' '#!/usr/bin/env bash' "$TARGER_SHIM_HEADER_SIGNATURE" "$(declare -f main)";
+						printf '%s="%s"\n' \
+										"shim_source" "$shim_source" \
+										SHIM_MIRROR "$SHIM_MIRROR";
+						printf '%s "$@";\n' main;
+					)"
+					try_sudo env self="$body" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target';
+				)
 			} elif test -e "$shim_source"; then {
 				try_sudo ln -sf "$shim_source" "$target";
 			} fi
-			# try_sudo ln -sf "$SHIM_MIRROR" "$target";
 		} fi
 
 		unset "${vars_to_unset[@]}";
@@ -156,7 +176,12 @@ function await::create_shim() {
 		await_nowrite_executable_symlink() {
 			declare input="$1";
 			await_nowrite_executable "$input";
-			await::until_true test -L "$input";
+			until test -L "$input" || {
+				test "$(sed -n '2p;3q' "$input" 2>/dev/null)" == "$TARGER_SHIM_HEADER_SIGNATURE" \
+				&& NO_AWAIT_SHIM=true
+			}; do {
+				sleep 0.5;
+			} done
 		}
 
 		exec_bin() {
@@ -170,6 +195,7 @@ function await::create_shim() {
 		}
 
 		await_while_shim_exists() {
+			if test -v NO_AWAIT_SHIM; then return; fi
 			# DEBUG
 			# if test "${KEEP_internal_call:-}" == false; then set -x; fi
 
@@ -194,12 +220,13 @@ function await::create_shim() {
 				# } done
 				
 			} done
-
 		}
 
 		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
 			printf 'info[shim]: Loading %s\n' "$target";
 		} fi
+
+		# Reset target
 
 		# Initial loop for detecting $target modifications
 		## For KEEP=
@@ -280,7 +307,8 @@ function await::create_shim() {
 							target "$target" \
 							shim_source "$shim_source" \
 							shim_dir "$shim_dir"\
-							SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE";
+							SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE" \
+							TARGER_SHIM_HEADER_SIGNATURE "$TARGER_SHIM_HEADER_SIGNATURE";
 
 		printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
 		if test -v SHIM_MIRROR; then {
