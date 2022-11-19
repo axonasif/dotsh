@@ -60,7 +60,7 @@ bash ~/.dotfiles/install.sh
 
 # Features
 
-Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myself as long it's possible within the context of `dotfiles` layer on Gitpod. I really like how programmable Gitpod can be unlike anything out there! (although I wish it was more obvious)
+Most of these features stemmed from my personal needs, I simply couldn't wait but try implementing them myself as long it's possible within the context of `dotfiles` layer on Gitpod. I really like how programmable Gitpod can be unlike anything out there! (although I wish it was more obvious). Another reason was to avoid repetitive work while answering some frequent questions at the Gitpod Discord server that required manual handcrafting for each scenario, an unified ~~solution~~ workaround was needed until these features exist at Gitpod.
 
 ## Fast installation
 
@@ -174,6 +174,13 @@ Again, on the shoulders of the giants, in this case `nix`.
 ## Easy interactive configuration
 
 ## Extra goodies
+
+Generally, bash scripts are error prone, hard to debug and maintain. But it changes with [bashbox](https://github.com/bashbox/bashbox), you get:
+- Pre syntax verification and optimization
+- Modular project
+- Proper error handling
+- Safe defaults and wrappers (i.e. panic on null values)
+- And more, go check it out!
 
 # Customizing
 
