@@ -115,6 +115,8 @@ Using SSH or terminal in general without TMUX feels powerless! Gitpod got amazin
 
 - Tight integration with `tmux` (replaces Gitpod tasks and VSCode terminal-UI), optimized for plain SSH based workflow.
 
+- `DOTFILES_TMUX_NO_TAKEOVER`
+
 ## Cross-workspace and local filesync
 
 The ephemeral nature of Gitpod may seem like a roadblock but not anymore as long you can program a reproducible environment. While dotfiles help with creating reproducible environments but one key part is private file synchronization. This let's you sync files across workspaces or locally to individual workspaces. That means you could persist your login for CLI programs, cache big files and so on. Obviously, it's gluing together external tools(`rclone`) to accomplish this, nothing special on it's own.

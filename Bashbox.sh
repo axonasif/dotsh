@@ -266,19 +266,17 @@ livetest() (
 		# 		/bin/bash -li
 		# 	)
 		# } fi
-		# local confirmed_statfile="/tmp/.confirmed_statfile";
-		# touch "$confirmed_statfile";
-		# local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
-		# if [[ "$confirmed_times" -lt 2 ]]; then {
-		# 	printf '\n';
-		# 	printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace" \
-		# 						"To exit from there, you can press ${BGREEN}Ctrl+d${RC} or run ${BRED}exit${RC} on the terminal when in ${GRAY}bash${RC} shell" \
-		# 						"You can run ${ORANGE}tmux${RC} a on the terminal to attach to the tmux session where Gitpod tasks are opened as tmux-windows" \
-		# 						"To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
-		# 	printf '\n';
-		# 	read -r -p '>>> Press Enter/return to continue execution of "bashbox live" command';
-		# 	printf '%s\n' "$confirmed_times" > "$confirmed_statfile";
-		# } fi
+		local confirmed_statfile="/tmp/.confirmed_statfile";
+		touch "$confirmed_statfile";
+		local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
+		if [[ "$confirmed_times" -lt 2 ]]; then {
+			printf '\n';
+			printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" \
+								"To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
+			printf '\n';
+			read -r -p ">>> Press Enter/return to continue execution";
+			printf '%s\n' "$confirmed_times" > "$confirmed_statfile";
+		} fi
 
 		local lckfile="/workspace/.dinit";
 		if test -e "$lckfile" && test ! -s "$lckfile"; then {

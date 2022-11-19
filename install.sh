@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%27155 () 
+main@bashbox%14521 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%27155 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%27155';
+    ___MAIN_FUNCNAME='main@bashbox%14521';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -274,6 +274,18 @@ main@bashbox%27155 ()
                 fi
             };
             docker_args+=(/bin/bash -li);
+            local confirmed_statfile="/tmp/.confirmed_statfile";
+            touch "$confirmed_statfile";
+            local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
+            if [[ "$confirmed_times" -lt 2 ]]; then
+                { 
+                    printf '\n';
+                    printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" "To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}";
+                    printf '\n';
+                    read -r -p ">>> Press Enter/return to continue execution";
+                    printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
+                };
+            fi;
             local lckfile="/workspace/.dinit";
             if test -e "$lckfile" && test ! -s "$lckfile"; then
                 { 
@@ -2068,6 +2080,7 @@ EOF
         declare +x WINDOW_NAME SESSION_NAME;
         tmux new-window -n "${WINDOW_NAME:-"${PWD##*/}"}" -t "${SESSION_NAME}" "$@"
     };
+    declare dotfiles_notmux_sig='# DOTFILES_TMUX_NO_TAKEOVER';
     function tmux_create_session () 
     { 
         SESSION_NAME="$tmux_first_session_name" WINDOW_NAME="editor" tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" -- "$(get::default_shell)" -li 2> /dev/null || :
@@ -2162,14 +2175,20 @@ CMDC
                                 };
                             else
                                 { 
-                                    exit 0
+                                    local stdin;
+                                    IFS= read -t0.01 -u0 -r -d '' stdin || :;
+                                    if ! grep -q "^$dotfiles_notmux_sig\$" <<< "$stdin"; then
+                                        { 
+                                            exit 0
+                                        };
+                                    fi
                                 };
                             fi
                         };
                     else
                         { 
                             local stdin cmd;
-                            IFS= read -t0.01 -u0 -r -d '' stdin;
+                            IFS= read -t0.01 -u0 -r -d '' stdin || :;
                             if test -n "$stdin"; then
                                 { 
                                     cmd="$(get::task_cmd)";
@@ -2184,7 +2203,7 @@ CMDC
         if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2> /dev/null; then
             { 
                 local function_exports=(tmux::new-session tmux_create_session tmux::inject get::task_cmd tmux::show-option get::default_shell await::signal);
-                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "$(declare -f "${function_exports[@]}")" 'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc"
+                printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" "tmux_first_window_num=$tmux_first_window_num" "$(declare -f "${function_exports[@]}")" "DOTFILES_TMUX=${DOTFILES_TMUX:-true}" "dotfiles_notmux_sig=$dotfiles_notmux_sig" "DOTFILES_TMUX_NO_VSCODE=${DOTFILES_TMUX_NO_VSCODE:-false}" 'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc"
             };
         fi
     };
@@ -2311,8 +2330,12 @@ CMDC
 						printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
 					} fi
 				)";
-                    cmd="$(get::task_cmd "$cmd")";
-                    WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+                    if ! grep -q "^${dotfiles_notmux_sig}\$" <<< "$cmd"; then
+                        { 
+                            cmd="$(get::task_cmd "$cmd")";
+                            WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd"
+                        };
+                    fi;
                     ((arr_elem=arr_elem+1))
                 };
             done ) & disown;
@@ -2921,4 +2944,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%27155 "$@";
+main@bashbox%14521 "$@";

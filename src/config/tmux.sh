@@ -2,6 +2,8 @@ use std::term::colors;
 use libtmux::session;
 use libtmux::window;
 
+declare dotfiles_notmux_sig='# DOTFILES_TMUX_NO_TAKEOVER';
+
 function tmux_create_session() {
 	SESSION_NAME="$tmux_first_session_name" \
   WINDOW_NAME="editor" \
@@ -96,13 +98,19 @@ function config::tmux::hijack_gitpod_task_terminals {
 					AWAIT_SHIM_PRINT_INDICATOR=true tmux_create_session;
 					exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
 				} else {
-					exit 0; # Terminate gitpod created task terminals so that we can take over, previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
+					local stdin;
+					IFS= read -t0.01 -u0 -r -d '' stdin || :;
+					if ! grep -q "^$dotfiles_notmux_sig\$" <<<"$stdin"; then {
+						# Terminate gitpod created task terminals so that we can take over,
+						# previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
+						exit 0;
+					} fi
 				} fi
 
 			} else {
 
 				local stdin cmd;
-				IFS= read -t0.01 -u0 -r -d '' stdin;
+				IFS= read -t0.01 -u0 -r -d '' stdin || :;
 
 				if test -n "$stdin"; then {
 					cmd="$(get::task_cmd)";
@@ -131,6 +139,9 @@ function config::tmux::hijack_gitpod_task_terminals {
 		printf '%s\n' "tmux_first_session_name=$tmux_first_session_name" \
 						"tmux_first_window_num=$tmux_first_window_num" \
 						"$(declare -f "${function_exports[@]}")" \
+						"DOTFILES_TMUX=${DOTFILES_TMUX:-true}" \
+						"dotfiles_notmux_sig=$dotfiles_notmux_sig" \
+						"DOTFILES_TMUX_NO_VSCODE=${DOTFILES_TMUX_NO_VSCODE:-false}" \
 						'PROMPT_COMMAND="tmux::inject; $PROMPT_COMMAND"' >> "$HOME/.bashrc";
 	} fi
 }
@@ -252,9 +263,11 @@ function config::tmux() {
 						printf '%s\n' "${cmd_prebuild:-}" "${cmd_others:-}";
 					} fi
 				)";
-				cmd="$(get::task_cmd "$cmd")";
 
-				WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+				if ! grep -q "^${dotfiles_notmux_sig}\$" <<<"$cmd"; then {
+					cmd="$(get::task_cmd "$cmd")";
+					WINDOW_NAME="$name" tmux_create_window -d -- bash -lic "$cmd";
+				} fi
 
 				((arr_elem=arr_elem+1));
 			} done
