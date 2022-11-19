@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14112 () 
+main@bashbox%31787 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%14112 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%14112';
+    ___MAIN_FUNCNAME='main@bashbox%31787';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1881,7 +1881,7 @@ EOF
                         fi;
                         try_sudo cp -ra "$_input" "$_persisted_node_dir";
                         try_sudo rm -rf "$_input";
-                        try_sudo ln -sr "$_persisted_node" "$_input"
+                        try_sudo ln -sf "$_persisted_node" "$_input"
                     };
                 else
                     { 
@@ -2820,4 +2820,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%14112 "$@";
+main@bashbox%31787 "$@";

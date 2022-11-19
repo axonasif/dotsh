@@ -98,7 +98,7 @@ function filesync::save_local() {
 
             try_sudo cp -ra "$_input" "$_persisted_node_dir";
             try_sudo rm -rf "$_input";
-            try_sudo ln -sr "$_persisted_node" "$_input";
+            try_sudo ln -sf "$_persisted_node" "$_input";
         } else {
             log::warn "$_input is already persisted";
         } fi
