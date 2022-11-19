@@ -6,16 +6,17 @@ function install::packages {
     # =================================================
     if test "${DOTFILES_TMUX:-true}" == true; then {
         if is::cde; then {
-            (
-                dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
+            dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
 
-                if ! command::exists yq; then {
-                    PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
-                } fi
-                if ! command::exists jq; then {
-                    dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown;
-                } fi
-            ) & disown;
+            # if ! command::exists yq; then {
+                try_sudo rm -f /usr/bin/yq;
+                PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
+            # } fi
+
+            # if ! command::exists jq; then {
+                try_sudo rm -f /usr/bin/jq;
+                dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown;
+            # } fi
         } else {
             nixpkgs_level_1+=(nixpkgs.tmux nixpkgs.yq nixpkgs.jq);
         } fi

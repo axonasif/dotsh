@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%4005 () 
+main@bashbox%25654 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%4005 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%4005';
+    ___MAIN_FUNCNAME='main@bashbox%25654';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -1585,17 +1585,11 @@ EOF
             { 
                 if is::cde; then
                     { 
-                        ( dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
-                        if ! command::exists yq; then
-                            { 
-                                PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown
-                            };
-                        fi;
-                        if ! command::exists jq; then
-                            { 
-                                dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown
-                            };
-                        fi ) & disown
+                        dw "/usr/bin/.dw/tmux" "https://github.com/axonasif/build-static-tmux/releases/latest/download/tmux.linux-amd64.stripped" & disown;
+                        try_sudo rm -f /usr/bin/yq;
+                        PIPE="| tar -O -xpz > /usr/bin/yq" dw /usr/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.30.2/yq_linux_amd64.tar.gz" & disown;
+                        try_sudo rm -f /usr/bin/jq;
+                        dw /usr/bin/jq "https://github.com/stedolan/jq/releases/latest/download/jq-linux64" & disown
                     };
                 else
                     { 
@@ -2128,7 +2122,6 @@ CMDC
                 };
             fi;
             CLOSE=true await::create_shim "${tmux_exec_path:-}";
-            set -x;
             ( if is::gitpod; then
                 { 
                     await::until_true command::exists yq;
@@ -2816,4 +2809,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%4005 "$@";
+main@bashbox%25654 "$@";
