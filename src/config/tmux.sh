@@ -197,9 +197,10 @@ function config::tmux() {
 
 				if test "${DOTFILES_READ_GITPOD_YML:-}" == true; then {
 					declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
-					if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then {
+					if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}"; then {
 						if ! GITPOD_TASKS="$(yq -I0 -erM -o=json '.tasks' "$gitpod_yml" 2>&1)"; then {
-							log::error "Syntax errors found on $gitpod_yml: $GITPOD_TASKS" 1 || return;
+							log::warn "No .gitpod.yml:tasks were found";
+							return;
 						} fi
 					} fi
 				} fi
@@ -222,7 +223,7 @@ function config::tmux() {
 
 			function jqw() {
 				local cmd;
-				if cmd=$(yq -I0 -erM "$@" <<<"$GITPOD_TASKS"); then {
+				if cmd=$(yq -o=json -I0 -erM "$@" <<<"$GITPOD_TASKS"); then {
 					printf '%s\n' "$cmd";
 				} else {
 					return 1;

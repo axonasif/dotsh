@@ -40,7 +40,55 @@ livetest() (
 			CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest";
 		;;
 		"ws")
+			trim_leading_trailing() {
+				local _stream="${1:-}";
+				local _stdin;
+				if test -z "${_stream}"; then {
+					read -r _stdin;
+					_stream="$_stdin";
+				} fi
+
+				# remove leading whitespace characters
+				_stream="${_stream#"${_stream%%[![:space:]]*}"}"
+				# remove trailing whitespace characters
+				_stream="${_stream%"${_stream##*[![:space:]]}"}"
+				printf '%s\n' "$_stream"
+			}
 			export DOTFILES_READ_GITPOD_YML=true;
+			declare default_gitpod_image="gitpod/workspace-full:latest";
+			declare CONTAINER_IMAGE="$default_gitpod_image";
+			declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
+
+			if test -e "${gitpod_yml:-}"; then {
+				gitpod_yml_path="${gitpod_yml[0]}";
+
+				if ! yq -o=yaml -reM '""' 1>/dev/null; then {
+					log::error "Syntax errors were found on $gitpod_yml_path" 1 || exit;
+				} fi
+
+				# Get image source
+				if res="$(yq -o=yaml -I0 -erM '.image' "$gitpod_yml_path" 2>/dev/null)"; then {
+					if [[ "$res" == file:* ]]; then {
+						res="${res##*:}" && res="$(trim_leading_trailing "$res")"; # Trim file: and extra spaces
+						declare custom_dockerfile="$GITPOD_REPO_ROOT/$res";
+						if test ! -e "$custom_dockerfile"; then {
+							log::error "Your custom dockerfile ${BGREEN}$res${RC} doesn't exist at $GITPOD_REPO_ROOT" 1 || exit;
+						} fi
+
+						declare local_container_image_name="workspace-image";
+						docker built -t "$local_container_image_name" -f "$custom_dockerfile" "$GITPOD_REPO_ROOT";
+
+						CONTAINER_IMAGE="$local_container_image_name";
+
+					} else {
+						CONTAINER_IMAGE="$(trim_leading_trailing "$res")";
+					} fi
+				} fi
+			} fi
+
+			if [[ "$CONTAINER_IMAGE" == *\ * ]]; then {
+				log::error "$gitpod_yml_path:image contains illegal spaces" 1 || exit;
+			} fi
 		;;
 		"stress")
 			export DOTFILES_STRESS_TEST=true;
@@ -48,7 +96,7 @@ livetest() (
 		;;
 	esac
 
-	local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}"; # From src/dockerfiles/testing-full.Dockerfile
+	declare CONTAINER_IMAGE="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}"; # From src/dockerfiles/testing-full.Dockerfile
 
 	log::info "Running bashbox build --release";
 	subcommand::build --release;
@@ -160,7 +208,7 @@ livetest() (
 
 		docker_args+=(
 			# Container image
-			-it "$container_image"
+			-it "$CONTAINER_IMAGE"
 		)
 
 		function startup_command() {
@@ -240,6 +288,7 @@ livetest() (
 			} done
 			rm -f "$lckfile";
 		} fi
+
 		docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
 		docker container prune -f >/dev/null 2>&1 & disown;
 	}

@@ -4,6 +4,7 @@ use std::async::lockfile;
 use std::sys::info::os;
 use std::sys::info::distro;
 use std::process::preserve_sudo;
+use std::string::trim;
 
 use utils;
 use install;
@@ -17,7 +18,7 @@ function main() {
 
     if test -n "${*:-}"; then {
       declare cli;
-      for cli in filesync config; do {
+      for cli in filesync config dotsh; do {
         "${cli}::cli" "$@";
       } done
     } fi

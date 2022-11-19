@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%529 () 
+main@bashbox%27155 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%529 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%529';
+    ___MAIN_FUNCNAME='main@bashbox%27155';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -91,7 +91,61 @@ main@bashbox%529 ()
                 ___self_CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest"
             ;;
             "ws")
-                export DOTFILES_READ_GITPOD_YML=true
+                function trim_leading_trailing () 
+                { 
+                    local _stream="${1:-}";
+                    local _stdin;
+                    if test -z "${_stream}"; then
+                        { 
+                            read -r _stdin;
+                            _stream="$_stdin"
+                        };
+                    fi;
+                    _stream="${_stream#"${_stream%%[![:space:]]*}"}";
+                    _stream="${_stream%"${_stream##*[![:space:]]}"}";
+                    printf '%s\n' "$_stream"
+                };
+                export DOTFILES_READ_GITPOD_YML=true;
+                declare default_gitpod_image="gitpod/workspace-full:latest";
+                declare CONTAINER_IMAGE="$default_gitpod_image";
+                declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
+                if test -e "${gitpod_yml:-}"; then
+                    { 
+                        gitpod_yml_path="${gitpod_yml[0]}";
+                        if ! yq -o=yaml -reM '""' > /dev/null; then
+                            { 
+                                log::error "Syntax errors were found on $gitpod_yml_path" 1 || exit
+                            };
+                        fi;
+                        if res="$(yq -o=yaml -I0 -erM '.image' "$gitpod_yml_path" 2>/dev/null)"; then
+                            { 
+                                if [[ "$res" == file:* ]]; then
+                                    { 
+                                        res="${res##*:}" && res="$(trim_leading_trailing "$res")";
+                                        declare custom_dockerfile="$GITPOD_REPO_ROOT/$res";
+                                        if test ! -e "$custom_dockerfile"; then
+                                            { 
+                                                log::error "Your custom dockerfile ${BGREEN}$res${RC} doesn't exist at $GITPOD_REPO_ROOT" 1 || exit
+                                            };
+                                        fi;
+                                        declare local_container_image_name="workspace-image";
+                                        docker built -t "$local_container_image_name" -f "$custom_dockerfile" "$GITPOD_REPO_ROOT";
+                                        ___self_CONTAINER_IMAGE="$local_container_image_name"
+                                    };
+                                else
+                                    { 
+                                        ___self_CONTAINER_IMAGE="$(trim_leading_trailing "$res")"
+                                    };
+                                fi
+                            };
+                        fi
+                    };
+                fi;
+                if [[ "$CONTAINER_IMAGE" == *\ * ]]; then
+                    { 
+                        log::error "$gitpod_yml_path:image contains illegal spaces" 1 || exit
+                    };
+                fi
             ;;
             "stress")
                 export DOTFILES_STRESS_TEST=true;
@@ -100,7 +154,7 @@ main@bashbox%529 ()
                 done
             ;;
         esac;
-        local container_image="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
+        declare CONTAINER_IMAGE="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
         log::info "Running bashbox build --release";
         subcommand::build --release;
         source "$_target_workdir/utils/common.sh";
@@ -173,7 +227,7 @@ main@bashbox%529 ()
                     docker_args+=(-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -e DOTFILES_READ_GITPOD_YML -e DOTFILES_STRESS_TEST)
                 };
             fi;
-            docker_args+=(-it "$container_image");
+            docker_args+=(-it "$CONTAINER_IMAGE");
             function startup_command () 
             { 
                 export PATH="$HOME/.nix-profile/bin:/ide/bin/remote-cli:$PATH";
@@ -900,6 +954,38 @@ main@bashbox%529 ()
                 fi
             };
         fi
+    };
+    function trim_leading_trailing () 
+    { 
+        local _stream="${1:-}";
+        local _stdin;
+        if test -z "${_stream}"; then
+            { 
+                read -r _stdin;
+                _stream="$_stdin"
+            };
+        fi;
+        _stream="${_stream#"${_stream%%[![:space:]]*}"}";
+        _stream="${_stream%"${_stream##*[![:space:]]}"}";
+        printf '%s\n' "$_stream"
+    };
+    function trim_string () 
+    { 
+        : "${1#"${1%%[![:space:]]*}"}";
+        : "${_%"${_##*[![:space:]]}"}";
+        printf '%s\n' "$_"
+    };
+    function trim_all () 
+    { 
+        set -f;
+        set -- $*;
+        printf '%s\n' "$*";
+        set +f
+    };
+    function trim_quotes () 
+    { 
+        : "${1//\'}";
+        printf '%s\n' "${_//\"}"
     };
     function tmux::show-option () 
     { 
@@ -1949,6 +2035,17 @@ EOF
     { 
         try_sudo ln -sf "$___self_DIR/${___self##*/}" "/usr/bin/dotsh"
     };
+    function dotsh::cli () 
+    { 
+        case "${1:-}" in 
+            livetest)
+                shift || true;
+                declare cmd=(bashbox -C "$(get::dotfiles-sh_dir)" livetest ws "$@");
+                log::info "Executing ${cmd[*]}";
+                "${cmd[@]}"
+            ;;
+        esac
+    };
     readonly RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m';
     readonly BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m';
     readonly WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m';
@@ -2142,11 +2239,12 @@ CMDC
                     if test "${DOTFILES_READ_GITPOD_YML:-}" == true; then
                         { 
                             declare gitpod_yml=("${GITPOD_REPO_ROOT:-}/".gitpod.y*ml);
-                            if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}" && test -e "$gitpod_yml"; then
+                            if test -n "${gitpod_yml:-}" && gitpod_yml="${gitpod_yml[0]}"; then
                                 { 
                                     if ! GITPOD_TASKS="$(yq -I0 -erM -o=json '.tasks' "$gitpod_yml" 2>&1)"; then
                                         { 
-                                            log::error "Syntax errors found on $gitpod_yml: $GITPOD_TASKS" 1 || return
+                                            log::warn "No .gitpod.yml:tasks were found";
+                                            return
                                         };
                                     fi
                                 };
@@ -2180,7 +2278,7 @@ CMDC
             function jqw () 
             { 
                 local cmd;
-                if cmd=$(yq -I0 -erM "$@" <<<"$GITPOD_TASKS"); then
+                if cmd=$(yq -o=json -I0 -erM "$@" <<<"$GITPOD_TASKS"); then
                     { 
                         printf '%s\n' "$cmd"
                     };
@@ -2770,7 +2868,7 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
                 if test -n "${*:-}"; then
                     { 
                         declare cli;
-                        for cli in filesync config;
+                        for cli in filesync config dotsh;
                         do
                             { 
                                 "${cli}::cli" "$@"
@@ -2823,4 +2921,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%529 "$@";
+main@bashbox%27155 "$@";
