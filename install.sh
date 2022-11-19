@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%18208 () 
+main@bashbox%21649 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%18208 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%18208';
+    ___MAIN_FUNCNAME='main@bashbox%21649';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2181,6 +2181,10 @@ CMDC
                                         { 
                                             exit 0
                                         };
+                                    else
+                                        { 
+                                            bash -lic "$stdin"
+                                        };
                                     fi
                                 };
                             fi
@@ -2191,7 +2195,7 @@ CMDC
                             IFS= read -t0.01 -u0 -r -d '' stdin || :;
                             if test -n "$stdin"; then
                                 { 
-                                    cmd="$(get::task_cmd)";
+                                    cmd="$(get::task_cmd "$stdin")";
                                     exec bash -lic "$cmd"
                                 };
                             fi
@@ -2948,4 +2952,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%18208 "$@";
+main@bashbox%21649 "$@";

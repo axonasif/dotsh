@@ -104,6 +104,8 @@ function config::tmux::hijack_gitpod_task_terminals {
 						# Terminate gitpod created task terminals so that we can take over,
 						# previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
 						exit 0;
+					} else {
+						bash -lic "$stdin";
 					} fi
 				} fi
 
@@ -113,7 +115,7 @@ function config::tmux::hijack_gitpod_task_terminals {
 				IFS= read -t0.01 -u0 -r -d '' stdin || :;
 
 				if test -n "$stdin"; then {
-					cmd="$(get::task_cmd)";
+					cmd="$(get::task_cmd "$stdin")";
 					exec bash -lic "$cmd";
 				} fi
 
