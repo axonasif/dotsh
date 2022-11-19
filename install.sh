@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%31342 () 
+main@bashbox%4005 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%31342 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%31342';
+    ___MAIN_FUNCNAME='main@bashbox%4005';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2128,6 +2128,7 @@ CMDC
                 };
             fi;
             CLOSE=true await::create_shim "${tmux_exec_path:-}";
+            set -x;
             ( if is::gitpod; then
                 { 
                     await::until_true command::exists yq;
@@ -2815,4 +2816,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%31342 "$@";
+main@bashbox%4005 "$@";

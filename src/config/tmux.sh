@@ -190,6 +190,7 @@ function config::tmux() {
 		} fi
 
 		CLOSE=true await::create_shim "${tmux_exec_path:-}";
+		set -x
 	
 		(
 			if is::gitpod; then {
