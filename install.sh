@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%14767 () 
+main@bashbox%2346 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%14767 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%14767';
+    ___MAIN_FUNCNAME='main@bashbox%2346';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -2800,8 +2800,8 @@ EOF
             OPT_NAME='DOTFILES_TMUX' OPT_DEFAULT_VALUE="true" QUESTION="Do you want the Tmux integration?" create_prompt true false;
             OPT_NAME='DOTFILES_TMUX_VSCODE' OPT_DEFAULT_VALUE="true" QUESTION="Should VSCode also use Tmux integration?" create_prompt true false;
             OPT_NAME='DOTFILES_SPAWN_SSH_PROTO' OPT_DEFAULT_VALUE="true" QUESTION="Do you want auto ssh:// launch for quick SSHing via your terminal emulator?" create_prompt true false;
-            OPT_NAME='DOTFILES_NO_VSCODE' OPT_DEFAULT_VALUE="false" QUESTION="Do you want to automatically kill VSCode process to only use SSH? (i.e. less CPU/RAM consumption)" create_prompt true false;
-            OPT_NAME='DOTFILES_EDITOR' OPT_DEFAULT_VALUE="neovim" QUESTION="Which is your preferred CLI EDITOR?" create_prompt emacs helix neovim;
+            OPT_NAME='DOTFILES_NO_VSCODE' OPT_DEFAULT_VALUE="false" QUESTION="Do you want to automatically kill VSCode process to only use SSH?" create_prompt true false;
+            OPT_NAME='DOTFILES_EDITOR' OPT_DEFAULT_VALUE="neovim" QUESTION="Which CLI EDITOR do you use?" create_prompt emacs helix neovim;
             if is::gitpod && ! test -e "$HOME/.dotfiles/src/variables.sh"; then
                 { 
                     read -n 1 -r -p "$(echo -e ">> Do you want to fork this repo and setup it for Gitpod? [Y/n]")";
@@ -3014,4 +3014,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%14767 "$@";
+main@bashbox%2346 "$@";

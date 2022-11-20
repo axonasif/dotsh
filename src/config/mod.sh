@@ -156,12 +156,12 @@ function config::cli() {
 
     OPT_NAME='DOTFILES_NO_VSCODE' \
     OPT_DEFAULT_VALUE="false" \
-    QUESTION="Do you want to automatically kill VSCode process to only use SSH? (i.e. less CPU/RAM consumption)" \
+    QUESTION="Do you want to automatically kill VSCode process to only use SSH?" \
       create_prompt true false;
 
     OPT_NAME='DOTFILES_EDITOR' \
     OPT_DEFAULT_VALUE="neovim" \
-    QUESTION="Which is your preferred CLI EDITOR?" \
+    QUESTION="Which CLI EDITOR do you use?" \
       create_prompt emacs helix neovim;
 
     if is::gitpod && ! test -e "$HOME/.dotfiles/src/variables.sh"; then {
