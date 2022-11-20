@@ -186,6 +186,7 @@ declare -r gitpod_scm_cli="$(
 # Dotfiles specific
 #declare -r dotfiles_sh_home="$HOME/.dotfiles-sh";
 declare -r dotfiles_sh_repos_dir="$___self_DIR/repos";
+declare dotfiles_notmux_sig='# DOTFILES_TMUX_NO_TAKEOVER';
 
 # Rclone specific
 declare -r rclone_mount_dir="$HOME/cloudsync";
