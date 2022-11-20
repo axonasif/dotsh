@@ -235,7 +235,7 @@ livetest() (
 					"Press 'ctrl+c' to exit the log-pager" \
 					"You can click between tabs/windows in the bottom" >> "$logfile";
 				if test "${DOTFILES_STRESS_TEST:-}" == true; then {
-					tmux select-window -t :1;
+					# tmux select-window -t :1;
 					sleep 2;
 					tmux detach-client;
 				} fi

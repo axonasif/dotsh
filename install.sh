@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%17183 () 
+main@bashbox%11858 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%17183 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%17183';
+    ___MAIN_FUNCNAME='main@bashbox%11858';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -251,7 +251,6 @@ main@bashbox%17183 ()
                 printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile";
                 if test "${DOTFILES_STRESS_TEST:-}" == true; then
                     { 
-                        tmux select-window -t :1;
                         sleep 2;
                         tmux detach-client
                     };
@@ -1359,17 +1358,44 @@ EOF
     };
     function await::create_shim () 
     { 
-        declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call);
-        declare +x CLOSE KEEP DIRECT_CMD;
+        declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call MONITOR_PROCESS_ID);
+        declare +x CLOSE KEEP DIRECT_CMD MONITOR_SHIM;
         export SHIM_MIRROR;
         declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
         declare TARGER_SHIM_HEADER_SIGNATURE="# TARGET_REDIRECT_SHIM";
+        declare target="$1";
+        declare target_name="${target##*/}";
+        function wildpath () 
+        { 
+            declare +x STRICT;
+            local path=($1);
+            if test -n "${path:-}"; then
+                { 
+                    printf '%s\n' "$path"
+                };
+            else
+                if test ! -v STRICT; then
+                    { 
+                        printf '%s\n' "$1"
+                    };
+                else
+                    { 
+                        return 1
+                    };
+                fi;
+            fi
+        };
         function is::custom_shim () 
         { 
             test -v SHIM_MIRROR
         };
         function revert_shim () 
         { 
+            if test -n "${MONITOR_PROCESS_ID:-}"; then
+                { 
+                    kill -9 "${MONITOR_PROCESS_ID}" || true
+                };
+            fi;
             try_sudo touch "$shim_tombstone" || true;
             if ! is::custom_shim; then
                 { 
@@ -1408,6 +1434,12 @@ EOF
                             { 
                                 try_sudo ln -sf "$shim_source" "$target"
                             };
+                        else
+                            if test -e "$SHIM_MIRROR"; then
+                                { 
+                                    try_sudo ln -sf "$SHIM_MIRROR" "$target"
+                                };
+                            fi;
                         fi;
                     fi
                 };
@@ -1437,8 +1469,6 @@ EOF
         };
         function set_shim_variables () 
         { 
-            target="$1";
-            target_name="${target##*/}";
             if ! is::custom_shim; then
                 { 
                     shim_dir="${target%/*}/.ashim";
@@ -1452,14 +1482,31 @@ EOF
             fi;
             shim_tombstone="${shim_source}.tombstone"
         };
-        set_shim_variables "$1";
+        set_shim_variables;
+        if [[ "$SHIM_MIRROR" =~ \* ]]; then
+            { 
+                SHIM_MIRROR="$(wildpath "${shim_dir%/*}")/${SHIM_MIRROR##*/}";
+                set_shim_variables
+            };
+        fi;
         if test -v CLOSE; then
             { 
+                if [[ "$SHIM_MIRROR" =~ \* ]]; then
+                    { 
+                        until sm="$(STRICT=0 wildpath "${shim_dir%/*}")"; do
+                            { 
+                                sleep 0.5
+                            };
+                        done;
+                        SHIM_MIRROR="$sm/${SHIM_MIRROR##*/}";
+                        set_shim_variables
+                    };
+                fi;
                 revert_shim;
                 return
             };
         fi;
-        if test -v KEEP && test ! -v KEEP_internal_call; then
+        if test -v KEEP; then
             { 
                 export SHIM_SOURCE="$shim_source";
                 export KEEP_internal_call=true
@@ -1485,7 +1532,7 @@ EOF
                         try_sudo mv "$target" "$shim_source"
                     };
                 else
-                    if test -e "${SHIM_MIRROR:-}" && is::custom_shim; then
+                    if is::custom_shim && test -e "${SHIM_MIRROR:-}"; then
                         { 
                             try_sudo mkdir -p "$shim_dir";
                             await::until_true test -x "$SHIM_MIRROR";
@@ -1564,22 +1611,17 @@ EOF
                     };
                 done
             };
-            for var in target SHIM_MIRROR;
-            do
+            if [[ "$SHIM_MIRROR" =~ \* ]]; then
                 { 
-                    if [[ "${!var:-}" =~ \* ]]; then
+                    until sm="$(STRICT=0 wildpath "$SHIM_MIRROR")"; do
                         { 
-                            until wildpath=(${!var}) && test -e "${wildpath:-}"; do
-                                { 
-                                    sleep 0.5
-                                };
-                            done;
-                            set_shim_variables "${wildpath[0]}";
-                            unset wildpath
+                            sleep 0.5
                         };
-                    fi
+                    done;
+                    SHIM_MIRROR="$sm";
+                    set_shim_variables
                 };
-            done;
+            fi;
             if test -v AWAIT_SHIM_PRINT_INDICATOR; then
                 { 
                     printf 'info[shim]: Loading %s\n' "$target"
@@ -1625,20 +1667,49 @@ EOF
                 { 
                     if test "${KEEP_internal_call:-}" == true; then
                         { 
-                            if test ! -e "$shim_tombstone" && test ! -e "$shim_source"; then
+                            function place_shim () 
+                            { 
+                                try_sudo mkdir -p "${shim_dir}";
+                                if ! is::custom_shim; then
+                                    { 
+                                        try_sudo mv "$target" "$shim_source";
+                                        try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target'
+                                    };
+                                else
+                                    { 
+                                        await::until_true test -x "$SHIM_MIRROR";
+                                        try_sudo mv "${SHIM_MIRROR}" "$shim_source"
+                                    };
+                                fi
+                            };
+                            if test ! -e "$shim_tombstone" && test ! -e "$shim_source" && test ! -v AWAIT_SHIM_MONITOR_PROCESS; then
                                 { 
-                                    try_sudo mkdir -p "${shim_dir}";
-                                    if ! is::custom_shim; then
+                                    place_shim
+                                };
+                            fi;
+                            if test -v AWAIT_SHIM_MONITOR_PROCESS; then
+                                { 
+                                    if is::custom_shim; then
                                         { 
-                                            try_sudo mv "$target" "$shim_source";
-                                            try_sudo env self="$(NO_PRINT=true create_self)" target="$target" sh -c 'printf "%s\n" "$self" > "$target" && chmod +x $target'
+                                            : "$SHIM_MIRROR"
                                         };
                                     else
                                         { 
-                                            await::until_true test -x "$SHIM_MIRROR";
-                                            try_sudo mv "${SHIM_MIRROR}" "$shim_source"
+                                            : "$target"
                                         };
-                                    fi
+                                    fi;
+                                    monfile="$_";
+                                    await::for_file_existence "$shim_source";
+                                    while true; do
+                                        { 
+                                            if test -e "$monfile"; then
+                                                { 
+                                                    place_shim
+                                                };
+                                            fi;
+                                            sleep 0.2
+                                        };
+                                    done
                                 };
                             fi;
                             if test -e "$shim_source"; then
@@ -1670,13 +1741,18 @@ EOF
                     printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone"
                 };
             fi;
-            printf '%s\n' "$(declare -f 			await::while_true 			await::until_true 			await::for_file_existence 			sleep 			is::custom_shim 			try_sudo 			create_self 			set_shim_variables 			async_wrapper
+            printf '%s\n' "$(declare -f 			await::while_true 			await::until_true 			await::for_file_existence 			sleep 			is::custom_shim 			try_sudo 			create_self 			set_shim_variables 			wildpath 			async_wrapper
 		)";
             printf '%s\n' 'async_wrapper "$@"; }'
         } > "$target";
         ( source "$target";
         create_self "$target" );
-        chmod +x "$target"
+        chmod +x "$target";
+        if test -v MONITOR_SHIM; then
+            { 
+                AWAIT_SHIM_MONITOR_PROCESS=true "$target" > /tmp/log 2>&1 & disown && MONITOR_PROCESS_ID=$!
+            };
+        fi
     };
     function await::create_shim_nix_common_wrapper () 
     { 
@@ -2429,13 +2505,11 @@ EOF
     };
     function config::shell::fish () 
     { 
-        await::create_shim_nix_common_wrapper "fish";
+        KEEP=true MONITOR_SHIM=true SHIM_MIRROR="/nix/store/*-fish-*/bin/fish" await::create_shim "/usr/bin/fish";
         log::info "Installing fisher and some plugins for fish-shell";
         mkdir -p "$fish_confd_dir";
-        { 
-            fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}"
-        } > /dev/null 2>&1;
-        CLOSE=true await::create_shim "$exec_path"
+        fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}" > /dev/null 2>&1;
+        CLOSE=true await::create_shim "/usr/bin/fish"
     };
     function config::shell::fish::append_hist_from_gitpod_tasks () 
     { 
@@ -2963,4 +3037,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%17183 "$@";
+main@bashbox%11858 "$@";

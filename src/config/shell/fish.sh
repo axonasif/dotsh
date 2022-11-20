@@ -1,20 +1,15 @@
 function config::shell::fish() {
 
     # Lock binary
-    await::create_shim_nix_common_wrapper "fish";
+    KEEP=true MONITOR_SHIM=true SHIM_MIRROR="/nix/store/*-fish-*/bin/fish" await::create_shim "/usr/bin/fish";
 
     # Install fisher plugin manager
     log::info "Installing fisher and some plugins for fish-shell";
 
     mkdir -p "$fish_confd_dir";
-    {
-        fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}";
+    fish -c "curl -sL https://git.io/fisher | source && fisher install ${fish_plugins[*]}" >/dev/null 2>&1;
 
-        # Fisher plugins
-        # fish -c 'fisher install lilyball/nix-env.fish'; # Might not be necessary because of my own .config/fish/conf.d/bash_env.fish
-    } >/dev/null 2>&1
-
-    CLOSE=true await::create_shim "$exec_path";
+    CLOSE=true await::create_shim "/usr/bin/fish";
 }
 
 function config::shell::fish::append_hist_from_gitpod_tasks() {
