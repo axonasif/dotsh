@@ -272,7 +272,7 @@ livetest() (
 		if [[ "$confirmed_times" -lt 2 ]]; then {
 			printf '\n';
 			printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" \
-								"To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
+								"To detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
 			printf '\n';
 			read -r -p ">>> Press Enter/return to continue execution";
 			printf '%s\n' "$confirmed_times" > "$confirmed_statfile";

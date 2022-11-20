@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%3638 () 
+main@bashbox%17183 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%3638 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%3638';
+    ___MAIN_FUNCNAME='main@bashbox%17183';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -280,7 +280,7 @@ main@bashbox%3638 ()
             if [[ "$confirmed_times" -lt 2 ]]; then
                 { 
                     printf '\n';
-                    printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" "To exit detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}";
+                    printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" "To detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}";
                     printf '\n';
                     read -r -p ">>> Press Enter/return to continue execution";
                     printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
@@ -1435,20 +1435,24 @@ EOF
                 };
             fi
         };
-        declare shim_dir shim_source shim_tombstone target="$1";
-        declare target_name="${target##*/}";
-        if ! is::custom_shim; then
-            { 
-                shim_dir="${target%/*}/.ashim";
-                shim_source="${shim_dir}/${target##*/}"
-            };
-        else
-            { 
-                shim_dir="${SHIM_MIRROR%/*}/.cshim";
-                shim_source="$shim_dir/${SHIM_MIRROR##*/}"
-            };
-        fi;
-        shim_tombstone="${shim_source}.tombstone";
+        function set_shim_variables () 
+        { 
+            target="$1";
+            target_name="${target##*/}";
+            if ! is::custom_shim; then
+                { 
+                    shim_dir="${target%/*}/.ashim";
+                    shim_source="${shim_dir}/${target##*/}"
+                };
+            else
+                { 
+                    shim_dir="${SHIM_MIRROR%/*}/.cshim";
+                    shim_source="$shim_dir/${SHIM_MIRROR##*/}"
+                };
+            fi;
+            shim_tombstone="${shim_source}.tombstone"
+        };
+        set_shim_variables "$1";
         if test -v CLOSE; then
             { 
                 revert_shim;
@@ -1505,6 +1509,7 @@ EOF
         function async_wrapper () 
         { 
             set -eu;
+            shopt -s nullglob;
             function await_nowrite_executable () 
             { 
                 declare input="$1";
@@ -1559,6 +1564,22 @@ EOF
                     };
                 done
             };
+            for var in target SHIM_MIRROR;
+            do
+                { 
+                    if [[ "${!var:-}" =~ \* ]]; then
+                        { 
+                            until wildpath=(${!var}) && test -e "${wildpath:-}"; do
+                                { 
+                                    sleep 0.5
+                                };
+                            done;
+                            set_shim_variables "${wildpath[0]}";
+                            unset wildpath
+                        };
+                    fi
+                };
+            done;
             if test -v AWAIT_SHIM_PRINT_INDICATOR; then
                 { 
                     printf 'info[shim]: Loading %s\n' "$target"
@@ -1649,7 +1670,8 @@ EOF
                     printf '%s="%s"\n' "KEEP_internal_call" '${KEEP_internal_call:-false}' shim_tombstone "$shim_tombstone"
                 };
             fi;
-            printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
+            printf '%s\n' "$(declare -f 			await::while_true 			await::until_true 			await::for_file_existence 			sleep 			is::custom_shim 			try_sudo 			create_self 			set_shim_variables 			async_wrapper
+		)";
             printf '%s\n' 'async_wrapper "$@"; }'
         } > "$target";
         ( source "$target";
@@ -1897,17 +1919,8 @@ EOF
                 log::info "Performing cloud filesync, scoped globally";
                 mkdir -p "${rclone_mount_dir}";
                 sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
-                declare times=0;
-                until test -e "$rclone_dotfiles_sh_dir"; do
-                    { 
-                        sleep 1;
-                        if test $times -gt 10; then
-                            { 
-                                break
-                            };
-                        fi;
-                        ((times=times+1))
-                    };
+                until mountpoint -q "$rclone_mount_dir"; do
+                    sleep 1;
                 done;
                 if test -e "$rclone_dotfiles_sh_sync_relative_home_dir"; then
                     { 
@@ -2950,4 +2963,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%3638 "$@";
+main@bashbox%17183 "$@";

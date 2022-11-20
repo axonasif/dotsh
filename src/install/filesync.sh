@@ -26,14 +26,15 @@ function install::filesync() {
         mkdir -p "${rclone_mount_dir}";
         sudo "$(command -v rclone)" "${rclone_cmd_args[@]}" & disown;
 
-        declare times=0;
-        until test -e "$rclone_dotfiles_sh_dir"; do {
-            sleep 1;
-            if test $times -gt 10; then {
-                break;
-            } fi
-            ((times=times+1));
-        } done
+        # declare times=0;
+        # until test -e "$rclone_dotfiles_sh_dir"; do {
+        #     sleep 1;
+        #     if test $times -gt 10; then {
+        #         break;
+        #     } fi
+        #     ((times=times+1));
+        # } done
+        until mountpoint -q "$rclone_mount_dir"; do sleep 1; done;
 
         # Relative home dotfiles
         if test -e "$rclone_dotfiles_sh_sync_relative_home_dir"; then {

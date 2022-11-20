@@ -81,22 +81,27 @@ function await::create_shim() {
 		} fi
 	}
 
-	declare shim_dir shim_source shim_tombstone target="$1";
-	declare target_name="${target##*/}";
-	if ! is::custom_shim; then {
-		shim_dir="${target%/*}/.ashim";
-		shim_source="${shim_dir}/${target##*/}";
-	} else {
-		shim_dir="${SHIM_MIRROR%/*}/.cshim";
-		shim_source="$shim_dir/${SHIM_MIRROR##*/}";
-	} fi
-	shim_tombstone="${shim_source}.tombstone";
+	function set_shim_variables() {
+		# declare -g shim_dir shim_source shim_tombstone
+		target="$1";
+		target_name="${target##*/}";
+		if ! is::custom_shim; then {
+			shim_dir="${target%/*}/.ashim";
+			shim_source="${shim_dir}/${target##*/}";
+		} else {
+			shim_dir="${SHIM_MIRROR%/*}/.cshim";
+			shim_source="$shim_dir/${SHIM_MIRROR##*/}";
+		} fi
+		shim_tombstone="${shim_source}.tombstone";
+	}
+
+	set_shim_variables "$1";
 
 	if test -v CLOSE; then {
 		revert_shim;
 		return;
 	} fi
-	
+
 	if test -v KEEP && test ! -v KEEP_internal_call; then {
 		export SHIM_SOURCE="$shim_source"; # for internal use
 		export KEEP_internal_call=true;
@@ -155,6 +160,7 @@ function await::create_shim() {
 		# 	set -x;
 		# fi
 		set -eu;
+		shopt -s nullglob;
 
 		# DEBUG
 		# if test "${KEEP_internal_call:-}" == false; then {
@@ -223,6 +229,19 @@ function await::create_shim() {
 				
 			} done
 		}
+
+		# Process wildcard
+		for var in target SHIM_MIRROR; do {
+			if [[ "${!var:-}" =~ \* ]]; then {
+				until wildpath=(${!var}) && test -e "${wildpath:-}"; do {
+					sleep 0.5;
+				} done
+
+				# Reset the variables to it's absolute PATH
+				set_shim_variables "${wildpath[0]}";
+				unset wildpath;
+			} fi
+		} done
 
 		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
 			printf 'info[shim]: Loading %s\n' "$target";
@@ -324,7 +343,17 @@ function await::create_shim() {
 								shim_tombstone "$shim_tombstone";
 		} fi
 
-		printf '%s\n' "$(declare -f await::while_true await::until_true await::for_file_existence sleep is::custom_shim try_sudo create_self async_wrapper)";
+		printf '%s\n' "$(declare -f \
+			await::while_true \
+			await::until_true \
+			await::for_file_existence \
+			sleep \
+			is::custom_shim \
+			try_sudo \
+			create_self \
+			set_shim_variables \
+			async_wrapper
+		)";
 		printf '%s\n' 'async_wrapper "$@"; }';
 	} > "$target";
 
