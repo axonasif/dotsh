@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%dotfiles-sh () 
+main@bashbox%16952 () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%dotfiles-sh ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%dotfiles-sh';
+    ___MAIN_FUNCNAME='main@bashbox%16952';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -945,14 +945,6 @@ main@bashbox%dotfiles-sh ()
     function distro::is_ubuntu () 
     { 
         std::sys::info::distro::is_ubuntu "$@"
-    };
-    function log::info () 
-    { 
-        echo -e "[%%%] \033[1;37minfo\033[0m: $@"
-    };
-    function log::warn () 
-    { 
-        echo -e "[***] \033[1;37mwarn\033[0m: $@"
     };
     function process::preserve_sudo () 
     { 
@@ -2331,59 +2323,12 @@ EOF
             await::signal send config_tmux_session;
             if is::gitpod; then
                 { 
-                    local spinner="/usr/bin/tmux-dotfiles-spinner.sh";
-                    local spinner_data="$(
-				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
-
-				cat <<'EOF'
-set -eu;
-while pgrep -f "$HOME/.dotfiles/install.sh" 1>/dev/null; do
-	for s in / - \\ \|; do
-		sleep 0.1;
-		printf '%s \n' "#[bg=#ff5555,fg=#282a36,bold] $s Dotfiles";
-	done
-done
-
-current_status="$(tmux display -p '#{status-right}')";
-tmux set -g status-right "$(printf '%s\n' "$current_status" | sed "s|#(exec $0)||g")"
+                    declare plugin_path="/etc/.tmux-gitpod";
+                    dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/tmux-gitpod/main/tmux-gitpod";
+                    cat <<EOF |
+run-shell -bC 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
 EOF
-		)";
-                    local resources_indicator="/usr/bin/tmux-resources-indicator.sh";
-                    local resources_indicator_data="$(
-				printf '%s\n' '#!/bin/bash' "$(declare -f sleep)";
-
-				cat <<'EOF'
-printf '\n'; # init quick draw
-
-i=1 && while true; do {
-	# Read all properties
-	IFS=$'\n' read -d '' -r mem_used mem_max cpu_used cpu_max \
-		< <(gp top -j | yq -I0 -rM ".resources | [.memory.used, .memory.limit, .cpu.used, .cpu.limit] | .[]")
-
-	# Human friendly memory numbers
-	read -r hmem_used hmem_max < <(numfmt -z --to=iec --format="%8.2f" $mem_used $mem_max);
-
-	# CPU percentage
-	cpu_perc="$(( (cpu_used * 100) / cpu_max ))";
-
-  # Disk usage
-  if test "${i:0-1}" == 1; then
-    read -r dsize dused < <(df -h --output=size,used /workspace | tail -n1)
-  fi
-
-	# Print to tmux
-	printf '%s\n' " #[bg=#ffb86c,fg=#282a36,bold] CPU: ${cpu_perc}% #[bg=#8be9fd,fg=#282a36,bold] MEM: ${hmem_used%?}/${hmem_max} #[bg=green,fg=#282a36,bold] DISK: ${dused}/${dsize} ";
-	sleep 3;
-  ((i=i+1));
-} done
-EOF
-		)";
-                    { 
-                        printf '%s\n' "$spinner_data" | sudo tee "$spinner";
-                        printf '%s\n' "$resources_indicator_data" | sudo tee "$resources_indicator"
-                    } > /dev/null;
-                    sudo chmod +x "$spinner" "$resources_indicator";
-                    tmux set-option -g status-left-length 100\; set-option -g status-right-length 100\; set-option -ga status-right "#(exec $resources_indicator)#(exec $spinner)"
+  sudo tee /etc/tmux.conf > /dev/null
                 };
             fi
         } & disown
@@ -3022,4 +2967,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-"main@bashbox%dotfiles-sh" "$@";
+main@bashbox%16952 "$@";
