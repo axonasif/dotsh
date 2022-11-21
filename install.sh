@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-main@bashbox%2346 () 
+main@bashbox%dotfiles-sh () 
 { 
     if test "${BASH_VERSINFO[0]}${BASH_VERSINFO[1]}" -lt 43; then
         { 
@@ -55,7 +55,7 @@ main@bashbox%2346 ()
     ___self="$0";
     ___self_PID="$$";
     ___self_DIR="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)";
-    ___MAIN_FUNCNAME='main@bashbox%2346';
+    ___MAIN_FUNCNAME='main@bashbox%dotfiles-sh';
     ___self_NAME="dotfiles-sh";
     ___self_CODENAME="dotfiles-sh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
@@ -945,6 +945,14 @@ main@bashbox%2346 ()
     function distro::is_ubuntu () 
     { 
         std::sys::info::distro::is_ubuntu "$@"
+    };
+    function log::info () 
+    { 
+        echo -e "[%%%] \033[1;37minfo\033[0m: $@"
+    };
+    function log::warn () 
+    { 
+        echo -e "[***] \033[1;37mwarn\033[0m: $@"
     };
     function process::preserve_sudo () 
     { 
@@ -3014,4 +3022,4 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
     wait;
     exit
 }
-main@bashbox%2346 "$@";
+"main@bashbox%dotfiles-sh" "$@";

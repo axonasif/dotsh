@@ -1,4 +1,4 @@
-ue std::print::log;
+use std::print::log;
 use std::native::sleep;
 use std::async::lockfile;
 use std::sys::info::os;
