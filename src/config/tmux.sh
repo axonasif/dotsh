@@ -150,13 +150,14 @@ function config::tmux() {
 		await::signal send config_tmux_session;
 
 		if is::gitpod; then {
-      declare plugin_path="/etc/.tmux-gitpod";
-      dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/tmux-gitpod/main/tmux-gitpod";
+      declare plugin_path="/etc/gitpod.tmux";
+      dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/gitpod.tmux/main/gitpod.tmux";
       cat <<EOF | sudo tee -a /etc/tmux.conf 1>/dev/null
 run-shell -b 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
 EOF
 		} fi
 
+	until tmux list-clients 2>/dev/null; do sleep 1; done
     "$plugin_path";
 		
 	 } & disown;
