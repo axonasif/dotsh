@@ -1411,7 +1411,7 @@ EOF
         declare +x CLOSE KEEP DIRECT_CMD MONITOR_SHIM;
         export SHIM_MIRROR;
         declare SHIM_HEADER_SIGNATURE="# AWAIT_CREATE_SHIM";
-        declare TARGER_SHIM_HEADER_SIGNATURE="# TARGET_REDIRECT_SHIM";
+        declare TARGET_SHIM_HEADER_SIGNATURE="# TARGET_REDIRECT_SHIM";
         declare target="$1";
         declare target_name="${target##*/}";
         function wildpath () 
@@ -1472,7 +1472,7 @@ EOF
                                 exec "$_" "$@"
                             };
                             body="$(
-						printf '%s\n' '#!/usr/bin/env bash' "$TARGER_SHIM_HEADER_SIGNATURE" "$(declare -f main)";
+						printf '%s\n' '#!/usr/bin/env bash' "$TARGET_SHIM_HEADER_SIGNATURE" "$(declare -f main)";
 						printf '%s="%s"\n' 										"shim_source" "$shim_source" 										SHIM_MIRROR "$SHIM_MIRROR";
 						printf '%s "$@";\n' main;
 					)";
@@ -1481,7 +1481,8 @@ EOF
                     else
                         if test -e "$shim_source"; then
                             { 
-                                try_sudo ln -sf "$shim_source" "$target"
+                                try_sudo ln -sf "$shim_source" "$SHIM_MIRROR";
+                                try_sudo ln -sf "$SHIM_MIRROR" "$target"
                             };
                         else
                             if test -e "$SHIM_MIRROR"; then
@@ -1622,7 +1623,7 @@ EOF
                 declare input="$1";
                 await_nowrite_executable "$input";
                 until test -L "$input" || { 
-                    test "$(sed -n '2p;3q' "$input" 2>/dev/null)" == "$TARGER_SHIM_HEADER_SIGNATURE" && NO_AWAIT_SHIM=true
+                    test "$(sed -n '2p;3q' "$input" 2>/dev/null)" == "$TARGET_SHIM_HEADER_SIGNATURE" && NO_AWAIT_SHIM=true
                 }; do
                     { 
                         sleep 0.5
@@ -1665,12 +1666,12 @@ EOF
             };
             if [[ "$SHIM_MIRROR" =~ \* ]]; then
                 { 
-                    until sm="$(STRICT=0 wildpath "$SHIM_MIRROR")"; do
+                    until sm="$(STRICT=0 wildpath "${shim_dir%/*}")"; do
                         { 
                             sleep 0.5
                         };
                     done;
-                    SHIM_MIRROR="$sm";
+                    SHIM_MIRROR="$sm/${SHIM_MIRROR##*/}";
                     set_shim_variables
                 };
             fi;
@@ -1781,7 +1782,7 @@ EOF
         };
         { 
             printf 'function main() {\n';
-            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir" SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE" TARGER_SHIM_HEADER_SIGNATURE "$TARGER_SHIM_HEADER_SIGNATURE";
+            printf '%s="%s"\n' target "$target" shim_source "$shim_source" shim_dir "$shim_dir" SHIM_HEADER_SIGNATURE "$SHIM_HEADER_SIGNATURE" TARGET_SHIM_HEADER_SIGNATURE "$TARGET_SHIM_HEADER_SIGNATURE";
             printf '%s=(%s)\n' vars_to_unset "${vars_to_unset[*]}";
             if test -v SHIM_MIRROR; then
                 { 
