@@ -3,7 +3,7 @@ use libtmux::session;
 use libtmux::window;
 
 function tmux_create_session() {
-	SESSION_NAME="$tmux_first_session_name" \
+  SESSION_NAME="$tmux_first_session_name" \
   WINDOW_NAME="editor" \
   DEBUG_SHIM="true" tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" \
       -- "$(get::default_shell)" -li 2>/dev/null || :;

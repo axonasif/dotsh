@@ -1305,9 +1305,17 @@ EOF
                                 }; then
                                     { 
                                         case "$file_name" in 
-                                            ".bashrc" | ".zshrc" | ".kshrc" | ".profile")
+                                            ".bashrc" | ".bash_profile" | ".zshrc" | ".zprofile" | ".kshrc" | ".profile" | "config.fish")
                                                 log::info "Your $file_name is being injected into the existing host $target_file";
-                                                local check_str="if test -e '$_file'; then source '$_file'; fi";
+                                                if test "$file_name" != "config.fish"; then
+                                                    { 
+                                                        local check_str="if test -e '$_file'; then source '$_file'; fi"
+                                                    };
+                                                else
+                                                    { 
+                                                        local check_str="if test -e '$_file'; source '$_file'; end"
+                                                    };
+                                                fi;
                                                 if ! grep -q "$check_str" "$target_file"; then
                                                     { 
                                                         printf '%s\n' "$check_str" >> "$target_file"
@@ -2844,7 +2852,12 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
         exit
     };
     export PATH="$PATH:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
-    declare dotfiles_repos=(https://github.com/axonasif/dotfiles.public);
+    declare dotfiles_repos=(https://github.com/axonasif/dotfiles.template);
+    if test -n "${DOTFILES_REPOS:-}"; then
+        { 
+            dotfiles_repos=(${DOTFILES_REPOS})
+        };
+    fi;
     : "${DOTFILES_SHELL:=fish}";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
     declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";

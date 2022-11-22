@@ -1,6 +1,7 @@
 # shellcheck disable=SC2034
 
 # UPPERCASE variables may be supplied as environment variables instead.
+# That means you can define them at https://gitpod.io/variables with */* scope.
 
 # Add nix, .local and ide bindir to PATH in advance
 export PATH="$PATH:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
@@ -11,9 +12,14 @@ export PATH="$PATH:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
 # =================================================
 # As many dotfiles repo you want to install together.
 declare dotfiles_repos=(
-    # Defaults to axonasif's repo, you may remove below line and put your own
-    https://github.com/axonasif/dotfiles.public
+    # Defaults to an example template repo, you may remove below line and put your own or not use any at all!
+    # If you do not have your own repo yet, you can fork this one as the starting point ;)
+    https://github.com/axonasif/dotfiles.template
 )
+# Overwrite if the DOTFILES_REPOS environment variable is set
+if test -n "${DOTFILES_REPOS:-}"; then {
+    dotfiles_repos=(${DOTFILES_REPOS});
+} fi
 
 
 # =================================================

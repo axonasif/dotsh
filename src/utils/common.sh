@@ -270,9 +270,13 @@ function dotfiles::initialize() {
 				}; then {
 					# Preserving host config strategy
 					case "$file_name" in
-						".bashrc"|".zshrc"|".kshrc"|".profile")
+						".bashrc"|".bash_profile"|".zshrc"|".zprofile"|".kshrc"|".profile"|"config.fish")
 							log::info "Your $file_name is being injected into the existing host $target_file";
-							local check_str="if test -e '$_file'; then source '$_file'; fi";
+							if test "$file_name" != "config.fish"; then {
+								local check_str="if test -e '$_file'; then source '$_file'; fi";
+							} else {
+								local check_str="if test -e '$_file'; source '$_file'; end";
+							} fi
 							if ! grep -q "$check_str" "$target_file"; then {
 								printf '%s\n' "$check_str" >> "$target_file";
 							} fi
