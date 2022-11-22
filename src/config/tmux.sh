@@ -50,7 +50,7 @@ function config::tmux() {
 		if test ! -e "$target"; then {
 			git clone --filter=tree:0 https://github.com/tmux-plugins/tpm "$target" >/dev/null 2>&1;
 		} fi
-		"$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh";
+		"$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh" || true;
 	
 		await::signal send config_tmux;
 
