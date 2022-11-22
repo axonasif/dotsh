@@ -186,9 +186,9 @@ function await::create_shim() {
 	# Embedded script
 	function async_wrapper() {
 		# DEBUG
-		# if test -v DEBUG_TUX; then
-		# 	set -x;
-		# fi
+		if test -v DEBUG_SHIM; then
+			set -x && exec 2>>/tmp/.await_shim;
+		fi
 		set -eu;
 		shopt -s nullglob;
 

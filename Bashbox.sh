@@ -1,19 +1,18 @@
 # shellcheck disable=SC2034
 
-NAME="dotfiles-sh"
-CODENAME="dotfiles-sh"
+NAME="dotsh"
+CODENAME="dotsh"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
 	std::23ec8e3
   https://github.com/bashbox/libtmux::fa10570
 )
-REPOSITORY="https://github.com/axonasif/dotfiles-sh.git"
+REPOSITORY="https://github.com/axonasif/dotsh.git"
 BASHBOX_COMPAT="0.3.9~"
 
 bashbox::build::after() {
-	local _script_name='install.sh';
-	local root_script="$_arg_path/$_script_name";
+	local root_script="$_arg_path/$CODENAME";
 	cp "$_target_workfile" "$root_script";
 	chmod +x "$root_script";
 }

@@ -5,7 +5,7 @@ use libtmux::window;
 function tmux_create_session() {
 	SESSION_NAME="$tmux_first_session_name" \
   WINDOW_NAME="editor" \
-    tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" \
+  DEBUG_SHIM="true" tmux::new-session -c "${GITPOD_REPO_ROOT:-$HOME}" \
       -- "$(get::default_shell)" -li 2>/dev/null || :;
 }
 
@@ -55,6 +55,7 @@ function config::tmux() {
 		await::signal send config_tmux;
 
 		if is::cde; then {
+      sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
 			tmux_create_session;
 		} fi
 
@@ -146,15 +147,17 @@ function config::tmux() {
 		# 	sleep 1;
 		# } fi 
 
-		
 		await::signal send config_tmux_session;
 
 		if is::gitpod; then {
       declare plugin_path="/etc/.tmux-gitpod";
       dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/tmux-gitpod/main/tmux-gitpod";
-      cat <<EOF | sudo tee /etc/tmux.conf 1>/dev/null
-run-shell -bC 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
+      cat <<EOF | sudo tee -a /etc/tmux.conf 1>/dev/null
+run-shell -b 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
 EOF
 		} fi
+
+    "$plugin_path";
+		
 	 } & disown;
 }
