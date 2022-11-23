@@ -37,6 +37,7 @@ function config::tmux() {
 		# 	KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
 		# 		await::create_shim "$tmux_exec_path";
 		# } fi
+    sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
 		declare tmux_exec_path=/usr/bin/tmux;
 		# await::until_true command::exists "$tmux_exec_path";
 		KEEP=true SHIM_MIRROR="/usr/bin/.dw/tmux" await::create_shim "$tmux_exec_path";
@@ -55,11 +56,9 @@ function config::tmux() {
 		await::signal send config_tmux;
 
 		if is::cde; then {
-      sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
 			tmux_create_session;
+      CLOSE=true await::create_shim "${tmux_exec_path:-}";
 		} fi
-
-		CLOSE=true await::create_shim "${tmux_exec_path:-}";
 	
 		(
 			if is::gitpod; then {
