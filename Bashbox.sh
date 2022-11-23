@@ -100,7 +100,7 @@ function livetest {
 		local _mountpoint;
 		while read -r _mountpoint; do
 			sudo umount "$_mountpoint";
-		done < <(mount | grep "$root" | awk '{print $3}' | sort -r)
+		done < <(mount | grep "$root" | awk '{print $3}' | sort -r || true);
 	}
 
 	function mount::overlay() {
@@ -292,26 +292,26 @@ function livetest {
 	# 		/bin/bash -li
 	# 	)
 	# } fi
-	local confirmed_statfile="/tmp/.confirmed_statfile";
-	touch "$confirmed_statfile";
-	local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
-	if [[ "$confirmed_times" -lt 2 ]]; then {
-		printf '\n';
-		printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" \
-							"To detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
-		printf '\n';
-		read -r -p ">>> Press Enter/return to continue execution";
-		printf '%s\n' "$confirmed_times" > "$confirmed_statfile";
-	} fi
+	# local confirmed_statfile="/tmp/.confirmed_statfile";
+	# touch "$confirmed_statfile";
+	# local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
+	# if [[ "$confirmed_times" -lt 2 ]]; then {
+	# 	printf '\n';
+	# 	printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" \
+	# 						"To detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}"
+	# 	printf '\n';
+	# 	read -r -p ">>> Press Enter/return to continue execution";
+	# 	printf '%s\n' "$confirmed_times" > "$confirmed_statfile";
+	# } fi
 
-	local lckfile="/workspace/.dinit";
-	if test -e "$lckfile" && test ! -s "$lckfile"; then {
-		printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
-		until test -s "$lckfile"; do {
-			sleep 0.5;
-		} done
-		rm -f "$lckfile";
-	} fi
+	# local lckfile="/workspace/.dinit";
+	# if test -e "$lckfile" && test ! -s "$lckfile"; then {
+	# 	printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
+	# 	until test -s "$lckfile"; do {
+	# 		sleep 0.5;
+	# 	} done
+	# 	rm -f "$lckfile";
+	# } fi
 
 	docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
 	docker container prune -f >/dev/null 2>&1 & disown;
