@@ -85,7 +85,7 @@ main@bashbox%dotsh ()
     };
     function livetest () 
     { 
-        ( case "${1:-}" in 
+        case "${1:-}" in 
             "minimg")
                 ___self_CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest"
             ;;
@@ -153,41 +153,33 @@ main@bashbox%dotsh ()
                 done
             ;;
         esac;
+        function mount::unloadroot () 
+        { 
+            local root="$1";
+            local _mountpoint;
+            while read -r _mountpoint; do
+                sudo umount "$_mountpoint";
+            done < <(mount | grep "$root" | awk '{print $3}' | sort -r)
+        };
+        function mount::overlay () 
+        { 
+            local namespace="$1";
+            local lowerdir="$2";
+            local overlay_root="/tmp/.gitpod_overlay/${namespace}";
+            local upperdir="${overlay_root}/up";
+            local workdir="${overlay_root}/work";
+            local mountdir="${overlay_root}/mount";
+            mount::unloadroot "$overlay_root";
+            sudo rm -rf "$overlay_root";
+            mkdir -p "$overlay_root"/{up,work,mount};
+            sudo mount -t overlay overlay -o lowerdir="${lowerdir}",upperdir="${upperdir}",workdir="${workdir}" "${mountdir}";
+            printf '%s\n' "${mountdir}"
+        };
         declare CONTAINER_IMAGE="${CONTAINER_IMAGE:-"axonasif/dotfiles-testing-full:latest"}";
         log::info "Running bashbox build --release";
         subcommand::build --release;
         source "$_target_workdir/utils/common.sh";
-        local duplicate_workspace_root="/tmp/.mrroot";
-        local workspace_sources;
-        if test -n "${GITPOD_REPO_ROOTS:-}"; then
-            { 
-                local repo_roots;
-                ___self_IFS=',' read -ra workspace_sources <<< "$GITPOD_REPO_ROOTS"
-            };
-        else
-            { 
-                workspace_sources=("${_arg_path}")
-            };
-        fi;
-        if test -e /workspace/.gitpod; then
-            { 
-                workspace_sources+=("/workspace/.gitpod")
-            };
-        fi;
-        log::info "Creating a clone of ${workspace_sources} at $duplicate_workspace_root" && { 
-            if command::exists rsync; then
-                { 
-                    mkdir -p "$duplicate_workspace_root";
-                    rsync -ah --info=progress2 --delete "${workspace_sources[@]}" "$duplicate_workspace_root"
-                };
-            else
-                { 
-                    rm -rf "$duplicate_workspace_root";
-                    mkdir -p "$duplicate_workspace_root";
-                    cp -ra "${workspace_sources[@]}" "$duplicate_workspace_root"
-                };
-            fi
-        };
+        local duplicate_workspace_root="$(mount::overlay ws /workspace)";
         local ide_mirror="/tmp/.idem";
         if test ! -e "$ide_mirror"; then
             { 
@@ -195,110 +187,109 @@ main@bashbox%dotsh ()
                 cp -ra /ide "$ide_mirror"
             };
         fi;
-        log::info "Starting a fake Gitpod workspace with headless IDE" && { 
-            local docker_args=();
-            docker_args+=(run --net=host);
-            docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$_arg_path:$HOME/.dotfiles");
-            if is::gitpod; then
-                { 
-                    docker_args+=(-v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -v /.supervisor:/.supervisor --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
+        log::info "Starting a fake Gitpod workspace with headless IDE";
+        local docker_args=();
+        docker_args+=(run --net=host);
+        docker_args+=(-v "$duplicate_workspace_root:/workspace" -v "$_arg_path:$HOME/.dotfiles");
+        if is::gitpod; then
+            { 
+                docker_args+=(-v "$ide_mirror:/ide" -v /usr/bin/gp:/usr/bin/gp:ro -v /.supervisor:/.supervisor --privileged --device /dev/fuse -v /var/run/docker.sock:/var/run/docker.sock)
+            };
+        fi;
+        if is::gitpod; then
+            { 
+                declare gitpod_env_vars="${!GITPOD_*}" && { 
+                    gitpod_env_vars="${gitpod_env_vars//"GITPOD_TASKS"/}"
                 };
-            fi;
-            if is::gitpod; then
-                { 
-                    declare gitpod_env_vars="${!GITPOD_*}" && { 
-                        gitpod_env_vars="${gitpod_env_vars//"GITPOD_TASKS"/}"
-                    };
-                    declare gp_env_vars="${!GP_*}" && { 
-                        declare key && for key in GP_PYENV_FAKEROOT GP_PYENV_INIT GP_PYENV_MIRROR;
-                        do
-                            { 
-                                gp_env_vars="${gp_env_vars//"${key}"/}"
-                            };
-                        done
-                    };
-                    for key in ${gitpod_env_vars:-} ${gp_env_vars:-};
+                declare gp_env_vars="${!GP_*}" && { 
+                    declare key && for key in GP_PYENV_FAKEROOT GP_PYENV_INIT GP_PYENV_MIRROR;
                     do
                         { 
-                            docker_args+=(-e "${key}")
+                            gp_env_vars="${gp_env_vars//"${key}"/}"
                         };
-                    done;
-                    docker_args+=(-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -e DOTFILES_READ_GITPOD_YML -e DOTFILES_STRESS_TEST)
+                    done
                 };
-            fi;
-            docker_args+=(-it "$CONTAINER_IMAGE");
-            function startup_command () 
-            { 
-                export PATH="$HOME/.nix-profile/bin:/ide/bin/remote-cli:$PATH";
-                local logfile="$HOME/.dotfiles.log";
-                local tail_cmd="tail -n +0 -F $logfile";
-                eval "$(gp env -e)";
-                $tail_cmd 2> /dev/null & disown;
-                set +m;
-                { 
-                    "$HOME/.dotfiles/install.sh" 2>&1
-                } > "$logfile" 2>&1 & wait;
-                set -m;
-                ( until tmux has-session 2> /dev/null; do
-                    sleep 1;
+                for key in ${gitpod_env_vars:-} ${gp_env_vars:-};
+                do
+                    { 
+                        docker_args+=(-e "${key}")
+                    };
                 done;
-                pkill -9 -f "${tail_cmd//+/\\+}" || :;
-                tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on\; set -g visual-activity off;
-                until test -n "$(tmux list-clients)"; do
-                    sleep 1;
-                done;
-                printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile";
-                if test "${DOTFILES_STRESS_TEST:-}" == true; then
-                    { 
-                        sleep 2;
-                        tmux detach-client
-                    };
-                fi ) & disown;
-                if test "${DOTFILES_TMUX:-true}" == true; then
-                    { 
-                        ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux attach
-                    };
-                else
-                    { 
-                        exec bash -li
-                    };
-                fi;
-                if test $? != 0; then
-                    { 
-                        printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
-                        printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
-                        exec bash -li
-                    };
-                fi
+                docker_args+=(-e GITPOD_TASKS='[{"name":"Test foo","command":"echo This is fooooo; exit 2"},{"name":"Test boo", "command":"echo This is boooo"}]' -e DOTFILES_SPAWN_SSH_PROTO=false -e DOTFILES_READ_GITPOD_YML -e DOTFILES_STRESS_TEST)
             };
-            docker_args+=(/bin/bash -li);
-            local confirmed_statfile="/tmp/.confirmed_statfile";
-            touch "$confirmed_statfile";
-            local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
-            if [[ "$confirmed_times" -lt 2 ]]; then
+        fi;
+        docker_args+=(-it "$CONTAINER_IMAGE");
+        function startup_command () 
+        { 
+            export PATH="$HOME/.nix-profile/bin:/ide/bin/remote-cli:$PATH";
+            local logfile="$HOME/.dotfiles.log";
+            local tail_cmd="tail -n +0 -F $logfile";
+            eval "$(gp env -e)";
+            $tail_cmd 2> /dev/null & disown;
+            set +m;
+            { 
+                "$HOME/.dotfiles/install.sh" 2>&1
+            } > "$logfile" 2>&1 & wait;
+            set -m;
+            ( until tmux has-session 2> /dev/null; do
+                sleep 1;
+            done;
+            pkill -9 -f "${tail_cmd//+/\\+}" || :;
+            tmux new-window -n ".dotfiles.log" "$tail_cmd"\; setw -g mouse on\; set -g visual-activity off;
+            until test -n "$(tmux list-clients)"; do
+                sleep 1;
+            done;
+            printf '====== %% %s\n' "Run 'tmux detach' to exit from here" "Press 'ctrl+c' to exit the log-pager" "You can click between tabs/windows in the bottom" >> "$logfile";
+            if test "${DOTFILES_STRESS_TEST:-}" == true; then
                 { 
-                    printf '\n';
-                    printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" "To detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}";
-                    printf '\n';
-                    read -r -p ">>> Press Enter/return to continue execution";
-                    printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
+                    sleep 2;
+                    tmux detach-client
+                };
+            fi ) & disown;
+            if test "${DOTFILES_TMUX:-true}" == true; then
+                { 
+                    ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux attach
+                };
+            else
+                { 
+                    exec bash -li
                 };
             fi;
-            local lckfile="/workspace/.dinit";
-            if test -e "$lckfile" && test ! -s "$lckfile"; then
+            if test $? != 0; then
                 { 
-                    printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
-                    until test -s "$lckfile"; do
-                        { 
-                            sleep 0.5
-                        };
-                    done;
-                    rm -f "$lckfile"
+                    printf '%s\n' "PS1='testing-dots \w \$ '" >> "$HOME/.bashrc";
+                    printf 'INFO: \n\n%s\n\n' "Falling back to debug bash shell";
+                    exec bash -li
                 };
-            fi;
-            docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
-            docker container prune -f > /dev/null 2>&1 & disown
-        } )
+            fi
+        };
+        docker_args+=(/bin/bash -li);
+        local confirmed_statfile="/tmp/.confirmed_statfile";
+        touch "$confirmed_statfile";
+        local confirmed_times="$(( $(<"$confirmed_statfile") + 1 ))";
+        if [[ "$confirmed_times" -lt 2 ]]; then
+            { 
+                printf '\n';
+                printf 'INFO: %b\n' "Now this will boot into a simulated Gitpod workspace with shared host resources" "To detach from the tmux session, you can run ${BPURPLE}tmux detach${RC}";
+                printf '\n';
+                read -r -p ">>> Press Enter/return to continue execution";
+                printf '%s\n' "$confirmed_times" > "$confirmed_statfile"
+            };
+        fi;
+        local lckfile="/workspace/.dinit";
+        if test -e "$lckfile" && test ! -s "$lckfile"; then
+            { 
+                printf 'info: %s\n' "Waiting for the '.gitpod.yml:tasks:command' docker-pull to complete ...";
+                until test -s "$lckfile"; do
+                    { 
+                        sleep 0.5
+                    };
+                done;
+                rm -f "$lckfile"
+            };
+        fi;
+        docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
+        docker container prune -f > /dev/null 2>&1 & disown
     };
     function log::info () 
     { 
@@ -2532,7 +2523,7 @@ EOF
     };
     function config::scm_cli () 
     { 
-        local tarball_url gp_credentials;
+        local token;
         await::until_true command::exists gh;
         await::for_vscode_ide_start;
         declare -a scm_cli_args=("${gitpod_scm_cli}" auth login);
@@ -2540,14 +2531,16 @@ EOF
         case "$gitpod_scm_cli" in 
             "gh")
                 scm_cli_args+=(--with-token);
+                token="${DOTFILES_GITHUB_TOKEN:-}";
                 scm_host="github.com"
             ;;
             "glab")
                 scm_cli_args+=(--stdin);
+                token="${DOTFILES_GITLAB_TOKEN:-}";
                 scm_host="gitlab.com"
             ;;
         esac;
-        local token && if token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then
+        if test -n "${token:-}" || token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then
             { 
                 local tries=1;
                 until printf '%s\n' "$token" | "${scm_cli_args[@]}"; do
@@ -2931,6 +2924,7 @@ Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://git
             { 
                 if test -n "${1:-}"; then
                     { 
+                        dotsh::cli "$@";
                         declare cli_func="${1}::cli";
                         if declare -F "${cli_func}" > /dev/null; then
                             { 

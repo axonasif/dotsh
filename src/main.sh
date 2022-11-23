@@ -17,6 +17,7 @@ function main() {
   if test "${___self##*/}" == "dotsh" || test -v DEBUG_DOTSH; then {
 
     if test -n "${1:-}"; then {
+      dotsh::cli "$@";
       declare cli_func="${1}::cli";
       if declare -F "${cli_func}" 1>/dev/null; then {
           shift && "${cli_func}" "$@";
