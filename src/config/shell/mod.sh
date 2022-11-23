@@ -56,12 +56,15 @@ function config::shell::hijack_gitpod_task_terminals {
 				} else {
 					local stdin;
 					IFS= read -t0.01 -u0 -r -d '' stdin || :;
-					if ! grep -q "^$dotfiles_notmux_sig\$" <<<"$stdin"; then {
-						# Terminate gitpod created task terminals so that we can take over,
-						# previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
-						exit 0;
-					} else {
-						bash -lic "$stdin";
+					if test -n "${stdin:-}"; then {
+						if ! grep -q "^$dotfiles_notmux_sig\$" <<<"$stdin"; then {
+							# Terminate gitpod created task terminals so that we can take over,
+							# previously this was done in a more complicated way via `tmux_old.sh:tmux::inject_old_complicated()` :P
+							exit 0;
+						} else {
+							cmd="$(get::task_cmd "$stdin")";
+							exec bash -lic "$cmd";
+						} fi
 					} fi
 				} fi
 

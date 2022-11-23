@@ -37,9 +37,10 @@ function config::tmux() {
 		# 	KEEP="true" SHIM_MIRROR="$HOME/.nix-profile/bin/tmux" \
 		# 		await::create_shim "$tmux_exec_path";
 		# } fi
-    sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
-		declare tmux_exec_path=/usr/bin/tmux;
+
+		declare tmux_exec_path=/usr/bin/tmux
 		# await::until_true command::exists "$tmux_exec_path";
+		sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
 		KEEP=true SHIM_MIRROR="/usr/bin/.dw/tmux" await::create_shim "$tmux_exec_path";
 	} else {
 		await::until_true command::exists tmux;
@@ -57,8 +58,15 @@ function config::tmux() {
 
 		if is::cde; then {
 			tmux_create_session;
-      CLOSE=true await::create_shim "${tmux_exec_path:-}";
+			CLOSE=true await::create_shim "${tmux_exec_path:-}";
+			declare plugin_path="/etc/gitpod.tmux";
+			dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/gitpod.tmux/main/gitpod.tmux";
+			cat <<EOF | sudo tee -a /etc/tmux.conf 1>/dev/null
+run-shell -b 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
+EOF
+			until tmux list-clients 2>/dev/null; do sleep 1; done && exec "$plugin_path" & disown;
 		} fi
+
 	
 		(
 			if is::gitpod; then {
@@ -147,17 +155,6 @@ function config::tmux() {
 		# } fi 
 
 		await::signal send config_tmux_session;
-
-		if is::gitpod; then {
-      declare plugin_path="/etc/gitpod.tmux";
-      dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/gitpod.tmux/main/gitpod.tmux";
-      cat <<EOF | sudo tee -a /etc/tmux.conf 1>/dev/null
-run-shell -b 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
-EOF
-		} fi
-
-	until tmux list-clients 2>/dev/null; do sleep 1; done
-    "$plugin_path";
 		
 	 } & disown;
 }

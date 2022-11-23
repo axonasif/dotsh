@@ -60,7 +60,7 @@ main@bashbox%dotsh ()
     ___self_CODENAME="dotsh";
     ___self_AUTHORS=("AXON <axonasif@gmail.com>");
     ___self_VERSION="1.0";
-    ___self_DEPENDENCIES=(std::23ec8e3 https://github.com/bashbox/libtmux::fa10570);
+    ___self_DEPENDENCIES=(std::23ec8e3 https://github.com/bashbox/libtmux::2863b38);
     ___self_REPOSITORY="https://github.com/axonasif/dotsh.git";
     ___self_BASHBOX_COMPAT="0.3.9~";
     function bashbox::build::after () 
@@ -248,7 +248,7 @@ main@bashbox%dotsh ()
             fi ) & disown;
             if test "${DOTFILES_TMUX:-true}" == true; then
                 { 
-                    ___self_AWAIT_SHIM_PRINT_INDICATOR=true tmux attach
+                    ___self_AWAIT_SHIM_PRINT_INDICATOR=true exec tmux attach
                 };
             else
                 { 
@@ -968,7 +968,7 @@ main@bashbox%dotsh ()
     { 
         local opt="$1";
         local opt_val;
-        if opt_val="$(tmux start-server\; show-option -gv "$opt")" 2> /dev/null; then
+        if opt_val="$(tmux start-server\; show-option -gv "$opt" 2>/dev/null)" && test -n "${opt_val:-}"; then
             { 
                 printf '%s\n' "$opt_val"
             };
@@ -983,6 +983,22 @@ main@bashbox%dotsh ()
                 };
             fi;
         fi
+    };
+    function tmux::chain-cmds () 
+    { 
+        declare -a cmds;
+        declare cmd stdin;
+        IFS= read -t0.01 -u0 -r -d '' stdin || :;
+        while read -r cmd; do
+            { 
+                if ! [[ "$cmd" =~ ^\# ]] && test -n "${cmd:-}"; then
+                    { 
+                        eval "cmds+=(${cmd} ';')"
+                    };
+                fi
+            };
+        done <<< "$stdin";
+        tmux "${cmds[@]}"
     };
     function get::task_cmd () 
     { 
@@ -1499,6 +1515,12 @@ EOF
             fi;
             shim_tombstone="${shim_source}.tombstone"
         };
+        if test ! -e "$target" && ntarget="$(command -v "${target_name}")" && test "$target" != "$ntarget"; then
+            { 
+                try_sudo rm -f "$(readlink -f "$ntarget")" "$ntarget" || true;
+                unset ntarget
+            };
+        fi;
         set_shim_variables;
         if [[ "$SHIM_MIRROR" =~ \* ]]; then
             { 
@@ -1569,7 +1591,7 @@ EOF
             fi;
         fi;
         declare USER && USER="$(id -u -n)";
-        try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\"";
+        try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\" && chmod 777 \"$target\"";
         function async_wrapper () 
         { 
             if test -v DEBUG_SHIM; then
@@ -1631,6 +1653,11 @@ EOF
                     };
                 done
             };
+            if test -v AWAIT_SHIM_PRINT_INDICATOR; then
+                { 
+                    printf 'info[shim]: Loading %s\n' "$target ${*:-}" 1>&2
+                };
+            fi;
             if [[ "$SHIM_MIRROR" =~ \* ]]; then
                 { 
                     until sm="$(STRICT=0 wildpath "${shim_dir%/*}")"; do
@@ -1640,11 +1667,6 @@ EOF
                     done;
                     SHIM_MIRROR="$sm/${SHIM_MIRROR##*/}";
                     set_shim_variables
-                };
-            fi;
-            if test -v AWAIT_SHIM_PRINT_INDICATOR; then
-                { 
-                    printf 'info[shim]: Loading %s\n' "$target"
                 };
             fi;
             if test -e "$shim_source"; then
@@ -2178,8 +2200,8 @@ EOF
         log::info "Setting up tmux";
         if is::cde; then
             { 
-                sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
                 declare tmux_exec_path=/usr/bin/tmux;
+                sudo sh -c "printf '%s\n' 'set-option -g base-index 1' >> /etc/tmux.conf";
                 KEEP=true SHIM_MIRROR="/usr/bin/.dw/tmux" await::create_shim "$tmux_exec_path"
             };
         else
@@ -2200,7 +2222,16 @@ EOF
             if is::cde; then
                 { 
                     tmux_create_session;
-                    CLOSE=true await::create_shim "${tmux_exec_path:-}"
+                    CLOSE=true await::create_shim "${tmux_exec_path:-}";
+                    declare plugin_path="/etc/gitpod.tmux";
+                    dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/gitpod.tmux/main/gitpod.tmux";
+                    cat <<EOF |
+run-shell -b 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
+EOF
+  sudo tee -a /etc/tmux.conf > /dev/null;
+                    until tmux list-clients 2> /dev/null; do
+                        sleep 1;
+                    done && exec "$plugin_path" & disown
                 };
             fi;
             ( if is::gitpod; then
@@ -2299,21 +2330,7 @@ EOF
                     ((arr_elem=arr_elem+1))
                 };
             done ) & disown;
-            await::signal send config_tmux_session;
-            if is::gitpod; then
-                { 
-                    declare plugin_path="/etc/gitpod.tmux";
-                    dw "$plugin_path" "https://raw.githubusercontent.com/axonasif/gitpod.tmux/main/gitpod.tmux";
-                    cat <<EOF |
-run-shell -b 'until test -n "\$(tmux list-clients 2>/dev/null)"; do sleep 1; done; exec $plugin_path'
-EOF
-  sudo tee -a /etc/tmux.conf > /dev/null
-                };
-            fi;
-            until tmux list-clients 2> /dev/null; do
-                sleep 1;
-            done;
-            "$plugin_path"
+            await::signal send config_tmux_session
         } & disown
     };
     function config::shell::bash () 
@@ -2403,13 +2420,18 @@ EOF
                                 { 
                                     local stdin;
                                     IFS= read -t0.01 -u0 -r -d '' stdin || :;
-                                    if ! grep -q "^$dotfiles_notmux_sig\$" <<< "$stdin"; then
+                                    if test -n "${stdin:-}"; then
                                         { 
-                                            exit 0
-                                        };
-                                    else
-                                        { 
-                                            bash -lic "$stdin"
+                                            if ! grep -q "^$dotfiles_notmux_sig\$" <<< "$stdin"; then
+                                                { 
+                                                    exit 0
+                                                };
+                                            else
+                                                { 
+                                                    cmd="$(get::task_cmd "$stdin")";
+                                                    exec bash -lic "$cmd"
+                                                };
+                                            fi
                                         };
                                     fi
                                 };

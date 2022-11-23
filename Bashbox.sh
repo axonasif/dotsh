@@ -6,7 +6,7 @@ AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
 	std::23ec8e3
-  https://github.com/bashbox/libtmux::fa10570
+  https://github.com/bashbox/libtmux::2863b38
 )
 REPOSITORY="https://github.com/axonasif/dotsh.git"
 BASHBOX_COMPAT="0.3.9~"
@@ -268,7 +268,7 @@ function livetest {
 		) & disown;
 
 		if test "${DOTFILES_TMUX:-true}" == true; then {
-			AWAIT_SHIM_PRINT_INDICATOR=true tmux attach;
+			AWAIT_SHIM_PRINT_INDICATOR=true exec tmux attach;
 			# exec bash -li;
 		} else {
 			exec bash -li;

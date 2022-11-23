@@ -111,6 +111,14 @@ function await::create_shim() {
 		} fi
 		shim_tombstone="${shim_source}.tombstone";
 	}
+
+	# Delete any existing real binary
+	if test ! -e "$target" \
+	&& ntarget="$(command -v "${target_name}")" && test "$target" != "$ntarget"; then {
+		try_sudo rm -f "$(readlink -f "$ntarget")" "$ntarget" || true;
+		unset ntarget;
+	} fi
+
 	set_shim_variables;
 
 	if [[ "$SHIM_MIRROR" =~ \* ]]; then {
@@ -180,7 +188,7 @@ function await::create_shim() {
 	} fi
 
 	declare USER && USER="$(id -u -n)";
-	try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\"";
+	try_sudo sh -c "mkdir -p \"${target%/*}\" && touch \"$target\" && chown $USER:$USER \"$target\" && chmod 777 \"$target\"";
 
 	# Embedded script
 	function async_wrapper() {
@@ -260,6 +268,10 @@ function await::create_shim() {
 			} done
 		}
 
+		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
+			printf 'info[shim]: Loading %s\n' "$target ${*:-}" >&2;
+		} fi
+
 		# Process wildcard
 		if [[ "$SHIM_MIRROR" =~ \* ]]; then {
 			until sm="$(STRICT=0 wildpath "${shim_dir%/*}")"; do {
@@ -267,10 +279,6 @@ function await::create_shim() {
 			} done
 			SHIM_MIRROR="$sm/${SHIM_MIRROR##*/}";
 			set_shim_variables;
-		} fi
-
-		if test -v AWAIT_SHIM_PRINT_INDICATOR; then {
-			printf 'info[shim]: Loading %s\n' "$target";
 		} fi
 
 		# Reset target
