@@ -4,11 +4,13 @@ A fast dotfiles and system-configuration installer optimized for Gitpod (can be 
 
 # Quickstart for Gitpod
 
+Note: You will be using your existing dotfiles repo, `dotsh` is only the installer.
+
 Open this repo on Gitpod:
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#github.com/axonasif/dotsh)
 
-Then run `dotsh config` on a terminal for interactive configuration wizard. At the end you'd be pushing your changes to your own repo.
+Then run `dotsh config` on a terminal for interactive configuration wizard.
 
 Or if you just want to try it out:
 
