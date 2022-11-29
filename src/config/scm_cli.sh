@@ -28,7 +28,7 @@ function config::scm_cli() {
     esac
 
     # if [[ "$(printf '%s\n' host=github.com | gp credential-helper get)" =~ password=(.*) ]]; then {
-    if test -n "${token:-}" || token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')"; then {
+    if test -n "${token:-}" || token="$(printf '%s\n' "host=${scm_host}" | gp credential-helper get | awk -F'password=' '{print $2}')"; then {
         local tries=1;
         until printf '%s\n' "$token" | "${scm_cli_args[@]}"; do {
             if test $tries -gt 2; then {
