@@ -10,6 +10,7 @@ use utils;
 use install;
 use config;
 use variables;
+# use user;
 
 function main() {
 
@@ -66,8 +67,13 @@ function main() {
     # Configure neovim
     BCLR="$GRAY" structlog config::editor & disown;
     
-    # Ranger + plugins
-    # install::ranger & disown;
+    ## User modules
+    ## The function comes from /src/user/example.sh file.
+    ## You will also need to uncomment or add `use user;` at the top of this file.
+    ## The below line is commented for demo purposes.
+
+    # user::example
+
 
     # Wait for "owned" background processess to exit (i.e. processess that were not "disown"ed)
     # it will ignore "disown"ed commands as you can see up there.

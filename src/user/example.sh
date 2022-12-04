@@ -1,9 +1,9 @@
-# To start using your module, include it in one of the top level files (e.g. `/src/config/mod.sh`)
-# by `use example;` statement.
-#
-# Then you can call your function from `/src/main.sh` or somewhere else.
+# To compile and use this module:
+## Make sure that /src/user/mod.sh has `use example;` statement.
+## Make sure /src/main.sh has `use user;` statement.
+# Then You can call your module function(s) from `/src/main.sh` or somewhere else.
 
-function config::example {
+function user::example {
   # Call child functions of this module here.
   # Start them as a subprocess for concurrency with `&`.
   # Use `& disown` at the end of command to not wait for completion. (i.e. detach)
@@ -12,7 +12,7 @@ function config::example {
   example::remove_files & disown; # Detached, will not be wait'ed for.
 
   # Waits for `&` functions to complete
-  wait %%;
+  wait $(jobs -rp); # `jobs -rp` returns [r]unning [p]rocess IDs
 }
 
 function example::create_something() {
