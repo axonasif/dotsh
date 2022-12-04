@@ -83,6 +83,8 @@ function config::shell::hijack_gitpod_task_terminals {
 				} fi
 
 			} fi
+
+      exit;
 		} fi
 	}
 	# For debugging

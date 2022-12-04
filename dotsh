@@ -2576,7 +2576,8 @@ EOF
                                 };
                             fi
                         };
-                    fi
+                    fi;
+                    exit
                 };
             fi
         };
