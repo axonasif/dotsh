@@ -21,7 +21,7 @@ function config::shell {
 			;;
 		esac
 
-	) & disown
+	) & disown;
 
 	config::shell::set_default_vscode_profile &
 
@@ -32,7 +32,7 @@ function config::shell {
 		config::shell::hijack_gitpod_task_terminals &
 	} fi
 
-	wait %%;
+  wait $(jobs -rp);
 }
 
 function config::shell::hijack_gitpod_task_terminals {
