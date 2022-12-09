@@ -64,7 +64,7 @@ Most of these features stemmed from my personal needs. Another reason was to avo
 
 ## Fast installation
 
-https://user-images.githubusercontent.com/39482679/204036949-3ac297e1-33c7-41e5-9461-f504e5b16df5.mp4
+https://user-images.githubusercontent.com/39482679/208247012-9341dc34-f191-46d8-85e1-ee3a937e8f79.mp4
 
 The installation is highly parallelized. This leads to a reasonably fast Gitpod workspace startup. In the regular way it'd take at least 60seconds for my dotfiles installation itself, rendering dotfiles unusable. Some tricks are used to start fast without crashing things that rely on your custom-shell and tmux (for example) while they're being installed/configured in the background. One of the most important trick is lazy-loading binaries with (optional) locking.
 
