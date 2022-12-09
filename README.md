@@ -30,7 +30,6 @@ Right now **only Linux and MacOS is supported**. In theory it could work on othe
 
 - git
 - bash 4.3 or above
-- [docker](https://docs.docker.com/engine/install/) and [bashbox](https://github.com/bashbox/bashbox#getting-started) (optional, only needed if you want to [live-test](#live-test-changes))
 
 ### Linux
 
@@ -261,7 +260,7 @@ You can find packages at https://search.nixos.org/packages
 
 ## Host aware multi-layer dotfiles installation
 
-It will not overwrite some crutial host files (e.g. `.bashrc`, `.gitconfig` and etc.) while installing your `dotfiles` repos but virtually load your ones to preserve integrity of the host system. (when you don't use a custom dotfiles-manager, you need to handle it from your dotfiles-manager in that case)
+It will not overwrite some crutial host files (e.g. `.bashrc`, `.gitconfig` and etc.) while installing your `dotfiles` repos but virtually load your ones to preserve integrity of the host system. (if you're using a custom dotfiles-manager like chezmoi, you need to handle it through your dotfiles-manager)
 
 For more details on this and an example raw dotfiles tree, check [this](https://github.com/axonasif/dotfiles)
 

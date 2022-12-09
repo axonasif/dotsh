@@ -1,15 +1,5 @@
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
-  # - name: Cache workspace images
-  #   command: |
-  #     l=/workspace/.dinit;
-  #     touch "$l";
-  #     for img in full min; do
-  #       docker pull axonasif/dotfiles-testing-${img}:latest;
-  #       printf '%s\n' done > "$l";
-  #     done
-  #     exit;
-
   - name: Compile project
     command: |
       curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall; # Install bashbox
@@ -28,6 +18,7 @@ tasks:
         gp open "$file";
       } done
       exit;
+
   - name: Bind mount repos dir
     command: |
       dir="$HOME/.dotfiles/repos";
@@ -37,16 +28,25 @@ tasks:
         sudo mount --bind "$dir" "$target_dir";
       } fi
       exit 0;
-  - name: Live test dotfiles
+
+  - name: First-time config
     command: |
       # DOTFILES_TMUX_NO_TAKEOVER
       gp sync-await compile;
       source "$HOME/.bashbox/env";
-      if test -e "$HOME/.dotfiles/src/variables.sh"; then
-        bashbox livetest; # `livetest` is a custom project command defined in `Bashbox.sh`
-      else
+      if test ! -e "$HOME/.dotfiles/src/variables.sh"; then
         dotsh config
+      else
+        echo "Skipped because you're already using dotsh";
+        exit 0
       fi
+
+  - name: Live testing
+    command: |
+      # DOTFILES_TMUX_NO_TAKEOVER
+      gp sync-await compile;
+      source "$HOME/.bashbox/env";
+      bashbox livetest; # `livetest` is a custom project command defined in `Bashbox.sh`
 
 vscode:
   extensions:
