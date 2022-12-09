@@ -162,7 +162,16 @@ function config::shell::set_default_vscode_profile() {
 			shell="$(get::default_shell)" && shell="${shell##*/}";
 			cat <<-JSON
 			{
-				"terminal.integrated.defaultProfile.linux": "$shell"
+				"terminal.integrated.profiles.linux": {
+					"customshell": {
+						"path": "bash",
+						"args": [
+							"-c",
+							"until cmd=\"\$(command -v $shell)\" && test -x \"\$cmd\"; do sleep 1; done; AWAIT_SHIM_PRINT_INDICATOR=true exec \$cmd -l"
+						]
+					}
+				},
+				"terminal.integrated.defaultProfile.linux": "customshell"
 			}
 			JSON
 		} fi
