@@ -47,7 +47,7 @@ function editor::autorun_in_tmux() {
 }
 
 function editor::emacs::doom {
-    todo;
+    return;
 }
 
 function editor::emacs::space {
@@ -99,5 +99,5 @@ function editor::neovim::lunar {
 }
 
 function editor::neovim::nvchad {
-    todo;
+    return;
 }

@@ -9,6 +9,7 @@ tasks:
         sudo ln -sf $PWD/dotsh /usr/bin/dotsh
       } fi
       gp sync-done compile;
+      exit;
 
   - name: Open all src/ *.sh files
     command: |

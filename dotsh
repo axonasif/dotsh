@@ -268,8 +268,9 @@ main@bashbox%dotsh ()
             fi
         };
         docker_args+=(/bin/bash -li);
-        docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
-        docker container prune -f > /dev/null 2>&1 & disown
+        ( sleep 2 docker container prune -f > /dev/null 2>&1 ) & disown;
+        rm -f /tmp/.{build,install}.lock;
+        exec docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")"
     };
     function log::info () 
     { 
@@ -2450,7 +2451,7 @@ EOF
     };
     function config::shell::bash () 
     { 
-        todo
+        return
     };
     function config::shell::fish () 
     { 
@@ -2671,11 +2672,21 @@ EOF
         case "$gitpod_scm_cli" in 
             "gh")
                 scm_cli_args+=(--with-token);
+                if test -v DOTFILES_GITHUB_TOKEN; then
+                    { 
+                        log::info "Using \$DOTFILES_GITHUB_TOKEN"
+                    };
+                fi;
                 token="${DOTFILES_GITHUB_TOKEN:-}";
                 scm_host="github.com"
             ;;
             "glab")
                 scm_cli_args+=(--stdin);
+                if test -v DOTFILES_GITLAB_TOKEN; then
+                    { 
+                        log::info "Using \$DOTFILES_GITLAB_TOKEN"
+                    };
+                fi;
                 token="${DOTFILES_GITLAB_TOKEN:-}";
                 scm_host="gitlab.com"
             ;;
@@ -2687,7 +2698,7 @@ EOF
                     { 
                         if test $tries -gt 2; then
                             { 
-                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:9}" 1 || exit;
+                                log::error "Failed to authenticate to 'gh' CLI with 'gp' credentials after trying for $tries times with ${token:0:9}" 1 || return;
                                 break
                             };
                         fi;
@@ -2701,7 +2712,8 @@ EOF
             { 
                 log::error "Failed to get auth token for ${gitpod_scm_cli}" 1 || return
             };
-        fi
+        fi;
+        log::info "Logged into ${scm_host^} via ${gitpod_scm_cli} CLI"
     };
     function config::editor () 
     { 
@@ -2757,7 +2769,7 @@ EOF
     };
     function editor::emacs::doom () 
     { 
-        todo
+        return
     };
     function editor::emacs::space () 
     { 
@@ -2789,7 +2801,7 @@ EOF
     };
     function editor::neovim::nvchad () 
     { 
-        todo
+        return
     };
     function config::cli () 
     { 

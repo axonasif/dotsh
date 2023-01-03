@@ -314,6 +314,7 @@ function livetest {
 	# 	rm -f "$lckfile";
 	# } fi
 
-	docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
-	docker container prune -f >/dev/null 2>&1 & disown;
+	(sleep 2 docker container prune -f >/dev/null 2>&1) & disown;
+	rm -f /tmp/.{build,install}.lock;
+	exec docker "${docker_args[@]}" -c "$(printf "%s\n" "$(declare -f startup_command)" "startup_command")";
 }
