@@ -1143,6 +1143,10 @@ main@bashbox%dotsh ()
             };
         fi
     };
+    function await::for_gitpod_workspace_ready () 
+    { 
+        await::for_file_existence "$workspace_dir/.gitpod/ready"
+    };
     function await::create_shim () 
     { 
         declare -a vars_to_unset=(SHIM_MIRROR SHIM_SOURCE KEEP_internal_call MONITOR_PROCESS_ID);
@@ -2385,7 +2389,7 @@ EOF
                     };
                 fi;
             fi;
-            await::for_file_existence "$workspace_dir/.gitpod/ready";
+            await::for_gitpod_workspace_ready;
             cd "${GITPOD_REPO_ROOT:-}";
             function jqw () 
             { 
@@ -2660,8 +2664,8 @@ EOF
     function config::scm_cli () 
     { 
         local token;
-        await::until_true command::exists gh;
-        await::for_vscode_ide_start;
+        await::until_true command::exists "${gitpod_scm_cli}";
+        await::for_gitpod_workspace_ready;
         declare -a scm_cli_args=("${gitpod_scm_cli}" auth login);
         declare scm_host;
         case "$gitpod_scm_cli" in 
@@ -2695,7 +2699,7 @@ EOF
             };
         else
             { 
-                log::error "Failed to get auth token for gh" || exit 1
+                log::error "Failed to get auth token for ${gitpod_scm_cli}" 1 || return
             };
         fi
     };
@@ -2936,7 +2940,7 @@ EOF
             cd "$dotfiles_sh_dir";
             if is::gitpod && ! test -e "$HOME/.dotfiles/src/variables.sh"; then
                 { 
-                    read -n 1 -r -p "$(echo -e ">> Do you want to fork this repo and setup it for Gitpod? [Y/n] ")";
+                    read -n 1 -r -p "$(echo -e ">> Do you want to fork (GitHub only) this repo and setup it for Gitpod? [Y/n] ")";
                     printf '\n';
                     declare target_repo_url="$___self_REPOSITORY";
                     if [ "${REPLY,,}" = y ]; then
@@ -2949,19 +2953,10 @@ EOF
                             fi;
                             if ! gh auth status > /dev/null 2>&1; then
                                 { 
-                                    function get_token () 
-                                    { 
-                                        declare token;
-                                        token="$(printf '%s\n' host=github.com | gp credential-helper get | awk -F'password=' '{print $2}')" || { 
-                                            log::error "Failed to retrieve Github auth token from 'gp credential-helper'" || exit
-                                        }
-                                    };
-                                    get_token;
                                     log::info "Trying to login into gh CLI";
-                                    until printf '%s\n' "$token" | gh auth login --with-token; do
-                                        log::warn "Failed to login to Github via gh CLI." "Please make sure you have the necessary ^ scopes enabled at ${ORANGE}https://gitpod.io/integrations > GitHub > Edit permissions${RC}";
+                                    until printf '%s\n' "host=github.com" | gp credential-helper get | awk -F'password=' '{print $2}' | gh auth login --with-token; do
+                                        echo -e "Failed to login to GitHub via gh CLI.\nPlease make sure you have the necessary ^ scopes enabled at ${ORANGE}https://gitpod.io/integrations > GitHub > Edit permissions${RC}";
                                         read -n 1 -r -p "$(echo -e "Press ${GREEN}Enter${RC} to try again after you've fixed the permissions...")";
-                                        get_token;
                                     done
                                 };
                             fi;
@@ -2982,7 +2977,8 @@ EOF
                             };
                             if ! get_target_repo_url > /dev/null 2>&1; then
                                 { 
-                                    gh repo fork "$___self_REPOSITORY" --clone=false
+                                    gh repo fork "$___self_REPOSITORY" --clone=false;
+                                    get_target_repo_url
                                 };
                             fi;
                             log::info "Updating git remotes for $dotfiles_sh_dir";

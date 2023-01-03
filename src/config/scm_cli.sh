@@ -3,11 +3,10 @@ function config::scm_cli() {
     local token;
 
     # Wait for gh to be installed via nix at userland_tools.sh:leveltwo_pkgs
-    await::until_true command::exists gh;
+    await::until_true command::exists "${gitpod_scm_cli}";
+    await::for_gitpod_workspace_ready;
 
     # Login into scm_cli (i.e. gh or glab)
-    await::for_vscode_ide_start;
-
     declare -a scm_cli_args=("${gitpod_scm_cli}" auth login);
     declare scm_host;
     case "$gitpod_scm_cli" in
@@ -40,6 +39,6 @@ function config::scm_cli() {
             continue;
         } done
     } else {
-        log::error "Failed to get auth token for gh" || exit 1;
+        log::error "Failed to get auth token for ${gitpod_scm_cli}" 1 || return;
     } fi
 }

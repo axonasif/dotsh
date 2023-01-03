@@ -6,6 +6,10 @@ function await::for_vscode_ide_start() {
 	} fi
 }
 
+function await::for_gitpod_workspace_ready() {
+	await::for_file_existence "$workspace_dir/.gitpod/ready";
+}
+
 # TODO: Spawn a single monitoring subprocess for detecting SHIM_MIRROR changes,
 # TODO: so that `fish` (for example) locking works 100% from `nix` when it's not already installed.
 # TODO: hint: try commenting out the `CLOSE=` line on `fish.sh` and run `bashbox livetest minimg`

@@ -96,7 +96,7 @@ EOF
 				return;
 			} fi
 
-			await::for_file_existence "$workspace_dir/.gitpod/ready";
+			await::for_gitpod_workspace_ready;
 			cd "${GITPOD_REPO_ROOT:-}";
 
 			function jqw() {
