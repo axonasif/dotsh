@@ -68,6 +68,7 @@ function config::cli() {
   }
 
   function cli::wizard() {
+    declare gitpod_preferences="https://gitpod.io/preferences";
     PS3="$(echo -e "\n${RED}#${RC} Enter your choice number > ")";
 
     # Human friendly options for preview
@@ -257,7 +258,7 @@ function config::cli() {
         log::info "That's fine too! But feel free to fork later if you want to persist your customizations!";
       } fi
 
-      log::info "Go to ${ORANGE}https://gitpod.io/preferences${RC} and set ${BGREEN}${target_repo_url}${RC} in the bottom URL field if you haven't yet";
+      log::info "Go to ${ORANGE}${gitpod_preferences}${RC} and set ${BGREEN}${target_repo_url}${RC} in the bottom URL field if you haven't yet";
 
     } fi
 
@@ -278,6 +279,8 @@ function config::cli() {
       git push origin main;
     } fi
 
+    log::info "Now, dotsh will be installed for all new workspaces if you added your dotsh repo to ${gitpod_preferences}";
+    log::info "Just create a new workspace to see it in action!";
   }
 
   function cli::rclone() {
