@@ -30,6 +30,14 @@ tasks:
       } fi
       exit 0;
 
+  - name: Live testing
+    command: |
+      printf "\033[3J\033c\033[3J"
+      # DOTFILES_TMUX_NO_TAKEOVER
+      gp sync-await compile;
+      source "$HOME/.bashbox/env";
+      bashbox livetest; # `livetest` is a custom project command defined in `Bashbox.sh`
+
   - name: First-time config
     command: |
       printf "\033[3J\033c\033[3J"
@@ -42,14 +50,6 @@ tasks:
         echo "Skipped because you're already using dotsh";
         exit 0
       fi
-
-  - name: Live testing
-    command: |
-      printf "\033[3J\033c\033[3J"
-      # DOTFILES_TMUX_NO_TAKEOVER
-      gp sync-await compile;
-      source "$HOME/.bashbox/env";
-      bashbox livetest; # `livetest` is a custom project command defined in `Bashbox.sh`
 
 vscode:
   extensions:
