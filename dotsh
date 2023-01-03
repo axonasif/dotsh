@@ -3024,6 +3024,7 @@ EOF
                     log::info "Committing the changes on $dotfiles_sh_dir";
                     git commit -am 'Update dotsh config' > /dev/null;
                     log::info "Pushing the changes to $target_repo_url";
+                    git pull --ff --no-edit > /dev/null;
                     git push origin main
                 };
             fi

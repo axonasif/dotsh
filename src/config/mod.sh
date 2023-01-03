@@ -274,6 +274,7 @@ function config::cli() {
       git commit -am 'Update dotsh config' 1>/dev/null;
 
       log::info "Pushing the changes to $target_repo_url";
+      git pull --ff --no-edit 1>/dev/null;
       git push origin main;
     } fi
 
