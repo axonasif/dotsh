@@ -35,6 +35,11 @@ bashbox::build::before() {
 }
 
 function livetest {
+
+  function docker() {
+    DOCKER_BUILDKIT=1 command docker "$@";
+  }
+
 	case "${1:-}" in
 		"minimg")
 			CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest";
@@ -76,7 +81,7 @@ function livetest {
 						} fi
 
 						declare local_container_image_name="workspace-image";
-						docker built -t "$local_container_image_name" -f "$custom_dockerfile" "$GITPOD_REPO_ROOT";
+						docker build -t "$local_container_image_name" -f "$custom_dockerfile" "$GITPOD_REPO_ROOT";
 
 						CONTAINER_IMAGE="$local_container_image_name";
 

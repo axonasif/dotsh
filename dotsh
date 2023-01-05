@@ -89,9 +89,13 @@ main@bashbox%dotsh ()
     };
     function livetest () 
     { 
+        function docker () 
+        { 
+            DOCKER_BUILDKIT=1 command docker "$@"
+        };
         case "${1:-}" in 
             "minimg")
-                ___self_CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest"
+                CONTAINER_IMAGE="axonasif/dotfiles-testing-min:latest"
             ;;
             "ws")
                 function trim_leading_trailing () 
@@ -132,12 +136,12 @@ main@bashbox%dotsh ()
                                             };
                                         fi;
                                         declare local_container_image_name="workspace-image";
-                                        docker built -t "$local_container_image_name" -f "$custom_dockerfile" "$GITPOD_REPO_ROOT";
-                                        ___self_CONTAINER_IMAGE="$local_container_image_name"
+                                        docker build -t "$local_container_image_name" -f "$custom_dockerfile" "$GITPOD_REPO_ROOT";
+                                        CONTAINER_IMAGE="$local_container_image_name"
                                     };
                                 else
                                     { 
-                                        ___self_CONTAINER_IMAGE="$(trim_leading_trailing "$res")"
+                                        CONTAINER_IMAGE="$(trim_leading_trailing "$res")"
                                     };
                                 fi
                             };
@@ -252,7 +256,7 @@ main@bashbox%dotsh ()
             fi ) & disown;
             if test "${DOTFILES_TMUX:-true}" == true; then
                 { 
-                    ___self_AWAIT_SHIM_PRINT_INDICATOR=true exec tmux attach
+                    AWAIT_SHIM_PRINT_INDICATOR=true exec tmux attach
                 };
             else
                 { 
