@@ -125,6 +125,7 @@ declare nixpkgs_level_3+=(
     nixpkgs.kubectl
     nixpkgs.k9s
     nixpkgs.google-cloud-sdk
+    nixpkgs.doppler
 )
 if command::exists apt; then {
     aptpkgs_level_1+=(

@@ -32,7 +32,9 @@ function config::shell {
 		config::shell::hijack_gitpod_task_terminals &
 	} fi
 
-  wait $(jobs -rp);
+	if jobs="$(jobs -rp)" && test -n "${jobs:-}"; then {
+		wait $jobs;
+	} fi
 }
 
 function config::shell::hijack_gitpod_task_terminals {
@@ -84,7 +86,7 @@ function config::shell::hijack_gitpod_task_terminals {
 
 			} fi
 
-      exit;
+	  exit;
 		} fi
 	}
 	# For debugging
@@ -94,11 +96,11 @@ function config::shell::hijack_gitpod_task_terminals {
 	if ! grep -q 'PROMPT_COMMAND=".*tmux::inject.*"' "$HOME/.bashrc" 2>/dev/null; then {
 		# log::info "Setting tmux as the interactive shell for Gitpod task terminals"
 		local function_exports=(
-      tmux::new-session
+	  tmux::new-session
 			tmux_create_session
 			tmux::inject
 			get::task_cmd
-      tmux::show-option
+	  tmux::show-option
 			get::default_shell
 			await::signal
 		)
@@ -108,10 +110,10 @@ function config::shell::hijack_gitpod_task_terminals {
 								tmux_first_window_num "$tmux_first_window_num" \
 								dotfiles_notmux_sig "$dotfiles_notmux_sig" \
 								PROMPT_COMMAND 'tmux::inject; $PROMPT_COMMAND' \
-                RC "$RC" \
-                BGREEN "$BGREEN" \
-                BRED "$BRED" \
-                YELLOW "$YELLOW";
+				RC "$RC" \
+				BGREEN "$BGREEN" \
+				BRED "$BRED" \
+				YELLOW "$YELLOW";
 
 			printf '%s="${%s:-%s}"\n' DOTFILES_TMUX DOTFILES_TMUX "${DOTFILES_TMUX:-true}" \
 										DOTFILES_TMUX_NO_VSCODE DOTFILES_TMUX_NO_VSCODE "${DOTFILES_TMUX_NO_VSCODE:-false}";
@@ -121,7 +123,6 @@ function config::shell::hijack_gitpod_task_terminals {
 	} fi
 }
 
-# TODO: Decouple it from here
 function config::shell::spawn_ssh_url() {
 	if ! (set -o noclobber && printf '' > /tmp/.dotsh_spawn_ssh) 2>/dev/null; then {
 		return;
@@ -184,9 +185,13 @@ function config::shell::set_default_vscode_profile() {
 	)"
 
 	# TIME=2 await::for_file_existence "$ms_vscode_server_dir";
-	vscode::add_settings \
-		"$vscode_machine_settings_file" \
-		"$HOME/.vscode-server/data/Machine/settings.json" \
-		"$HOME/.vscode-remote/data/Machine/settings.json" <<<"$json_data"
+	function perform() {
+		vscode::add_settings \
+			"$vscode_machine_settings_file" \
+			"$HOME/.vscode-server/data/Machine/settings.json" \
+			"$HOME/.vscode-remote/data/Machine/settings.json" <<<"$json_data"
+	}
 
+	perform;
+	for _ in {1..3}; do perform; sleep 3.5; done & disown;
 }

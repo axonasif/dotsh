@@ -18,57 +18,64 @@ function is::gitpod() {
 }
 
 function is::codespaces() {
-	test -v CODESPACES || test -e /home/codespaces;
+    test -v CODESPACES || test -e /home/codespaces;
 }
 
 function is::cde {
-	is::gitpod || is::codespaces;
+    is::gitpod || is::codespaces;
 }
 
 function try_sudo() {
-	"$@" 2>/dev/null || sudo "$@";
+    "$@" 2>/dev/null || sudo "$@";
 }
 
 function get::default_shell {
 
-	await::signal get install_dotfiles;
-	
-	local custom_shell;
-	if test "${DOTFILES_TMUX:-true}" == true; then {
-		await::signal get config_tmux;
-	} fi
+    await::signal get install_dotfiles;
+    
+    local custom_shell;
+    if test "${DOTFILES_TMUX:-true}" == true; then {
+        await::signal get config_tmux;
+    } fi
 
-	if test -n "${DOTFILES_SHELL:-}"; then {
-		custom_shell="$(command -v "${DOTFILES_SHELL}")";
+    if test -n "${DOTFILES_SHELL:-}"; then {
+        custom_shell="$(command -v "${DOTFILES_SHELL}")";
 
-		if test "${DOTFILES_TMUX:-true}" == true; then {
-			local tmux_shell;
-			if tmux_shell="$(tmux::show-option default-shell)" \
-			&& [ "$tmux_shell" != "$custom_shell" ]; then {
-				(
-					exec 1>&-;
-					until tmux has-session 2>/dev/null; do {
-						sleep 1;
-					} done
-					tmux set -g default-shell "$custom_shell" || :;
-				) & disown;
-			} fi
-		} fi
+        if test "${DOTFILES_TMUX:-true}" == true; then {
+            local tmux_shell;
+            if tmux_shell="$(tmux::show-option default-shell)" \
+            && [ "$tmux_shell" != "$custom_shell" ]; then {
+                (
+                    exec 1>&-;
+                    until tmux has-session 2>/dev/null; do {
+                        sleep 1;
+                    } done
+                    tmux set -g default-shell "$custom_shell" || :;
+                ) & disown;
+            } fi
+        } fi
 
-	} elif test "${DOTFILES_TMUX:-true}" == true; then {
-		if custom_shell="$(tmux::show-option default-shell)" \
-		&& [ "${custom_shell}" == "/bin/sh" ]; then {
-			custom_shell="$(command -v bash)";
-		} fi
+    } elif test "${DOTFILES_TMUX:-true}" == true; then {
+        if custom_shell="$(tmux::show-option default-shell)" \
+        && [ "${custom_shell}" == "/bin/sh" ]; then {
+            custom_shell="$(command -v bash)";
+        } fi
 
-	} elif ! custom_shell="$(command -v fish)"; then {
-		custom_shell="$(command -v bash)";
-	} fi
-	
-	printf '%s\n' "${custom_shell:-/bin/bash}";
+    } elif ! custom_shell="$(command -v fish)"; then {
+        custom_shell="$(command -v bash)";
+    } fi
+    
+    printf '%s\n' "${custom_shell:-/bin/bash}";
 }
 
 function command::exists() {
-	declare cmd="$1" res;
-	res="$(command -v "$cmd")" && test -x "$res";
+    declare cmd="$1" res;
+    res="$(command -v "$cmd")" && test -x "$res";
 }
+
+# function wait::for_running_jobs() {
+#     declare running_jobs && running_jobs=($(jobs -rp));
+#     if test -n "${running_jobs:-}"; then {
+#         wait "${running_jobs[@]}";
+#     } fi
+# }
