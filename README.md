@@ -77,7 +77,7 @@ A `bash` script is placed at an alternate place in `$PATH` or even the exact pat
 
 This is quite complicated under the hood due to race-conditions and filesystem operations, thankfully it didn't involve something like a fusefs implementaion which has it's own requirements (although that probably would've been easier to debug).
 
-More details at [here](./REFERENCE.md#awaitcreate_shim-unstable)
+More details at [here](/docs/REFERENCE.md#awaitcreate_shim-unstable)
 
 </details>
 
@@ -153,7 +153,7 @@ https://user-images.githubusercontent.com/39482679/204037099-854db4a9-430b-470f-
 
 File sync is a crutial feature when working with ephemeral workspaces. This let's you sync files across workspaces or locally to individual workspaces. That means you could persist your login for CLI programs, cache big files and so on. It's gluing together [rclone](https://github.com/rclone/rclone) to accomplish this, nothing special on it's own.
 
-PS: This is easily one of the most wanted features on Gitpod.
+This is easily one of the most wanted features on Gitpod. See [/docs/PERSISTING_AUTH.md](/docs/PERSISTING_AUTH.md) for examples of a few use-cases.
 
 <details>
   <summary>Usage</summary>
@@ -235,7 +235,7 @@ Official issue: https://github.com/gitpod-io/gitpod/issues/10105
 
 https://user-images.githubusercontent.com/39482679/204090871-7abfb4b0-d757-40cb-ab0f-52f0ba5ccbd0.mp4
 
-Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](./REFERENCE.md#open-ssh-protocol-urls-in-local-terminal-emulator) without having to copy-paste manually!
+Launch gitpod workspaces automatically inside a [local terminal emulator via `ssh://`](/docs/REFERENCE.md#open-ssh-protocol-urls-in-local-terminal-emulator) without having to copy-paste manually!
 
 Official issue: https://github.com/gitpod-io/gitpod/issues/9323
 
@@ -285,7 +285,7 @@ You can also run `bashbox build --release` for only compiling.
 
 For viewing logs from the filesystem: `less -FXR ~/.dotfiles.log`
 
-Also check [./REFERENCE.md](./REFERENCE.md)
+Also check [docs/REFERENCE.md](/docs/REFERENCE.md)
 
 # Back story
 
