@@ -178,7 +178,7 @@ function config::cli() {
     # Dotfiles repo question
     read -n 1 -r -p "$(echo -e ">> Do you have your own dotfiles repo? [Y/n] ")";
     printf '\n';
-    declare template_dotfiles_repo="https://github.com/axonasif/dotfiles";
+    declare template_dotfiles_repo="https://github.com/axonasif/dotfiles.public";
 
     if [ "${REPLY,,}" = y ]; then {
       read -r -p "$(echo -e ">> Enter your dotfiles repo URL: ")";

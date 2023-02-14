@@ -2954,7 +2954,7 @@ EOF
             OPT_NAME='DOTFILES_EDITOR' OPT_DEFAULT_VALUE="neovim" QUESTION="Which CLI EDITOR do you use?" create_prompt emacs helix neovim;
             read -n 1 -r -p "$(echo -e ">> Do you have your own dotfiles repo? [Y/n] ")";
             printf '\n';
-            declare template_dotfiles_repo="https://github.com/axonasif/dotfiles";
+            declare template_dotfiles_repo="https://github.com/axonasif/dotfiles.public";
             if [ "${REPLY,,}" = y ]; then
                 { 
                     read -r -p "$(echo -e ">> Enter your dotfiles repo URL: ")";
@@ -3114,7 +3114,7 @@ EOF
         exit
     };
     export PATH="$PATH:$HOME/.local/bin:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
-    declare dotfiles_repos=(https://github.com/axonasif/dotfiles);
+    declare dotfiles_repos=(https://github.com/axonasif/dotfiles.public);
     if test -n "${DOTFILES_REPOS:-}"; then
         { 
             dotfiles_repos=(${DOTFILES_REPOS})
