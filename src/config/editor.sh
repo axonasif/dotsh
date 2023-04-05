@@ -87,7 +87,11 @@ function editor::neovim::lunar {
         await::until_true command::exists git;
         await::until_true command::exists nvim;
 
-        curl -sL "https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh" | bash -s -- --no-install-dependencies -y 1>/dev/null;
+        curl    -s https://raw.githubusercontent.com/lunarvim/lunarvim/fc6873809934917b470bff1b072171879899a36b/utils/installer/install.sh \
+        | sed   -e '/for dir in "${__lvim_dirs\[@\]}"; do/a if test "$dir" == "$HOME/.config/lvim"; then continue; fi' \
+                -e '/function __backup_dir() {/a if test "$1" == "$HOME/.config/lvim"; then return; fi' \
+        | LV_BRANCH='release-1.2/neovim-0.8' bash -s -- --no-install-dependencies -y;
+
         editor::autorun_in_tmux "lvim";
     } fi
 
