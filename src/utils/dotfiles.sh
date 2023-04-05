@@ -20,10 +20,10 @@ function dotfiles::initialize() {
 				log::info "Cleaning up broken dotfiles link: $file";
 				rm -f "$file" || :;
 			} fi
-		} done < "$last_applied_filelist"
+		} done < <(sort -u "$last_applied_filelist")
 
-		# Reset last_applied_filelist
-		printf '' > "$last_applied_filelist";
+		# # Reset last_applied_filelist
+		# printf '' > "$last_applied_filelist";
 	} fi
 
 	for dotfiles_repo in "$@"; do {
@@ -127,7 +127,7 @@ function dotfiles::initialize() {
                 continue; # End this loop
               ;;
               ".gitconfig")
-                log::info "Your $file_name is being merged with the existing host $file_name";
+                log::info "Your $file_name is being merged with the existing host $target_file";
                 local check_str="# dotsh merged";
                 if ! grep -q "$check_str" "$target_file" 2>/dev/null; then {
                   # The native `[include.path]` doesn't seem to work as expected, so yeah...
