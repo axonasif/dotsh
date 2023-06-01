@@ -29,7 +29,11 @@ function config::shell {
 		if test "${DOTFILES_SPAWN_SSH_PROTO:-true}" == true; then {
 			config::shell::spawn_ssh_url & disown;
 		} fi
-		config::shell::hijack_gitpod_task_terminals &
+
+		config::shell::hijack_gitpod_task_terminals;
+		if test -e /ide/xterm; then {
+			config::shell::hijack_xtermjs;
+		} fi
 	} fi
 
 	if jobs="$(jobs -rp)" && test -n "${jobs:-}"; then {
@@ -116,7 +120,8 @@ function config::shell::hijack_gitpod_task_terminals {
 				YELLOW "$YELLOW";
 
 			printf '%s="${%s:-%s}"\n' DOTFILES_TMUX DOTFILES_TMUX "${DOTFILES_TMUX:-true}" \
-										DOTFILES_TMUX_NO_VSCODE DOTFILES_TMUX_NO_VSCODE "${DOTFILES_TMUX_NO_VSCODE:-false}";
+										DOTFILES_TMUX_NO_VSCODE DOTFILES_TMUX_NO_VSCODE "${DOTFILES_TMUX_NO_VSCODE:-false}" \
+										DOTFILES_SHELL "${DOTFILES_SHELL:-fish}";
 
 			printf '%s\n' "$(declare -f "${function_exports[@]}")";
 		} >> "$HOME/.bashrc";
@@ -194,4 +199,24 @@ function config::shell::set_default_vscode_profile() {
 
 	perform;
 	for _ in {1..3}; do perform; sleep 3.5; done & disown;
+}
+
+function config::shell::hijack_xtermjs() {
+	function inject() {
+		if [ "$PPID" == "$(pgrep -f '/ide/xterm/bin/node /ide/xterm/index.cjs' | head -n1)" ] && test ! -v TMUX; then {
+			if test "${DOTFILES_TMUX:-true}" == true; then {
+				printf 'Loading %s ...\n' tmux;
+				AWAIT_SHIM_PRINT_INDICATOR=true tmux_create_session;
+				exec tmux set -g -t "${tmux_first_session_name}" window-size largest\; attach \; attach -t :${tmux_first_window_num};
+			} else {
+				exec "${DOTFILES_SHELL:-fish}";
+			} fi
+		} fi
+	}
+
+	payload=$(declare -f inject);
+	payload="${payload#*{}";
+	payload="${payload%\}}";
+	
+	printf '%s\n' "${payload}" >> "$HOME/.bashrc";
 }
