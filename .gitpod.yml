@@ -53,6 +53,7 @@ tasks:
 
   - name: Test
     init: echo hello world
+    # hello
 
 vscode:
   extensions:
