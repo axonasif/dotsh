@@ -51,6 +51,9 @@ tasks:
         exit 0
       fi
 
+  - name: Test
+    init: echo hello world
+
 vscode:
   extensions:
     - mads-hartmann.bash-ide-vscode
