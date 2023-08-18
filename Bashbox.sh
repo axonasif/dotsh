@@ -5,7 +5,7 @@ CODENAME="dotsh"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
 DEPENDENCIES=(
-	std::85df7f3
+	std::85df7f3hg
   https://github.com/bashbox/libtmux::2863b38
   https://github.com/axonasif/bashenv_zsh::c56d334
 )
