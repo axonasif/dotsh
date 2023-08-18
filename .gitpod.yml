@@ -54,6 +54,9 @@ tasks:
   - name: Test
     init: echo hello world
 
+  - name: Sleep test
+    init: sleep 60
+
 vscode:
   extensions:
     - mads-hartmann.bash-ide-vscode
