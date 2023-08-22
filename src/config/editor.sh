@@ -90,7 +90,7 @@ function editor::neovim::lunar {
         curl    -s https://raw.githubusercontent.com/lunarvim/lunarvim/release-1.3/neovim-0.9/utils/installer/install.sh \
         | sed   -e '/for dir in "${__lvim_dirs\[@\]}"; do/a if test "$dir" == "$HOME/.config/lvim"; then continue; fi' \
                 -e '/function __backup_dir() {/a if test "$1" == "$HOME/.config/lvim"; then return; fi' \
-        | LV_BRANCH='release-1.2/neovim-0.8' bash -s -- --no-install-dependencies -y;
+        | LV_BRANCH='release-1.3/neovim-0.9' bash -s -- --no-install-dependencies -y;
 
         editor::autorun_in_tmux "lvim";
     } fi
