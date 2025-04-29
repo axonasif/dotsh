@@ -14,7 +14,7 @@ export PATH="$PATH:$HOME/.local/bin:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
 declare dotfiles_repos=(
     # Defaults to an example template repo, you may remove below line and put your own or not use any at all!
     # If you do not have your own repo yet, you can fork this one as the starting point ;)
-    https://github.com/axonasif/dotfiles.public
+    https://github.com/axonasif/miki_ash_dotfiles.public
 )
 # Overwrite if the DOTFILES_REPOS environment variable is set
 if test -n "${DOTFILES_REPOS:-}"; then {
@@ -26,7 +26,7 @@ if test -n "${DOTFILES_REPOS:-}"; then {
 # = SHELL                                         =
 # =================================================
 # Defaults to fish
-: "${DOTFILES_SHELL:=fish}";
+: "${DOTFILES_SHELL:=zsh}";
 # =================================================
 # = FISH SHEL                                     =
 # =================================================
@@ -43,7 +43,7 @@ declare fish_plugins+=(
 # = TMUX OPTIONS                                  =
 # =================================================
 # Tmux is enabled by default.
-: "${DOTFILES_TMUX:=true}";
+: "${DOTFILES_TMUX:=false}";
 # Tmux integration for VSCode
 : "${DOTFILES_TMUX_VSCODE:=true}";
 declare -r tmux_first_session_name="gitpod";
@@ -55,7 +55,7 @@ declare -r tmux_first_window_num="1";
 # =================================================
 # The below option will help you easily SSH into
 # your workspace via your local terminal emulator.
-: "${DOTFILES_SPAWN_SSH_PROTO:=true}";
+: "${DOTFILES_SPAWN_SSH_PROTO:=false}";
 # When the below option is true, VSCode will be
 # killed after you've established a SSH connection
 # with the workspace to save RAM and CPU.

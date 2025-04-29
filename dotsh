@@ -3143,21 +3143,21 @@ EOF
         exit
     };
     export PATH="$PATH:$HOME/.local/bin:/ide/bin/remote-cli:$HOME/.nix-profile/bin";
-    declare dotfiles_repos=(https://github.com/axonasif/dotfiles.public);
+    declare dotfiles_repos=(https://github.com/axonasif/miki_ash_dotfiles.public);
     if test -n "${DOTFILES_REPOS:-}"; then
         { 
             dotfiles_repos=(${DOTFILES_REPOS})
         };
     fi;
-    : "${DOTFILES_SHELL:=fish}";
+    : "${DOTFILES_SHELL:=zsh}";
     declare -r fish_confd_dir="$HOME/.config/fish/conf.d";
     declare -r fish_hist_file="$HOME/.local/share/fish/fish_history";
     declare fish_plugins+=(PatrickF1/fzf.fish jorgebucaran/fisher axonasif/bashenv.fish);
-    : "${DOTFILES_TMUX:=true}";
+    : "${DOTFILES_TMUX:=false}";
     : "${DOTFILES_TMUX_VSCODE:=true}";
     declare -r tmux_first_session_name="gitpod";
     declare -r tmux_first_window_num="1";
-    : "${DOTFILES_SPAWN_SSH_PROTO:=true}";
+    : "${DOTFILES_SPAWN_SSH_PROTO:=false}";
     : "${DOTFILES_NO_VSCODE:=false}";
     : "${DOTFILES_EDITOR:=neovim}";
     : "${DOTFILES_EDITOR_PRESET:=lunarvim}";
